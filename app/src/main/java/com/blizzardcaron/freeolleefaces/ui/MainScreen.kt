@@ -61,10 +61,10 @@ fun MainScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        // Pinned header — stays visible regardless of scroll position.
         Row(
             verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -74,82 +74,89 @@ fun MainScreen(
             TextButton(onClick = callbacks.onRefresh) { Text("Refresh") }
         }
 
-        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-            SegmentedButton(
-                selected = state.tempUnit == TempUnit.FAHRENHEIT,
-                onClick = { callbacks.onTempUnitChange(TempUnit.FAHRENHEIT) },
-                shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
-            ) { Text("°F") }
-            SegmentedButton(
-                selected = state.tempUnit == TempUnit.CELSIUS,
-                onClick = { callbacks.onTempUnitChange(TempUnit.CELSIUS) },
-                shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-            ) { Text("°C") }
-        }
-
-        Text(state.watchLabel, style = MaterialTheme.typography.bodyMedium)
-        Button(onClick = callbacks.onSelectWatch, modifier = Modifier.fillMaxWidth()) {
-            Text("Select watch")
-        }
-
-        OutlinedTextField(
-            value = state.lat,
-            onValueChange = callbacks.onLatChange,
-            label = { Text("Latitude") },
-            singleLine = true,
-            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth(),
-        )
-        OutlinedTextField(
-            value = state.lng,
-            onValueChange = callbacks.onLngChange,
-            label = { Text("Longitude") },
-            singleLine = true,
-            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth(),
-        )
-        OutlinedButton(onClick = callbacks.onUseMyLocation, modifier = Modifier.fillMaxWidth()) {
-            Text("Use my location")
-        }
-
-        HorizontalDivider()
-
-        PreviewCard(
-            title = "Temperature",
-            state = state.tempPreview,
-            onRetry = callbacks.onRetryTemperature,
-            onSend = callbacks.onSendTemperature,
-            sendEnabled = state.tempPreview is PreviewState.Ready && state.watchSelected && !state.sending,
-        )
-
-        PreviewCard(
-            title = "Next sun event",
-            state = state.sunPreview,
-            onRetry = null, // sun is local; no retry path
-            onSend = callbacks.onSendSunTime,
-            sendEnabled = state.sunPreview is PreviewState.Ready && state.watchSelected && !state.sending,
-        )
-
-        AutoUpdateCard(state = state, callbacks = callbacks)
-
-        HorizontalDivider()
-
-        OutlinedTextField(
-            value = state.custom,
-            onValueChange = callbacks.onCustomChange,
-            label = { Text("Custom (up to 6 chars)") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Button(
-            onClick = callbacks.onSendCustom,
-            enabled = state.watchSelected && !state.sending,
-            modifier = Modifier.fillMaxWidth(),
-        ) { Text("Send custom") }
-
-        HorizontalDivider()
-
         Text(state.status, style = MaterialTheme.typography.bodyMedium)
+
+        HorizontalDivider()
+
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                SegmentedButton(
+                    selected = state.tempUnit == TempUnit.FAHRENHEIT,
+                    onClick = { callbacks.onTempUnitChange(TempUnit.FAHRENHEIT) },
+                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                ) { Text("°F") }
+                SegmentedButton(
+                    selected = state.tempUnit == TempUnit.CELSIUS,
+                    onClick = { callbacks.onTempUnitChange(TempUnit.CELSIUS) },
+                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                ) { Text("°C") }
+            }
+
+            Text(state.watchLabel, style = MaterialTheme.typography.bodyMedium)
+            Button(onClick = callbacks.onSelectWatch, modifier = Modifier.fillMaxWidth()) {
+                Text("Select watch")
+            }
+
+            OutlinedTextField(
+                value = state.lat,
+                onValueChange = callbacks.onLatChange,
+                label = { Text("Latitude") },
+                singleLine = true,
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            OutlinedTextField(
+                value = state.lng,
+                onValueChange = callbacks.onLngChange,
+                label = { Text("Longitude") },
+                singleLine = true,
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            OutlinedButton(onClick = callbacks.onUseMyLocation, modifier = Modifier.fillMaxWidth()) {
+                Text("Use my location")
+            }
+
+            HorizontalDivider()
+
+            PreviewCard(
+                title = "Temperature",
+                state = state.tempPreview,
+                onRetry = callbacks.onRetryTemperature,
+                onSend = callbacks.onSendTemperature,
+                sendEnabled = state.tempPreview is PreviewState.Ready && state.watchSelected && !state.sending,
+            )
+
+            PreviewCard(
+                title = "Next sun event",
+                state = state.sunPreview,
+                onRetry = null, // sun is local; no retry path
+                onSend = callbacks.onSendSunTime,
+                sendEnabled = state.sunPreview is PreviewState.Ready && state.watchSelected && !state.sending,
+            )
+
+            AutoUpdateCard(state = state, callbacks = callbacks)
+
+            HorizontalDivider()
+
+            OutlinedTextField(
+                value = state.custom,
+                onValueChange = callbacks.onCustomChange,
+                label = { Text("Custom (up to 6 chars)") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Button(
+                onClick = callbacks.onSendCustom,
+                enabled = state.watchSelected && !state.sending,
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Send custom") }
+        }
     }
 }
 
