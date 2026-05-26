@@ -983,12 +983,12 @@ git commit -m "Add auto-update card and wire scheduling into the UI"
 - [ ] **Step 1: Run the full unit-test suite**
 
 Run: `./gradlew :app:testDebugUnitTest -q`
-Expected: BUILD SUCCESSFUL — the new `AutoUpdateScheduleTest` (16 tests) plus all pre-existing tests pass.
+Expected: BUILD SUCCESSFUL — the new `AutoUpdateScheduleTest` (15 tests) plus all pre-existing tests pass.
 
-- [ ] **Step 2: Build the debug APK**
+- [ ] **Step 2: Build the debug APK (sanity check only — not committed)**
 
 Run: `./gradlew :app:assembleDebug -q`
-Expected: BUILD SUCCESSFUL; APK at `app/build/outputs/apk/debug/`.
+Expected: BUILD SUCCESSFUL; APK at `app/build/outputs/apk/debug/` (gitignored under `/build`). This step only confirms the app assembles. The APK is published via GitHub Releases (Task 9), never committed to the repo.
 
 - [ ] **Step 3: Append the manual verification checklist**
 
@@ -1021,9 +1021,133 @@ git commit -m "Add manual verification checklist for auto-update"
 
 ---
 
+## Task 9: Publish the APK via GitHub Releases (stop committing binaries)
+
+Switch distribution from a committed APK to a GitHub Release built by CI on tag push.
+The debug-signed APK (installable for GrapheneOS sideloading) is the release artifact.
+
+**Files:**
+- Create: `.github/workflows/release.yml`
+- Modify: `.gitignore`
+- Delete: `dist/freeollee-faces-debug-v0.2.0.apk` (remove from git)
+- Modify: `dist/README.md` and `README.md`
+
+- [ ] **Step 1: Stop tracking APKs**
+
+Append to `.gitignore`:
+
+```
+# Built APKs are published as GitHub Release assets, never committed.
+*.apk
+```
+
+- [ ] **Step 2: Remove the committed APK from the repo**
+
+```bash
+git rm dist/freeollee-faces-debug-v0.2.0.apk
+```
+
+(History still contains it; that's fine. We just stop carrying it going forward.)
+
+- [ ] **Step 3: Add the release workflow**
+
+Create `.github/workflows/release.yml`:
+
+```yaml
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build debug APK
+        run: ./gradlew :app:assembleDebug
+
+      - name: Stage APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk "freeollee-faces-debug-${GITHUB_REF_NAME}.apk"
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh release create "$GITHUB_REF_NAME"
+          "freeollee-faces-debug-${GITHUB_REF_NAME}.apk"
+          --title "$GITHUB_REF_NAME"
+          --generate-notes
+```
+
+- [ ] **Step 4: Update the dist/ README to point at Releases**
+
+Replace the contents of `dist/README.md` with:
+
+```markdown
+# Distribution
+
+Built APKs are **no longer committed here**. Each tagged version is published as a
+GitHub Release with the debug-signed APK attached:
+
+https://github.com/kenblizzardcaron/FreeOllee-Faces/releases
+
+To cut a release, push a tag like `v0.3.0`; the `Release` workflow builds the APK and
+publishes it automatically.
+```
+
+- [ ] **Step 5: Update the main README build section**
+
+In `README.md`, under the `## Building` section, after the existing debug-build lines, add:
+
+```markdown
+## Releases
+
+Tagged versions are published as GitHub Releases with the debug-signed APK attached —
+see the [Releases page](https://github.com/kenblizzardcaron/FreeOllee-Faces/releases).
+Pushing a `v*` tag triggers `.github/workflows/release.yml`, which builds and publishes
+the APK; APKs are not committed to the repository.
+```
+
+- [ ] **Step 6: Verify the workflow is well-formed**
+
+The workflow can only be fully verified by pushing a tag (which happens after merge).
+For now, confirm the YAML parses and the file is in place:
+
+Run: `git status --short .github/workflows/release.yml && python3 -c "import yaml,sys; yaml.safe_load(open('.github/workflows/release.yml')); print('YAML OK')"`
+Expected: the file is staged/added and `YAML OK` prints. (If `pyyaml` isn't installed, skip the parse check — the real verification is the first tagged CI run.)
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add .gitignore .github/workflows/release.yml dist/README.md README.md
+git commit -m "Publish APK via GitHub Releases instead of committing it"
+```
+
+> **Note:** The first real CI run (on the first `v*` tag) may need a tweak — AGP 9 + compileSdk 36 are new, so the runner's Android SDK platform may need adjusting. Cutting the release tag happens after this branch merges; verify the Actions run there and iterate if needed.
+
+---
+
 ## Done
 
-The feature is complete when: all unit tests pass, the debug APK builds, and the manual
-verification checklist has been walked on-device. The pure scheduling math is covered by
-automated tests; the Android wrappers (worker, scheduler, boot receiver, UI) are verified
-manually per the checklist above.
+The feature is complete when: all unit tests pass, the debug APK builds locally, the manual
+verification checklist has been walked on-device, and the release workflow is in place (its
+first run verified when the version tag is pushed after merge). The pure scheduling math is
+covered by automated tests; the Android wrappers (worker, scheduler, boot receiver, UI) are
+verified manually per the checklist; the APK is distributed via GitHub Releases, not committed.
