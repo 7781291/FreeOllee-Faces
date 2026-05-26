@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.blizzardcaron.freeolleefaces.format.TempUnit
+import com.blizzardcaron.freeolleefaces.auto.AutoSource
 
 class Prefs(context: Context) {
 
@@ -28,11 +29,54 @@ class Prefs(context: Context) {
             ?: TempUnit.FAHRENHEIT
         set(value) = sp.edit { putString(KEY_TEMP_UNIT, value.name) }
 
+    var autoSource: AutoSource
+        get() = sp.getString(KEY_AUTO_SOURCE, null)
+            ?.let { runCatching { AutoSource.valueOf(it) }.getOrNull() }
+            ?: AutoSource.OFF
+        set(value) = sp.edit { putString(KEY_AUTO_SOURCE, value.name) }
+
+    var tempIntervalMinutes: Int
+        get() = sp.getInt(KEY_TEMP_INTERVAL, 60)
+        set(value) = sp.edit { putInt(KEY_TEMP_INTERVAL, value) }
+
+    var sleepEnabled: Boolean
+        get() = sp.getBoolean(KEY_SLEEP_ENABLED, true)
+        set(value) = sp.edit { putBoolean(KEY_SLEEP_ENABLED, value) }
+
+    var sleepStartMin: Int
+        get() = sp.getInt(KEY_SLEEP_START, 22 * 60)
+        set(value) = sp.edit { putInt(KEY_SLEEP_START, value) }
+
+    var sleepEndMin: Int
+        get() = sp.getInt(KEY_SLEEP_END, 6 * 60)
+        set(value) = sp.edit { putInt(KEY_SLEEP_END, value) }
+
+    var lastAutoSendMs: Long?
+        get() = if (sp.contains(KEY_LAST_SEND_MS)) sp.getLong(KEY_LAST_SEND_MS, 0L) else null
+        set(value) = sp.edit { if (value == null) remove(KEY_LAST_SEND_MS) else putLong(KEY_LAST_SEND_MS, value) }
+
+    var lastAutoSendSummary: String?
+        get() = sp.getString(KEY_LAST_SEND_SUMMARY, null)
+        set(value) = sp.edit { if (value == null) remove(KEY_LAST_SEND_SUMMARY) else putString(KEY_LAST_SEND_SUMMARY, value) }
+
+    /** Convenience: stamp the time and summary of the most recent background send attempt. */
+    fun recordAutoSend(summary: String) {
+        lastAutoSendMs = System.currentTimeMillis()
+        lastAutoSendSummary = summary
+    }
+
     companion object {
         private const val FILE = "freeollee_faces_prefs"
         private const val KEY_LAT = "last_lat"
         private const val KEY_LNG = "last_lng"
         private const val KEY_WATCH = "watch_address"
         private const val KEY_TEMP_UNIT = "temp_unit"
+        private const val KEY_AUTO_SOURCE = "auto_source"
+        private const val KEY_TEMP_INTERVAL = "temp_interval_min"
+        private const val KEY_SLEEP_ENABLED = "sleep_enabled"
+        private const val KEY_SLEEP_START = "sleep_start_min"
+        private const val KEY_SLEEP_END = "sleep_end_min"
+        private const val KEY_LAST_SEND_MS = "last_auto_send_ms"
+        private const val KEY_LAST_SEND_SUMMARY = "last_auto_send_summary"
     }
 }
