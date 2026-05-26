@@ -148,3 +148,19 @@ Record each issue found:
 ## Acceptance
 
 When every row above is filled in with PASS (or follow-ups are committed), this task is complete and the Done criteria in the implementation plan are met.
+
+## Automatic background updates (2026-05-25)
+
+Requires a physical device + the watch (background BLE timing can't be unit-tested).
+
+- [ ] Select **Temp**, interval **15**, sleep **22:00–06:00**. Confirm a send lands
+      within ~15 min, and that sends pause overnight and resume at 06:00.
+- [ ] Set interval to **5** → field accepts text but the persisted/effective interval
+      is clamped to 15 min.
+- [ ] Select **Sun**. Confirm a fresh value lands shortly after the next sunrise/sunset
+      passes (within ~1 min of the event).
+- [ ] With **Temp** active, force-stop the app → sends continue on schedule.
+- [ ] Reboot the phone → sends resume without opening the app.
+- [ ] Turn the watch off during a tick → "Last auto-update" shows `watch unreachable`;
+      the next tick recovers once the watch is back.
+- [ ] Select **Off** → no further background sends occur.
