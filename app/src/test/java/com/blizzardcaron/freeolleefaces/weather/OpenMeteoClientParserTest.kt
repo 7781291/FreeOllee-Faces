@@ -29,23 +29,23 @@ class OpenMeteoClientParserTest {
     }
 
     @Test
-    fun `throws when current block is missing`() {
+    fun `throws Malformed when current block is missing`() {
         val json = """{"hourly":{"temperature_2m":[60]}}"""
         try {
             OpenMeteoClient.parseCurrentTemperatureF(json)
             error("expected to throw")
-        } catch (e: IllegalStateException) {
+        } catch (e: WeatherFetchError.Malformed) {
             assertTrue(e.message?.contains("current") == true)
         }
     }
 
     @Test
-    fun `throws when temperature_2m is missing`() {
+    fun `throws Malformed when temperature_2m is missing`() {
         val json = """{"current":{"time":"2026-05-14T15:00"}}"""
         try {
             OpenMeteoClient.parseCurrentTemperatureF(json)
             error("expected to throw")
-        } catch (e: IllegalStateException) {
+        } catch (e: WeatherFetchError.Malformed) {
             assertTrue(e.message?.contains("temperature_2m") == true)
         }
     }

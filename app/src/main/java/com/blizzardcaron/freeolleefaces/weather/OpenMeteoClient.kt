@@ -5,7 +5,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONException
 import org.json.JSONObject
+import java.io.IOException
 import java.net.HttpURLConnection
+import java.net.SocketTimeoutException
 import java.net.URL
 
 object OpenMeteoClient {
@@ -21,39 +23,61 @@ object OpenMeteoClient {
                 "&current=temperature_2m&temperature_unit=${unit.openMeteoParam}"
         )
 
-    /** Fetches `current.temperature_2m` in the requested [unit]. */
-    suspend fun currentTemp(lat: Double, lng: Double, unit: TempUnit): Result<Double> =
+    /** Fetches `current.temperature_2m` in the requested [unit], retrying per [policy]. */
+    suspend fun currentTemp(
+        lat: Double,
+        lng: Double,
+        unit: TempUnit,
+        policy: RetryPolicy,
+    ): Result<Double> =
         withContext(Dispatchers.IO) {
-            runCatching {
-                val conn = buildUrl(lat, lng, unit).openConnection() as HttpURLConnection
-                try {
-                    conn.connectTimeout = CONNECT_TIMEOUT_MS
-                    conn.readTimeout = READ_TIMEOUT_MS
-                    conn.requestMethod = "GET"
-                    val code = conn.responseCode
-                    if (code !in 200..299) {
-                        val errBody = conn.errorStream?.bufferedReader()?.use { it.readText() }.orEmpty()
-                        error("HTTP $code from Open-Meteo: $errBody")
-                    }
-                    val body = conn.inputStream.bufferedReader().use { it.readText() }
-                    parseCurrentTemperatureF(body)
-                } finally {
-                    conn.disconnect()
-                }
+            withRetry(
+                policy = policy,
+                isTransient = { it is WeatherFetchError && it.isTransient },
+            ) {
+                fetchOnce(lat, lng, unit)
             }
         }
+
+    /** A single HTTP attempt. Throws a [WeatherFetchError] on any failure. */
+    private fun fetchOnce(lat: Double, lng: Double, unit: TempUnit): Double {
+        val conn = buildUrl(lat, lng, unit).openConnection() as HttpURLConnection
+        try {
+            conn.connectTimeout = CONNECT_TIMEOUT_MS
+            conn.readTimeout = READ_TIMEOUT_MS
+            conn.requestMethod = "GET"
+            val code = try {
+                conn.responseCode
+            } catch (e: SocketTimeoutException) {
+                throw WeatherFetchError.Timeout
+            } catch (e: IOException) {
+                throw WeatherFetchError.Network(e.message ?: e.javaClass.simpleName)
+            }
+            WeatherFetchError.fromHttpStatus(code)?.let { throw it }
+            val body = try {
+                conn.inputStream.bufferedReader().use { it.readText() }
+            } catch (e: SocketTimeoutException) {
+                throw WeatherFetchError.Timeout
+            } catch (e: IOException) {
+                throw WeatherFetchError.Network(e.message ?: e.javaClass.simpleName)
+            }
+            return parseCurrentTemperatureF(body)
+        } finally {
+            conn.disconnect()
+        }
+    }
 
     /** Extracts `current.temperature_2m` from the response JSON. Unit is whatever the URL requested. */
     fun parseCurrentTemperatureF(json: String): Double {
         val root = try {
             JSONObject(json)
         } catch (e: JSONException) {
-            throw IllegalStateException("response is not valid JSON: ${e.message}", e)
+            throw WeatherFetchError.Malformed("response is not valid JSON: ${e.message}")
         }
         val current = root.optJSONObject("current")
-            ?: throw IllegalStateException("response missing 'current' block")
+            ?: throw WeatherFetchError.Malformed("response missing 'current' block")
         if (!current.has("temperature_2m")) {
-            throw IllegalStateException("response 'current' missing 'temperature_2m'")
+            throw WeatherFetchError.Malformed("response 'current' missing 'temperature_2m'")
         }
         return current.getDouble("temperature_2m")
     }

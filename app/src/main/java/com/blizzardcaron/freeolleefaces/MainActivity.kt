@@ -22,6 +22,7 @@ import com.blizzardcaron.freeolleefaces.auto.AutoSource
 import com.blizzardcaron.freeolleefaces.auto.AutoUpdateScheduler
 import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
 import com.blizzardcaron.freeolleefaces.format.TempUnit
+import com.blizzardcaron.freeolleefaces.format.WeatherErrorCopy
 import com.blizzardcaron.freeolleefaces.location.LocationSource
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
 import com.blizzardcaron.freeolleefaces.sun.NextEvent
@@ -33,6 +34,7 @@ import com.blizzardcaron.freeolleefaces.ui.MainScreenState
 import com.blizzardcaron.freeolleefaces.ui.PreviewState
 import com.blizzardcaron.freeolleefaces.ui.theme.FreeOlleeFacesTheme
 import com.blizzardcaron.freeolleefaces.weather.OpenMeteoClient
+import com.blizzardcaron.freeolleefaces.weather.RetryPolicy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -96,14 +98,14 @@ private fun AppRoot(modifier: Modifier = Modifier) {
             update { it.copy(tempPreview = PreviewState.Loading, sunPreview = PreviewState.Loading) }
 
             val tempCoroutine = launch {
-                OpenMeteoClient.currentTemp(lat, lng, unit)
+                OpenMeteoClient.currentTemp(lat, lng, unit, RetryPolicy.Preview)
                     .onSuccess { temp ->
                         val payload = DisplayFormatter.temperature(temp, unit)
                         val human = "Currently: %.1f°%s".format(Locale.US, temp, unit.symbol)
                         update { it.copy(tempPreview = PreviewState.Ready(payload, human)) }
                     }
                     .onFailure { err ->
-                        update { it.copy(tempPreview = PreviewState.Error("Weather fetch failed: ${err.message}")) }
+                        update { it.copy(tempPreview = PreviewState.Error(WeatherErrorCopy.describe(err))) }
                     }
             }
 

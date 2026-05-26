@@ -8,6 +8,8 @@ import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
 import com.blizzardcaron.freeolleefaces.sun.SunCalc
 import com.blizzardcaron.freeolleefaces.weather.OpenMeteoClient
+import com.blizzardcaron.freeolleefaces.weather.RetryPolicy
+import com.blizzardcaron.freeolleefaces.weather.WeatherFetchError
 import java.time.Duration
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -62,14 +64,17 @@ class AutoUpdateWorker(
         val inSleep = sleep != null &&
             AutoUpdateSchedule.isInSleepWindow(nowMinOfDay, sleep.startMin, sleep.endMin)
         if (!inSleep) {
-            OpenMeteoClient.currentTemp(lat, lng, prefs.tempUnit)
+            OpenMeteoClient.currentTemp(lat, lng, prefs.tempUnit, RetryPolicy.Background)
                 .onSuccess { temp ->
                     val payload = DisplayFormatter.temperature(temp, prefs.tempUnit)
                     OlleeBleClient(ctx).send(address, payload)
                         .onSuccess { prefs.recordAutoSend("Sent '$payload'") }
                         .onFailure { prefs.recordAutoSend("Skipped: watch unreachable") }
                 }
-                .onFailure { prefs.recordAutoSend("Skipped: weather fetch failed") }
+                .onFailure { err ->
+                    val suffix = (err as? WeatherFetchError)?.statusCode?.let { " (HTTP $it)" } ?: ""
+                    prefs.recordAutoSend("Skipped: weather fetch failed$suffix")
+                }
         } else {
             prefs.recordAutoSend("Asleep (power saving)")
         }
