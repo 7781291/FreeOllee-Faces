@@ -70,6 +70,8 @@ class AutoUpdateWorker(
                         .onFailure { prefs.recordAutoSend("Skipped: watch unreachable") }
                 }
                 .onFailure { prefs.recordAutoSend("Skipped: weather fetch failed") }
+        } else {
+            prefs.recordAutoSend("Asleep (power saving)")
         }
 
         val fire = AutoUpdateSchedule.nextTemperatureFire(now, prefs.tempIntervalMinutes, sleep)
