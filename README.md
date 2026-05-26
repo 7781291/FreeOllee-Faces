@@ -30,3 +30,10 @@ protocol in-tree rather than depending on the FreeOllee APK.
 ```
 
 The debug APK lands in `app/build/outputs/apk/debug/`.
+
+## Releases
+
+Tagged versions are published as GitHub Releases with the debug-signed APK attached —
+see the [Releases page](https://github.com/kenblizzardcaron/FreeOllee-Faces/releases).
+Pushing a `v*` tag triggers `.github/workflows/release.yml`, which builds and publishes
+the APK; APKs are not committed to the repository.

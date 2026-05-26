@@ -13,3 +13,6 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Built APKs are published as GitHub Release assets, never committed.
+*.apk
