@@ -10,6 +10,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.blizzardcaron.freeolleefaces.format.TempUnit
+import androidx.compose.ui.platform.LocalContext
+import com.blizzardcaron.freeolleefaces.auto.AutoSource
 
 data class MainScreenState(
     val lat: String = "",
@@ -22,6 +24,12 @@ data class MainScreenState(
     val tempUnit: TempUnit = TempUnit.FAHRENHEIT,
     val tempPreview: PreviewState = PreviewState.WaitingForCoords,
     val sunPreview: PreviewState = PreviewState.WaitingForCoords,
+    val autoSource: AutoSource = AutoSource.OFF,
+    val tempIntervalText: String = "60",
+    val sleepEnabled: Boolean = true,
+    val sleepStartMin: Int = 22 * 60,
+    val sleepEndMin: Int = 6 * 60,
+    val lastAutoSummary: String = "No auto-updates yet",
 )
 
 data class MainScreenCallbacks(
@@ -36,6 +44,11 @@ data class MainScreenCallbacks(
     val onSendSunTime: () -> Unit,
     val onSendCustom: () -> Unit,
     val onRetryTemperature: () -> Unit,
+    val onAutoSourceChange: (AutoSource) -> Unit,
+    val onTempIntervalChange: (String) -> Unit,
+    val onSleepEnabledChange: (Boolean) -> Unit,
+    val onSleepStartChange: (Int) -> Unit,
+    val onSleepEndChange: (Int) -> Unit,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -117,6 +130,8 @@ fun MainScreen(
             sendEnabled = state.sunPreview is PreviewState.Ready && state.watchSelected && !state.sending,
         )
 
+        AutoUpdateCard(state = state, callbacks = callbacks)
+
         HorizontalDivider()
 
         OutlinedTextField(
@@ -136,6 +151,115 @@ fun MainScreen(
 
         Text(state.status, style = MaterialTheme.typography.bodyMedium)
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AutoUpdateCard(
+    state: MainScreenState,
+    callbacks: MainScreenCallbacks,
+) {
+    val context = LocalContext.current
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text("Auto-update", style = MaterialTheme.typography.titleMedium)
+
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                SegmentedButton(
+                    selected = state.autoSource == AutoSource.OFF,
+                    onClick = { callbacks.onAutoSourceChange(AutoSource.OFF) },
+                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 3),
+                ) { Text("Off") }
+                SegmentedButton(
+                    selected = state.autoSource == AutoSource.TEMPERATURE,
+                    onClick = { callbacks.onAutoSourceChange(AutoSource.TEMPERATURE) },
+                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 3),
+                ) { Text("Temp") }
+                SegmentedButton(
+                    selected = state.autoSource == AutoSource.SUN,
+                    onClick = { callbacks.onAutoSourceChange(AutoSource.SUN) },
+                    shape = SegmentedButtonDefaults.itemShape(index = 2, count = 3),
+                ) { Text("Sun") }
+            }
+
+            when (state.autoSource) {
+                AutoSource.TEMPERATURE -> {
+                    OutlinedTextField(
+                        value = state.tempIntervalText,
+                        onValueChange = callbacks.onTempIntervalChange,
+                        label = { Text("Interval (minutes, min 15)") },
+                        singleLine = true,
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Row(
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text("Power-saving sleep")
+                        Switch(
+                            checked = state.sleepEnabled,
+                            onCheckedChange = callbacks.onSleepEnabledChange,
+                        )
+                    }
+                    if (state.sleepEnabled) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            OutlinedButton(
+                                onClick = {
+                                    showTimePicker(context, state.sleepStartMin, callbacks.onSleepStartChange)
+                                },
+                                modifier = Modifier.weight(1f),
+                            ) { Text("From ${minutesToLabel(state.sleepStartMin)}") }
+                            OutlinedButton(
+                                onClick = {
+                                    showTimePicker(context, state.sleepEndMin, callbacks.onSleepEndChange)
+                                },
+                                modifier = Modifier.weight(1f),
+                            ) { Text("To ${minutesToLabel(state.sleepEndMin)}") }
+                        }
+                    }
+                }
+                AutoSource.SUN -> Text(
+                    "Re-sends automatically after each sunrise/sunset; no schedule needed.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                AutoSource.OFF -> Text(
+                    "Auto-update is off.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+
+            Text(
+                "Last auto-update: ${state.lastAutoSummary}",
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+    }
+}
+
+private fun minutesToLabel(min: Int): String = "%02d:%02d".format(min / 60, min % 60)
+
+private fun showTimePicker(
+    context: android.content.Context,
+    currentMin: Int,
+    onPicked: (Int) -> Unit,
+) {
+    android.app.TimePickerDialog(
+        context,
+        { _, hour, minute -> onPicked(hour * 60 + minute) },
+        currentMin / 60,
+        currentMin % 60,
+        true,
+    ).show()
 }
 
 @Composable

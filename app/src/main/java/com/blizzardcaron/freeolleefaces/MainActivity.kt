@@ -18,6 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import com.blizzardcaron.freeolleefaces.ble.OlleeBleClient
+import com.blizzardcaron.freeolleefaces.auto.AutoSource
+import com.blizzardcaron.freeolleefaces.auto.AutoUpdateScheduler
 import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 import com.blizzardcaron.freeolleefaces.location.LocationSource
@@ -69,6 +71,12 @@ private fun AppRoot(modifier: Modifier = Modifier) {
                 watchLabel = labelForAddress(context, prefs.watchAddress),
                 watchSelected = prefs.watchAddress != null,
                 tempUnit = prefs.tempUnit,
+                autoSource = prefs.autoSource,
+                tempIntervalText = prefs.tempIntervalMinutes.toString(),
+                sleepEnabled = prefs.sleepEnabled,
+                sleepStartMin = prefs.sleepStartMin,
+                sleepEndMin = prefs.sleepEndMin,
+                lastAutoSummary = formatLastSummary(prefs),
             )
         )
     }
@@ -159,6 +167,7 @@ private fun AppRoot(modifier: Modifier = Modifier) {
             update { it.copy(status = "Using saved coordinates.") }
         }
         refreshFromState()
+        AutoUpdateScheduler.reschedule(context)
     }
 
     val btPermissionLauncher = rememberLauncherForActivityResult(
@@ -263,6 +272,34 @@ private fun AppRoot(modifier: Modifier = Modifier) {
             val lat = state.lat.toDoubleOrNull(); val lng = state.lng.toDoubleOrNull()
             if (lat != null && lng != null) refreshPreviews(lat, lng, state.tempUnit)
         },
+        onAutoSourceChange = { src ->
+            prefs.autoSource = src
+            update { it.copy(autoSource = src) }
+            AutoUpdateScheduler.reschedule(context)
+        },
+        onTempIntervalChange = { text ->
+            update { it.copy(tempIntervalText = text) }
+            val mins = text.toIntOrNull()
+            if (mins != null) {
+                prefs.tempIntervalMinutes = mins.coerceAtLeast(15)
+                AutoUpdateScheduler.reschedule(context)
+            }
+        },
+        onSleepEnabledChange = { enabled ->
+            prefs.sleepEnabled = enabled
+            update { it.copy(sleepEnabled = enabled) }
+            AutoUpdateScheduler.reschedule(context)
+        },
+        onSleepStartChange = { min ->
+            prefs.sleepStartMin = min
+            update { it.copy(sleepStartMin = min) }
+            AutoUpdateScheduler.reschedule(context)
+        },
+        onSleepEndChange = { min ->
+            prefs.sleepEndMin = min
+            update { it.copy(sleepEndMin = min) }
+            AutoUpdateScheduler.reschedule(context)
+        },
     )
 
     MainScreen(state = state, callbacks = callbacks, modifier = modifier)
@@ -341,4 +378,12 @@ private fun labelForAddress(context: Context, address: String?): String {
     val mgr = context.getSystemService(BluetoothManager::class.java) ?: return "Watch: $address"
     val device = mgr.adapter?.getRemoteDevice(address)
     return "Watch: ${device?.name ?: address}"
+}
+
+private fun formatLastSummary(prefs: com.blizzardcaron.freeolleefaces.prefs.Prefs): String {
+    val ms = prefs.lastAutoSendMs ?: return "No auto-updates yet"
+    val time = java.time.Instant.ofEpochMilli(ms)
+        .atZone(java.time.ZoneId.systemDefault())
+        .format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
+    return "$time — ${prefs.lastAutoSendSummary ?: ""}"
 }
