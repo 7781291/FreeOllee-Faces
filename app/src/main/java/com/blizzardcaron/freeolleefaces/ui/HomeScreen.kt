@@ -173,7 +173,7 @@ private fun LocationFallback(state: HomeState, callbacks: HomeCallbacks) {
                 modifier = Modifier.fillMaxWidth(),
             )
             OutlinedButton(onClick = callbacks.onUseMyLocation, modifier = Modifier.fillMaxWidth()) {
-                Text("Grant location")
+                Text("Use my location")
             }
         }
     }

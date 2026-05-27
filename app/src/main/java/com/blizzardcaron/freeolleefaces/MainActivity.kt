@@ -137,7 +137,10 @@ private fun AppRoot(modifier: Modifier = Modifier) {
     fun refreshTemp(force: Boolean, push: Boolean) {
         val c = validCoords()
         if (c == null) {
-            update { it.copy(tempPreview = PreviewState.Error("Enter coordinates to see temperature")) }
+            update { it.copy(
+                tempPreview = PreviewState.Error("Enter coordinates to see temperature"),
+                showLocationFallback = true,
+            ) }
             return
         }
         val (lat, lng) = c
@@ -180,7 +183,10 @@ private fun AppRoot(modifier: Modifier = Modifier) {
     fun refreshSun(push: Boolean) {
         val c = validCoords()
         if (c == null) {
-            update { it.copy(sunPreview = PreviewState.Error("Enter coordinates to see sun event")) }
+            update { it.copy(
+                sunPreview = PreviewState.Error("Enter coordinates to see sun event"),
+                showLocationFallback = true,
+            ) }
             return
         }
         val (lat, lng) = c
@@ -341,8 +347,9 @@ private fun AppRoot(modifier: Modifier = Modifier) {
             AutoUpdateScheduler.reschedule(context)
         },
         onCustomChange = { text ->
-            update { it.copy(custom = text) }
-            prefs.customText = text
+            val capped = text.take(6)
+            update { it.copy(custom = capped) }
+            prefs.customText = capped
         },
         onSendCustom = { sendCustom(state.custom) },
         onLatChange = { onCoordEdit(it, state.lng) },
@@ -402,7 +409,10 @@ private fun AppRoot(modifier: Modifier = Modifier) {
                     status = "Selected ${device.name ?: device.address}.",
                 ) }
                 showPicker = false
-                refreshActive(force = false, push = true)
+                when (state.activeFace) {
+                    ActiveFace.CUSTOM -> prefs.customText.takeIf { it.isNotEmpty() }?.let { sendCustom(it) }
+                    else -> refreshActive(force = false, push = true)
+                }
             },
             onDismiss = { showPicker = false },
         )
