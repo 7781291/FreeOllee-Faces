@@ -112,6 +112,18 @@ private fun AppRoot(modifier: Modifier = Modifier) {
         scope.launch { sendAndReport(ble, addr, payload, ::update) }
     }
 
+    fun sendCustom(text: String) {
+        val addr = prefs.watchAddress ?: return
+        prefs.customText = text
+        scope.launch {
+            val result = sendAndReport(ble, addr, DisplayFormatter.custom(text), ::update)
+            if (result.isSuccess) {
+                prefs.customSentMs = System.currentTimeMillis()
+                update { it.copy(customSent = "Sent '$text' at ${clockTime(prefs.customSentMs!!)}") }
+            }
+        }
+    }
+
     fun interval(): Int = state.tempIntervalText.toIntOrNull()?.coerceAtLeast(15) ?: 60
 
     fun tempNextText(): String {
@@ -205,12 +217,9 @@ private fun AppRoot(modifier: Modifier = Modifier) {
             ActiveFace.TEMPERATURE -> refreshTemp(force = false, push = true)
             ActiveFace.SUN -> refreshSun(push = true)
             ActiveFace.CUSTOM -> {
+                update { it.copy(showLocationFallback = false) }
                 val text = prefs.customText
-                if (text.isNotEmpty()) {
-                    prefs.customSentMs = System.currentTimeMillis()
-                    update { it.copy(customSent = "Sent '$text' at ${clockTime(prefs.customSentMs!!)}") }
-                    pushIfWatch(DisplayFormatter.custom(text))
-                }
+                if (text.isNotEmpty()) sendCustom(text)
             }
         }
     }
@@ -335,16 +344,7 @@ private fun AppRoot(modifier: Modifier = Modifier) {
             update { it.copy(custom = text) }
             prefs.customText = text
         },
-        onSendCustom = {
-            val addr = prefs.watchAddress ?: return@HomeCallbacks
-            val text = state.custom
-            prefs.customText = text
-            scope.launch {
-                sendAndReport(ble, addr, DisplayFormatter.custom(text), ::update)
-                prefs.customSentMs = System.currentTimeMillis()
-                update { it.copy(customSent = "Sent '$text' at ${clockTime(prefs.customSentMs!!)}") }
-            }
-        },
+        onSendCustom = { sendCustom(state.custom) },
         onLatChange = { onCoordEdit(it, state.lng) },
         onLngChange = { onCoordEdit(state.lat, it) },
         onUseMyLocation = {
@@ -414,9 +414,9 @@ private suspend fun sendAndReport(
     address: String,
     value: String,
     update: ((HomeState) -> HomeState) -> Unit,
-) {
+): Result<Unit> {
     update { it.copy(status = "Sending '$value'…", sending = true) }
-    ble.send(address, value)
+    return ble.send(address, value)
         .onSuccess { update { it.copy(sending = false, status = "Sent '$value'.") } }
         .onFailure { err -> update { it.copy(sending = false, status = "Send failed: ${err.message}") } }
 }
