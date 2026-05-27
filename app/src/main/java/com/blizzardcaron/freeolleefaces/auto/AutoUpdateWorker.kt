@@ -27,23 +27,23 @@ class AutoUpdateWorker(
         val ctx = applicationContext
         val prefs = Prefs(ctx)
 
-        val source = prefs.autoSource
+        val face = prefs.activeFace
         val lat = prefs.lastLat
         val lng = prefs.lastLng
         val address = prefs.watchAddress
 
-        // OFF, or not enough config to send: stop the chain. Re-arm triggers restart it.
-        if (source == AutoSource.OFF) return Result.success()
+        // CUSTOM has no schedule; stop the chain. Enough config required to send.
+        if (face == ActiveFace.CUSTOM) return Result.success()
         if (lat == null || lng == null || address == null) {
             prefs.recordAutoSend("Skipped: set location/watch in app")
             return Result.success()
         }
 
         val now = ZonedDateTime.now(ZoneId.systemDefault())
-        return when (source) {
-            AutoSource.TEMPERATURE -> runTemperature(ctx, prefs, lat, lng, address, now)
-            AutoSource.SUN -> runSun(ctx, prefs, lat, lng, address, now)
-            AutoSource.OFF -> Result.success()
+        return when (face) {
+            ActiveFace.TEMPERATURE -> runTemperature(ctx, prefs, lat, lng, address, now)
+            ActiveFace.SUN -> runSun(ctx, prefs, lat, lng, address, now)
+            ActiveFace.CUSTOM -> Result.success()
         }
     }
 
@@ -66,6 +66,7 @@ class AutoUpdateWorker(
         if (!inSleep) {
             OpenMeteoClient.currentTemp(lat, lng, prefs.tempUnit, RetryPolicy.Background)
                 .onSuccess { temp ->
+                    prefs.recordTempFetch(temp, prefs.tempUnit)
                     val payload = DisplayFormatter.temperature(temp, prefs.tempUnit)
                     OlleeBleClient(ctx).send(address, payload)
                         .onSuccess { prefs.recordAutoSend("Sent '$payload'") }

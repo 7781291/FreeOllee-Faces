@@ -27,10 +27,10 @@ object AutoUpdateScheduler {
 
         ensureWatchdog(wm)
 
-        when (prefs.autoSource) {
-            AutoSource.OFF -> wm.cancelUniqueWork(WORK_NAME)
+        when (prefs.activeFace) {
+            ActiveFace.CUSTOM -> wm.cancelUniqueWork(WORK_NAME)
 
-            AutoSource.TEMPERATURE -> {
+            ActiveFace.TEMPERATURE -> {
                 val now = ZonedDateTime.now(ZoneId.systemDefault())
                 val sleep = if (prefs.sleepEnabled) {
                     SleepWindow(prefs.sleepStartMin, prefs.sleepEndMin)
@@ -50,7 +50,7 @@ object AutoUpdateScheduler {
                 enqueueNext(ctx, delayMs, sunAttempt = 0)
             }
 
-            AutoSource.SUN -> enqueueNext(ctx, 0L, sunAttempt = 0)
+            ActiveFace.SUN -> enqueueNext(ctx, 0L, sunAttempt = 0)
         }
     }
 
