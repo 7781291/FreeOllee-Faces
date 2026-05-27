@@ -5,7 +5,6 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 import com.blizzardcaron.freeolleefaces.auto.ActiveFace
-import com.blizzardcaron.freeolleefaces.auto.AutoSource
 
 class Prefs(context: Context) {
 
@@ -29,12 +28,6 @@ class Prefs(context: Context) {
             ?.let { runCatching { TempUnit.valueOf(it) }.getOrNull() }
             ?: TempUnit.FAHRENHEIT
         set(value) = sp.edit { putString(KEY_TEMP_UNIT, value.name) }
-
-    var autoSource: AutoSource
-        get() = sp.getString(KEY_AUTO_SOURCE, null)
-            ?.let { runCatching { AutoSource.valueOf(it) }.getOrNull() }
-            ?: AutoSource.OFF
-        set(value) = sp.edit { putString(KEY_AUTO_SOURCE, value.name) }
 
     var activeFace: ActiveFace
         get() {
