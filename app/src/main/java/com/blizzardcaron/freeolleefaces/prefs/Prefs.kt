@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.blizzardcaron.freeolleefaces.format.TempUnit
+import com.blizzardcaron.freeolleefaces.auto.ActiveFace
 import com.blizzardcaron.freeolleefaces.auto.AutoSource
 
 class Prefs(context: Context) {
@@ -34,6 +35,45 @@ class Prefs(context: Context) {
             ?.let { runCatching { AutoSource.valueOf(it) }.getOrNull() }
             ?: AutoSource.OFF
         set(value) = sp.edit { putString(KEY_AUTO_SOURCE, value.name) }
+
+    var activeFace: ActiveFace
+        get() {
+            sp.getString(KEY_ACTIVE_FACE, null)?.let { stored ->
+                runCatching { ActiveFace.valueOf(stored) }.getOrNull()?.let { return it }
+            }
+            val migrated = ActiveFace.fromLegacyAutoSource(sp.getString(KEY_AUTO_SOURCE, null))
+            sp.edit { putString(KEY_ACTIVE_FACE, migrated.name) }
+            return migrated
+        }
+        set(value) = sp.edit { putString(KEY_ACTIVE_FACE, value.name) }
+
+    var tempValue: Double?
+        get() = if (sp.contains(KEY_TEMP_VALUE)) sp.getFloat(KEY_TEMP_VALUE, 0f).toDouble() else null
+        set(value) = sp.edit { if (value == null) remove(KEY_TEMP_VALUE) else putFloat(KEY_TEMP_VALUE, value.toFloat()) }
+
+    var tempCacheUnit: TempUnit?
+        get() = sp.getString(KEY_TEMP_CACHE_UNIT, null)
+            ?.let { runCatching { TempUnit.valueOf(it) }.getOrNull() }
+        set(value) = sp.edit { if (value == null) remove(KEY_TEMP_CACHE_UNIT) else putString(KEY_TEMP_CACHE_UNIT, value.name) }
+
+    var tempFetchedMs: Long?
+        get() = if (sp.contains(KEY_TEMP_FETCHED_MS)) sp.getLong(KEY_TEMP_FETCHED_MS, 0L) else null
+        set(value) = sp.edit { if (value == null) remove(KEY_TEMP_FETCHED_MS) else putLong(KEY_TEMP_FETCHED_MS, value) }
+
+    var customText: String
+        get() = sp.getString(KEY_CUSTOM_TEXT, "") ?: ""
+        set(value) = sp.edit { putString(KEY_CUSTOM_TEXT, value) }
+
+    var customSentMs: Long?
+        get() = if (sp.contains(KEY_CUSTOM_SENT_MS)) sp.getLong(KEY_CUSTOM_SENT_MS, 0L) else null
+        set(value) = sp.edit { if (value == null) remove(KEY_CUSTOM_SENT_MS) else putLong(KEY_CUSTOM_SENT_MS, value) }
+
+    /** Stamp the cached temperature value, the unit it was fetched in, and the fetch time. */
+    fun recordTempFetch(value: Double, unit: TempUnit) {
+        tempValue = value
+        tempCacheUnit = unit
+        tempFetchedMs = System.currentTimeMillis()
+    }
 
     var tempIntervalMinutes: Int
         get() = sp.getInt(KEY_TEMP_INTERVAL, 60)
@@ -72,6 +112,12 @@ class Prefs(context: Context) {
         private const val KEY_WATCH = "watch_address"
         private const val KEY_TEMP_UNIT = "temp_unit"
         private const val KEY_AUTO_SOURCE = "auto_source"
+        private const val KEY_ACTIVE_FACE = "active_face"
+        private const val KEY_TEMP_VALUE = "temp_value"
+        private const val KEY_TEMP_CACHE_UNIT = "temp_cache_unit"
+        private const val KEY_TEMP_FETCHED_MS = "temp_fetched_ms"
+        private const val KEY_CUSTOM_TEXT = "custom_text"
+        private const val KEY_CUSTOM_SENT_MS = "custom_sent_ms"
         private const val KEY_TEMP_INTERVAL = "temp_interval_min"
         private const val KEY_SLEEP_ENABLED = "sleep_enabled"
         private const val KEY_SLEEP_START = "sleep_start_min"
