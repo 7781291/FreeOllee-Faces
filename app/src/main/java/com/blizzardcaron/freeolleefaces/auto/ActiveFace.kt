@@ -4,6 +4,8 @@ package com.blizzardcaron.freeolleefaces.auto
 enum class ActiveFace {
     TEMPERATURE,
     SUN,
+
+    /** Not reachable via [fromLegacyAutoSource] — the legacy AutoSource enum had no CUSTOM value. */
     CUSTOM;
 
     companion object {
