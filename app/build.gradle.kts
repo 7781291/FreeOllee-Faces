@@ -30,6 +30,19 @@ android {
         versionName = appVersionName
     }
 
+    signingConfigs {
+        create("release") {
+            // Populated only in CI (see .github/workflows/release.yml). Absent locally,
+            // which is fine: the release buildType only attaches this config when present.
+            System.getenv("KEYSTORE_FILE")?.let { ksPath ->
+                storeFile = file(ksPath)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -37,6 +50,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            if (System.getenv("KEYSTORE_FILE") != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
     compileOptions {

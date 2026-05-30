@@ -16,3 +16,10 @@ local.properties
 
 # Built APKs are published as GitHub Release assets, never committed.
 *.apk
+
+# Python venv for the BLE tools in tools/
+.venv/
+
+# Signing keystores are NEVER committed; CI gets them from GitHub Secrets.
+*.jks
+*.keystore
