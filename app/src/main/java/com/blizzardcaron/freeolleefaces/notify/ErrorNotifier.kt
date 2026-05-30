@@ -18,12 +18,18 @@ object ErrorNotifier {
     private const val CHANNEL_ID = "background_problems"
     private const val NOTIFICATION_ID = 1001
 
-    fun notify(context: Context, kind: FailureKind) {
+    /**
+     * Posts (or replaces) the single error notification. Returns `true` if it was actually shown,
+     * `false` if suppressed because POST_NOTIFICATIONS is not granted — callers must not record the
+     * notification as shown unless this returned `true`, or a later grant would never surface an
+     * ongoing failure.
+     */
+    fun notify(context: Context, kind: FailureKind): Boolean {
         val ctx = context.applicationContext
         ensureChannel(ctx)
         if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS)
             != PackageManager.PERMISSION_GRANTED
-        ) return
+        ) return false
 
         val intent = Intent(ctx, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -39,6 +45,7 @@ object ErrorNotifier {
             .setAutoCancel(true)
             .build()
         NotificationManagerCompat.from(ctx).notify(NOTIFICATION_ID, notification)
+        return true
     }
 
     fun clear(context: Context) {

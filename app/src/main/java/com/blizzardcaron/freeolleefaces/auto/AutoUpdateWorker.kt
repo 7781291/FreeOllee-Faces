@@ -149,8 +149,11 @@ class AutoUpdateWorker(
     private fun applyHealth(ctx: Context, prefs: Prefs, kind: FailureKind?, inSleep: Boolean) {
         when (val action = NotifyDecision.decide(kind, prefs.lastNotifiedKind, inSleep)) {
             is NotifyAction.Notify -> {
-                ErrorNotifier.notify(ctx, action.kind)
-                prefs.lastNotifiedKind = action.kind
+                // Only record it as shown if it actually posted; otherwise (permission not yet
+                // granted) leave the state untouched so a later grant still surfaces the failure.
+                if (ErrorNotifier.notify(ctx, action.kind)) {
+                    prefs.lastNotifiedKind = action.kind
+                }
             }
             NotifyAction.Clear -> {
                 ErrorNotifier.clear(ctx)
