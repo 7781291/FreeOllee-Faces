@@ -53,6 +53,10 @@ class Prefs(context: Context) {
         get() = if (sp.contains(KEY_TEMP_FETCHED_MS)) sp.getLong(KEY_TEMP_FETCHED_MS, 0L) else null
         set(value) = sp.edit { if (value == null) remove(KEY_TEMP_FETCHED_MS) else putLong(KEY_TEMP_FETCHED_MS, value) }
 
+    var lastLocationFetchedMs: Long?
+        get() = if (sp.contains(KEY_LOCATION_FETCHED_MS)) sp.getLong(KEY_LOCATION_FETCHED_MS, 0L) else null
+        set(value) = sp.edit { if (value == null) remove(KEY_LOCATION_FETCHED_MS) else putLong(KEY_LOCATION_FETCHED_MS, value) }
+
     var customText: String
         get() = sp.getString(KEY_CUSTOM_TEXT, "") ?: ""
         set(value) = sp.edit { putString(KEY_CUSTOM_TEXT, value) }
@@ -109,6 +113,7 @@ class Prefs(context: Context) {
         private const val KEY_TEMP_VALUE = "temp_value"
         private const val KEY_TEMP_CACHE_UNIT = "temp_cache_unit"
         private const val KEY_TEMP_FETCHED_MS = "temp_fetched_ms"
+        private const val KEY_LOCATION_FETCHED_MS = "location_fetched_ms"
         private const val KEY_CUSTOM_TEXT = "custom_text"
         private const val KEY_CUSTOM_SENT_MS = "custom_sent_ms"
         private const val KEY_TEMP_INTERVAL = "temp_interval_min"
