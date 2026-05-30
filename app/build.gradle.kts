@@ -3,6 +3,21 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+// Single source of truth for the app version: the root-level VERSION file.
+// versionCode is derived as MAJOR*10000 + MINOR*100 + PATCH (MINOR/PATCH must stay <= 99).
+val appVersionName: String = rootProject.file("VERSION").readText().trim()
+val appVersionCode: Int = run {
+    val parts = appVersionName.split(".")
+    require(parts.size == 3 && parts.all { it.toIntOrNull() != null }) {
+        "VERSION must be MAJOR.MINOR.PATCH (got '$appVersionName')"
+    }
+    val (major, minor, patch) = parts.map { it.toInt() }
+    require(minor <= 99 && patch <= 99) {
+        "VERSION minor/patch must each be <= 99 for the versionCode formula (got '$appVersionName')"
+    }
+    major * 10000 + minor * 100 + patch
+}
+
 android {
     namespace = "com.blizzardcaron.freeolleefaces"
     compileSdk = 36
@@ -11,8 +26,8 @@ android {
         applicationId = "com.blizzardcaron.freeolleefaces"
         minSdk = 31
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = appVersionCode
+        versionName = appVersionName
     }
 
     buildTypes {
