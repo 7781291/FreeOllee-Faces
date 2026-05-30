@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 import com.blizzardcaron.freeolleefaces.auto.ActiveFace
+import com.blizzardcaron.freeolleefaces.notify.FailureKind
 
 class Prefs(context: Context) {
 
@@ -53,6 +54,10 @@ class Prefs(context: Context) {
         get() = if (sp.contains(KEY_TEMP_FETCHED_MS)) sp.getLong(KEY_TEMP_FETCHED_MS, 0L) else null
         set(value) = sp.edit { if (value == null) remove(KEY_TEMP_FETCHED_MS) else putLong(KEY_TEMP_FETCHED_MS, value) }
 
+    var lastLocationFetchedMs: Long?
+        get() = if (sp.contains(KEY_LOCATION_FETCHED_MS)) sp.getLong(KEY_LOCATION_FETCHED_MS, 0L) else null
+        set(value) = sp.edit { if (value == null) remove(KEY_LOCATION_FETCHED_MS) else putLong(KEY_LOCATION_FETCHED_MS, value) }
+
     var customText: String
         get() = sp.getString(KEY_CUSTOM_TEXT, "") ?: ""
         set(value) = sp.edit { putString(KEY_CUSTOM_TEXT, value) }
@@ -92,6 +97,11 @@ class Prefs(context: Context) {
         get() = sp.getString(KEY_LAST_SEND_SUMMARY, null)
         set(value) = sp.edit { if (value == null) remove(KEY_LAST_SEND_SUMMARY) else putString(KEY_LAST_SEND_SUMMARY, value) }
 
+    var lastNotifiedKind: FailureKind?
+        get() = sp.getString(KEY_LAST_NOTIFIED_KIND, null)
+            ?.let { runCatching { FailureKind.valueOf(it) }.getOrNull() }
+        set(value) = sp.edit { if (value == null) remove(KEY_LAST_NOTIFIED_KIND) else putString(KEY_LAST_NOTIFIED_KIND, value.name) }
+
     /** Convenience: stamp the time and summary of the most recent background send attempt. */
     fun recordAutoSend(summary: String) {
         lastAutoSendMs = System.currentTimeMillis()
@@ -109,6 +119,7 @@ class Prefs(context: Context) {
         private const val KEY_TEMP_VALUE = "temp_value"
         private const val KEY_TEMP_CACHE_UNIT = "temp_cache_unit"
         private const val KEY_TEMP_FETCHED_MS = "temp_fetched_ms"
+        private const val KEY_LOCATION_FETCHED_MS = "location_fetched_ms"
         private const val KEY_CUSTOM_TEXT = "custom_text"
         private const val KEY_CUSTOM_SENT_MS = "custom_sent_ms"
         private const val KEY_TEMP_INTERVAL = "temp_interval_min"
@@ -117,5 +128,6 @@ class Prefs(context: Context) {
         private const val KEY_SLEEP_END = "sleep_end_min"
         private const val KEY_LAST_SEND_MS = "last_auto_send_ms"
         private const val KEY_LAST_SEND_SUMMARY = "last_auto_send_summary"
+        private const val KEY_LAST_NOTIFIED_KIND = "last_notified_kind"
     }
 }

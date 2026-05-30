@@ -36,8 +36,11 @@ data class HomeState(
     val activeFace: ActiveFace = ActiveFace.TEMPERATURE,
     val watchLabel: String = "Watch: none selected",
     val watchSelected: Boolean = false,
-    val status: String = "Ready.",
     val sending: Boolean = false,
+
+    val locationLabel: String = "Location: not set",
+    val locationFreshness: String? = null,
+    val locating: Boolean = false,
 
     val tempUnit: TempUnit = TempUnit.FAHRENHEIT,
     val tempPreview: PreviewState = PreviewState.WaitingForCoords,
@@ -106,6 +109,21 @@ fun HomeScreen(
             }
         }
 
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(
+                if (state.locating) "Locating…"
+                else state.locationLabel + (state.locationFreshness?.let { " · $it" } ?: ""),
+                style = MaterialTheme.typography.bodySmall,
+            )
+            TextButton(onClick = callbacks.onUseMyLocation) {
+                Text(if (state.locationFreshness == null) "set" else "refresh")
+            }
+        }
+
         HorizontalDivider()
 
         Column(
@@ -119,7 +137,6 @@ fun HomeScreen(
             }
         }
 
-        Text(state.status, style = MaterialTheme.typography.bodySmall)
     }
 }
 
