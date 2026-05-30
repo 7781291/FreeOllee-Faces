@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -346,6 +347,20 @@ private fun AppRoot(
     ) { granted ->
         if (granted) showPicker = true
         else showSnackbar("Bluetooth permission denied — can't list paired watches.")
+    }
+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { /* granted or not — errors still record in-app either way */ }
+
+    LaunchedEffect(Unit) {
+        val backgroundActive = prefs.activeFace != ActiveFace.CUSTOM && prefs.watchAddress != null
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && backgroundActive &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
     }
 
     val locationPermissionLauncher = rememberLauncherForActivityResult(
