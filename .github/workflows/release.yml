@@ -2,39 +2,106 @@ name: Release
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [main]
 
 permissions:
   contents: write
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out
+      - name: Check out (full history + tags)
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Skip if merged PR opted out with [skip release]
+        id: skipcheck
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          PR_TITLE="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/pulls" \
+            --jq '.[0].title // ""' 2>/dev/null || true)"
+          echo "Associated PR title: '${PR_TITLE}'"
+          case "$PR_TITLE" in
+            *"[skip release]"*)
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              echo "PR opted out of release; nothing to do."
+              ;;
+            *)
+              echo "skip=false" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
+      - name: Read and guard VERSION
+        if: steps.skipcheck.outputs.skip == 'false'
+        id: version
+        run: |
+          set -euo pipefail
+          if [ ! -f VERSION ]; then
+            echo "::error::VERSION file is missing."
+            exit 1
+          fi
+          VERSION="$(tr -d '[:space:]' < VERSION)"
+          if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::VERSION '$VERSION' is not MAJOR.MINOR.PATCH semver."
+            exit 1
+          fi
+          if git rev-parse -q --verify "refs/tags/v${VERSION}" >/dev/null; then
+            echo "::error::Tag v${VERSION} already exists — VERSION was not bumped for this merge."
+            exit 1
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Releasing v${VERSION}."
 
       - name: Set up JDK 17
+        if: steps.skipcheck.outputs.skip == 'false'
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
       - name: Set up Android SDK
+        if: steps.skipcheck.outputs.skip == 'false'
         uses: android-actions/setup-android@v3
 
-      - name: Build debug APK
-        run: ./gradlew :app:assembleDebug
+      - name: Decode release keystore
+        if: steps.skipcheck.outputs.skip == 'false'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d > "${RUNNER_TEMP}/release.jks"
+
+      - name: Build signed release APK
+        if: steps.skipcheck.outputs.skip == 'false'
+        env:
+          KEYSTORE_FILE: ${{ runner.temp }}/release.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew :app:assembleRelease
 
       - name: Stage APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk "freeollee-faces-debug-${GITHUB_REF_NAME}.apk"
+        if: steps.skipcheck.outputs.skip == 'false'
+        run: |
+          set -euo pipefail
+          cp app/build/outputs/apk/release/app-release.apk \
+            "freeollee-faces-${{ steps.version.outputs.version }}.apk"
 
       - name: Publish release
+        if: steps.skipcheck.outputs.skip == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
         run: >
-          gh release create "$GITHUB_REF_NAME"
-          "freeollee-faces-debug-${GITHUB_REF_NAME}.apk"
-          --title "$GITHUB_REF_NAME"
+          gh release create "v${{ steps.version.outputs.version }}"
+          "freeollee-faces-${{ steps.version.outputs.version }}.apk"
+          --title "v${{ steps.version.outputs.version }}"
+          --target "${GITHUB_SHA}"
           --generate-notes
