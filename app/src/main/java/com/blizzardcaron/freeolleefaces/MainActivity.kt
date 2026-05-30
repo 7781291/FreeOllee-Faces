@@ -30,6 +30,7 @@ import com.blizzardcaron.freeolleefaces.format.TempUnit
 import com.blizzardcaron.freeolleefaces.format.WeatherErrorCopy
 import com.blizzardcaron.freeolleefaces.location.LocationSource
 import com.blizzardcaron.freeolleefaces.location.freshnessLabel
+import com.blizzardcaron.freeolleefaces.location.isLocationStale
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
 import com.blizzardcaron.freeolleefaces.sun.SunCalc
 import com.blizzardcaron.freeolleefaces.ui.BondedDevicesDialog
@@ -253,6 +254,11 @@ private fun AppRoot(
         val latD = lat.toDoubleOrNull(); val lngD = lng.toDoubleOrNull()
         if (latD != null && lngD != null && latD in -90.0..90.0 && lngD in -180.0..180.0) {
             prefs.lastLat = latD; prefs.lastLng = lngD
+            prefs.lastLocationFetchedMs = System.currentTimeMillis()
+            update { it.copy(
+                locationLabel = locLabel(latD, lngD),
+                locationFreshness = "just now",
+            ) }
         }
         debounceJob?.cancel()
         debounceJob = scope.launch {
@@ -267,32 +273,70 @@ private fun AppRoot(
                 PackageManager.PERMISSION_GRANTED ||
                 ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) ==
                 PackageManager.PERMISSION_GRANTED
-        if (hasAnyLocation) {
-            update { it.copy(locating = true) }
-            locationSource.fetch()
-                .onSuccess { coords ->
-                    prefs.lastLat = coords.lat; prefs.lastLng = coords.lng
-                    prefs.lastLocationFetchedMs = System.currentTimeMillis()
-                    update { it.copy(
-                        lat = coords.lat.toString(),
-                        lng = coords.lng.toString(),
-                        showLocationFallback = false,
-                        locating = false,
-                        locationLabel = locLabel(coords.lat, coords.lng),
-                        locationFreshness = "just now",
-                    ) }
-                }
-                .onFailure {
-                    update { it.copy(
-                        showLocationFallback = state.activeFace != ActiveFace.CUSTOM,
-                        locating = false,
-                    ) }
-                }
-        } else {
-            update { it.copy(
-                showLocationFallback = state.activeFace != ActiveFace.CUSTOM,
-            ) }
+        val haveCoords = prefs.lastLat != null && prefs.lastLng != null
+        val stale = isLocationStale(prefs.lastLocationFetchedMs, System.currentTimeMillis())
+
+        when {
+            // Fresh saved coords: use them silently, no fix.
+            haveCoords && !stale -> { /* render with saved coords */ }
+
+            // Stale saved coords + permission: render saved, silently refresh.
+            haveCoords && hasAnyLocation -> {
+                update { it.copy(locating = true) }
+                locationSource.fetch()
+                    .onSuccess { coords ->
+                        prefs.lastLat = coords.lat; prefs.lastLng = coords.lng
+                        prefs.lastLocationFetchedMs = System.currentTimeMillis()
+                        update { it.copy(
+                            lat = coords.lat.toString(),
+                            lng = coords.lng.toString(),
+                            showLocationFallback = false,
+                            locating = false,
+                            locationLabel = locLabel(coords.lat, coords.lng),
+                            locationFreshness = "just now",
+                        ) }
+                    }
+                    .onFailure {
+                        update { it.copy(
+                            locating = false,
+                            locationFreshness = (freshnessLabel(
+                                prefs.lastLocationFetchedMs, System.currentTimeMillis(),
+                            ) ?: "stale") + " · refresh failed",
+                        ) }
+                        showSnackbar("Couldn't refresh location — using saved coordinates")
+                    }
+            }
+
+            // No saved coords, permission held: first-run fix.
+            !haveCoords && hasAnyLocation -> {
+                update { it.copy(locating = true) }
+                locationSource.fetch()
+                    .onSuccess { coords ->
+                        prefs.lastLat = coords.lat; prefs.lastLng = coords.lng
+                        prefs.lastLocationFetchedMs = System.currentTimeMillis()
+                        update { it.copy(
+                            lat = coords.lat.toString(),
+                            lng = coords.lng.toString(),
+                            showLocationFallback = false,
+                            locating = false,
+                            locationLabel = locLabel(coords.lat, coords.lng),
+                            locationFreshness = "just now",
+                        ) }
+                    }
+                    .onFailure {
+                        update { it.copy(
+                            locating = false,
+                            showLocationFallback = state.activeFace != ActiveFace.CUSTOM,
+                        ) }
+                    }
+            }
+
+            // No permission: manual entry / grant fallback (Custom needs no coords).
+            else -> {
+                update { it.copy(showLocationFallback = state.activeFace != ActiveFace.CUSTOM) }
+            }
         }
+
         refreshActive(force = false, push = false)
         AutoUpdateScheduler.reschedule(context)
     }
