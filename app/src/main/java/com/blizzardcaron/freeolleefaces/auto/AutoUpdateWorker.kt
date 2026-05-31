@@ -5,6 +5,10 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.blizzardcaron.freeolleefaces.ble.OlleeBleClient
 import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
+import com.blizzardcaron.freeolleefaces.notify.ErrorNotifier
+import com.blizzardcaron.freeolleefaces.notify.FailureKind
+import com.blizzardcaron.freeolleefaces.notify.NotifyAction
+import com.blizzardcaron.freeolleefaces.notify.NotifyDecision
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
 import com.blizzardcaron.freeolleefaces.sun.SunCalc
 import com.blizzardcaron.freeolleefaces.weather.OpenMeteoClient
@@ -32,10 +36,14 @@ class AutoUpdateWorker(
         val lng = prefs.lastLng
         val address = prefs.watchAddress
 
-        // CUSTOM has no schedule; stop the chain. Enough config required to send.
-        if (face == ActiveFace.CUSTOM) return Result.success()
+        // CUSTOM has no schedule; clear any stale error notification and stop the chain.
+        if (face == ActiveFace.CUSTOM) {
+            applyHealth(ctx, prefs, null, inSleep = false)
+            return Result.success()
+        }
         if (lat == null || lng == null || address == null) {
             prefs.recordAutoSend("Skipped: set location/watch in app")
+            applyHealth(ctx, prefs, FailureKind.SETUP_INCOMPLETE, inSleepNow(prefs))
             return Result.success()
         }
 
@@ -69,12 +77,19 @@ class AutoUpdateWorker(
                     prefs.recordTempFetch(temp, prefs.tempUnit)
                     val payload = DisplayFormatter.temperature(temp, prefs.tempUnit)
                     OlleeBleClient(ctx).send(address, payload)
-                        .onSuccess { prefs.recordAutoSend("Sent '$payload'") }
-                        .onFailure { prefs.recordAutoSend("Skipped: watch unreachable") }
+                        .onSuccess {
+                            prefs.recordAutoSend("Sent '$payload'")
+                            applyHealth(ctx, prefs, null, inSleep)
+                        }
+                        .onFailure {
+                            prefs.recordAutoSend("Skipped: watch unreachable")
+                            applyHealth(ctx, prefs, FailureKind.WATCH_UNREACHABLE, inSleep)
+                        }
                 }
                 .onFailure { err ->
                     val suffix = (err as? WeatherFetchError)?.statusCode?.let { " (HTTP $it)" } ?: ""
                     prefs.recordAutoSend("Skipped: weather fetch failed$suffix")
+                    applyHealth(ctx, prefs, FailureKind.WEATHER_FETCH_FAILED, inSleep)
                 }
         } else {
             prefs.recordAutoSend("Asleep (power saving)")
@@ -94,6 +109,7 @@ class AutoUpdateWorker(
         address: String,
         now: ZonedDateTime,
     ): Result {
+        val inSleep = inSleepNow(prefs)
         val event = SunCalc.nextEvent(now.toInstant(), lat, lng, ZoneId.systemDefault())
         if (event == null) {
             prefs.recordAutoSend("Skipped: no sun event (polar)")
@@ -106,6 +122,7 @@ class AutoUpdateWorker(
 
         if (sendResult.isSuccess) {
             prefs.recordAutoSend("Sent '$payload'")
+            applyHealth(ctx, prefs, null, inSleep)
             scheduleAfterEvent(ctx, now, event.time)
         } else {
             val attempt = inputData.getInt(KEY_SUN_ATTEMPT, 0)
@@ -116,6 +133,7 @@ class AutoUpdateWorker(
                 )
             } else {
                 prefs.recordAutoSend("Skipped: watch unreachable")
+                applyHealth(ctx, prefs, FailureKind.SUN_UNREACHABLE, inSleep)
                 scheduleAfterEvent(ctx, now, event.time)
             }
         }
@@ -126,6 +144,30 @@ class AutoUpdateWorker(
         val wake = AutoUpdateSchedule.nextSunWake(eventTime)
         val delayMs = Duration.between(now, wake).toMillis().coerceAtLeast(0)
         AutoUpdateScheduler.enqueueNext(ctx, delayMs, sunAttempt = 0)
+    }
+
+    private fun applyHealth(ctx: Context, prefs: Prefs, kind: FailureKind?, inSleep: Boolean) {
+        when (val action = NotifyDecision.decide(kind, prefs.lastNotifiedKind, inSleep)) {
+            is NotifyAction.Notify -> {
+                // Only record it as shown if it actually posted; otherwise (permission not yet
+                // granted) leave the state untouched so a later grant still surfaces the failure.
+                if (ErrorNotifier.notify(ctx, action.kind)) {
+                    prefs.lastNotifiedKind = action.kind
+                }
+            }
+            NotifyAction.Clear -> {
+                ErrorNotifier.clear(ctx)
+                prefs.lastNotifiedKind = null
+            }
+            NotifyAction.Nothing -> {}
+        }
+    }
+
+    private fun inSleepNow(prefs: Prefs): Boolean {
+        if (!prefs.sleepEnabled) return false
+        val now = ZonedDateTime.now(ZoneId.systemDefault())
+        val m = now.hour * 60 + now.minute
+        return AutoUpdateSchedule.isInSleepWindow(m, prefs.sleepStartMin, prefs.sleepEndMin)
     }
 
     companion object {

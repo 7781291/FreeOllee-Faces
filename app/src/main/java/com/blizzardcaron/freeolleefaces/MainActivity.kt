@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -13,6 +14,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -27,6 +30,8 @@ import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 import com.blizzardcaron.freeolleefaces.format.WeatherErrorCopy
 import com.blizzardcaron.freeolleefaces.location.LocationSource
+import com.blizzardcaron.freeolleefaces.location.freshnessLabel
+import com.blizzardcaron.freeolleefaces.location.isLocationStale
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
 import com.blizzardcaron.freeolleefaces.sun.SunCalc
 import com.blizzardcaron.freeolleefaces.ui.BondedDevicesDialog
@@ -53,8 +58,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             FreeOlleeFacesTheme {
-                Scaffold { inner ->
-                    AppRoot(Modifier.padding(inner))
+                val snackbarHostState = remember { SnackbarHostState() }
+                Scaffold(
+                    snackbarHost = { SnackbarHost(snackbarHostState) },
+                ) { inner ->
+                    AppRoot(snackbarHostState, Modifier.padding(inner))
                 }
             }
         }
@@ -66,13 +74,23 @@ private val CLOCK: DateTimeFormatter = DateTimeFormatter.ofPattern("h:mm a")
 private fun clockTime(ms: Long): String =
     Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefault()).format(CLOCK)
 
+private fun locLabel(lat: Double?, lng: Double?): String =
+    if (lat != null && lng != null) "Location: %.4f, %.4f".format(lat, lng) else "Location: not set"
+
 @Composable
-private fun AppRoot(modifier: Modifier = Modifier) {
+private fun AppRoot(
+    snackbarHostState: SnackbarHostState,
+    modifier: Modifier = Modifier,
+) {
     val context = LocalContext.current
     val prefs = remember { Prefs(context) }
     val ble = remember { OlleeBleClient(context) }
     val locationSource = remember { LocationSource(context) }
     val scope = rememberCoroutineScope()
+
+    fun showSnackbar(message: String) {
+        scope.launch { snackbarHostState.showSnackbar(message) }
+    }
 
     var screen by remember { mutableStateOf<Screen>(Screen.Home) }
     var showPicker by remember { mutableStateOf(false) }
@@ -94,6 +112,8 @@ private fun AppRoot(modifier: Modifier = Modifier) {
                 sleepEndMin = prefs.sleepEndMin,
                 custom = prefs.customText,
                 customSent = prefs.customSentMs?.let { "Sent '${prefs.customText}' at ${clockTime(it)}" },
+                locationLabel = locLabel(prefs.lastLat, prefs.lastLng),
+                locationFreshness = freshnessLabel(prefs.lastLocationFetchedMs, System.currentTimeMillis()),
             )
         )
     }
@@ -109,14 +129,14 @@ private fun AppRoot(modifier: Modifier = Modifier) {
 
     fun pushIfWatch(payload: String) {
         val addr = prefs.watchAddress ?: return
-        scope.launch { sendAndReport(ble, addr, payload, ::update) }
+        scope.launch { sendAndReport(ble, addr, payload, ::update, ::showSnackbar) }
     }
 
     fun sendCustom(text: String) {
         val addr = prefs.watchAddress ?: return
         prefs.customText = text
         scope.launch {
-            val result = sendAndReport(ble, addr, DisplayFormatter.custom(text), ::update)
+            val result = sendAndReport(ble, addr, DisplayFormatter.custom(text), ::update, ::showSnackbar)
             if (result.isSuccess) {
                 prefs.customSentMs = System.currentTimeMillis()
                 update { it.copy(customSent = "Sent '$text' at ${clockTime(prefs.customSentMs!!)}") }
@@ -235,6 +255,11 @@ private fun AppRoot(modifier: Modifier = Modifier) {
         val latD = lat.toDoubleOrNull(); val lngD = lng.toDoubleOrNull()
         if (latD != null && lngD != null && latD in -90.0..90.0 && lngD in -180.0..180.0) {
             prefs.lastLat = latD; prefs.lastLng = lngD
+            prefs.lastLocationFetchedMs = System.currentTimeMillis()
+            update { it.copy(
+                locationLabel = locLabel(latD, lngD),
+                locationFreshness = "just now",
+            ) }
         }
         debounceJob?.cancel()
         debounceJob = scope.launch {
@@ -249,30 +274,70 @@ private fun AppRoot(modifier: Modifier = Modifier) {
                 PackageManager.PERMISSION_GRANTED ||
                 ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) ==
                 PackageManager.PERMISSION_GRANTED
-        if (hasAnyLocation) {
-            update { it.copy(status = "Getting location fix…") }
-            locationSource.fetch()
-                .onSuccess { coords ->
-                    prefs.lastLat = coords.lat; prefs.lastLng = coords.lng
-                    update { it.copy(
-                        lat = coords.lat.toString(),
-                        lng = coords.lng.toString(),
-                        showLocationFallback = false,
-                        status = "Got fix: %.4f, %.4f".format(coords.lat, coords.lng),
-                    ) }
-                }
-                .onFailure {
-                    update { it.copy(
-                        showLocationFallback = state.activeFace != ActiveFace.CUSTOM,
-                        status = "Location failed. Using saved coordinates.",
-                    ) }
-                }
-        } else {
-            update { it.copy(
-                showLocationFallback = state.activeFace != ActiveFace.CUSTOM,
-                status = "Location unavailable.",
-            ) }
+        val haveCoords = prefs.lastLat != null && prefs.lastLng != null
+        val stale = isLocationStale(prefs.lastLocationFetchedMs, System.currentTimeMillis())
+
+        when {
+            // Fresh saved coords: use them silently, no fix.
+            haveCoords && !stale -> { /* render with saved coords */ }
+
+            // Stale saved coords + permission: render saved, silently refresh.
+            haveCoords && hasAnyLocation -> {
+                update { it.copy(locating = true) }
+                locationSource.fetch()
+                    .onSuccess { coords ->
+                        prefs.lastLat = coords.lat; prefs.lastLng = coords.lng
+                        prefs.lastLocationFetchedMs = System.currentTimeMillis()
+                        update { it.copy(
+                            lat = coords.lat.toString(),
+                            lng = coords.lng.toString(),
+                            showLocationFallback = false,
+                            locating = false,
+                            locationLabel = locLabel(coords.lat, coords.lng),
+                            locationFreshness = "just now",
+                        ) }
+                    }
+                    .onFailure {
+                        update { it.copy(
+                            locating = false,
+                            locationFreshness = (freshnessLabel(
+                                prefs.lastLocationFetchedMs, System.currentTimeMillis(),
+                            ) ?: "stale") + " · refresh failed",
+                        ) }
+                        showSnackbar("Couldn't refresh location — using saved coordinates")
+                    }
+            }
+
+            // No saved coords, permission held: first-run fix.
+            !haveCoords && hasAnyLocation -> {
+                update { it.copy(locating = true) }
+                locationSource.fetch()
+                    .onSuccess { coords ->
+                        prefs.lastLat = coords.lat; prefs.lastLng = coords.lng
+                        prefs.lastLocationFetchedMs = System.currentTimeMillis()
+                        update { it.copy(
+                            lat = coords.lat.toString(),
+                            lng = coords.lng.toString(),
+                            showLocationFallback = false,
+                            locating = false,
+                            locationLabel = locLabel(coords.lat, coords.lng),
+                            locationFreshness = "just now",
+                        ) }
+                    }
+                    .onFailure {
+                        update { it.copy(
+                            locating = false,
+                            showLocationFallback = state.activeFace != ActiveFace.CUSTOM,
+                        ) }
+                    }
+            }
+
+            // No permission: manual entry / grant fallback (Custom needs no coords).
+            else -> {
+                update { it.copy(showLocationFallback = state.activeFace != ActiveFace.CUSTOM) }
+            }
         }
+
         refreshActive(force = false, push = false)
         AutoUpdateScheduler.reschedule(context)
     }
@@ -281,7 +346,21 @@ private fun AppRoot(modifier: Modifier = Modifier) {
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) showPicker = true
-        else update { it.copy(status = "Bluetooth permission denied — can't list paired watches.") }
+        else showSnackbar("Bluetooth permission denied — can't list paired watches.")
+    }
+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { /* granted or not — errors still record in-app either way */ }
+
+    LaunchedEffect(Unit) {
+        val backgroundActive = prefs.activeFace != ActiveFace.CUSTOM && prefs.watchAddress != null
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && backgroundActive &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
     }
 
     val locationPermissionLauncher = rememberLauncherForActivityResult(
@@ -289,22 +368,28 @@ private fun AppRoot(modifier: Modifier = Modifier) {
     ) { results ->
         if (results.values.any { it }) {
             scope.launch {
-                update { it.copy(status = "Getting location fix…") }
+                update { it.copy(locating = true) }
                 locationSource.fetch()
                     .onSuccess { coords ->
                         prefs.lastLat = coords.lat; prefs.lastLng = coords.lng
+                        prefs.lastLocationFetchedMs = System.currentTimeMillis()
                         update { it.copy(
                             lat = coords.lat.toString(),
                             lng = coords.lng.toString(),
                             showLocationFallback = false,
-                            status = "Got fix: %.4f, %.4f".format(coords.lat, coords.lng),
+                            locating = false,
+                            locationLabel = locLabel(coords.lat, coords.lng),
+                            locationFreshness = "just now",
                         ) }
                         refreshActive(force = true, push = false)
                     }
-                    .onFailure { err -> update { it.copy(status = "Location failed: ${err.message}") } }
+                    .onFailure { err ->
+                        update { it.copy(locating = false) }
+                        showSnackbar("Location failed: ${err.message}")
+                    }
             }
         } else {
-            update { it.copy(status = "Location permission denied — enter coordinates manually.") }
+            showSnackbar("Location permission denied — enter coordinates manually.")
         }
     }
 
@@ -362,19 +447,25 @@ private fun AppRoot(modifier: Modifier = Modifier) {
                     PackageManager.PERMISSION_GRANTED
             if (hasAny) {
                 scope.launch {
-                    update { it.copy(status = "Getting location fix…") }
+                    update { it.copy(locating = true) }
                     locationSource.fetch()
                         .onSuccess { coords ->
                             prefs.lastLat = coords.lat; prefs.lastLng = coords.lng
+                            prefs.lastLocationFetchedMs = System.currentTimeMillis()
                             update { it.copy(
                                 lat = coords.lat.toString(),
                                 lng = coords.lng.toString(),
                                 showLocationFallback = false,
-                                status = "Got fix: %.4f, %.4f".format(coords.lat, coords.lng),
+                                locating = false,
+                                locationLabel = locLabel(coords.lat, coords.lng),
+                                locationFreshness = "just now",
                             ) }
                             refreshActive(force = true, push = false)
                         }
-                        .onFailure { err -> update { it.copy(status = "Location failed: ${err.message}") } }
+                        .onFailure { err ->
+                            update { it.copy(locating = false) }
+                            showSnackbar("Location failed: ${err.message}")
+                        }
                 }
             } else {
                 locationPermissionLauncher.launch(
@@ -406,7 +497,6 @@ private fun AppRoot(modifier: Modifier = Modifier) {
                 update { it.copy(
                     watchLabel = "Watch: ${device.name ?: device.address}",
                     watchSelected = true,
-                    status = "Selected ${device.name ?: device.address}.",
                 ) }
                 showPicker = false
                 when (state.activeFace) {
@@ -424,11 +514,12 @@ private suspend fun sendAndReport(
     address: String,
     value: String,
     update: ((HomeState) -> HomeState) -> Unit,
+    showSnackbar: (String) -> Unit,
 ): Result<Unit> {
-    update { it.copy(status = "Sending '$value'…", sending = true) }
+    update { it.copy(sending = true) }
     return ble.send(address, value)
-        .onSuccess { update { it.copy(sending = false, status = "Sent '$value'.") } }
-        .onFailure { err -> update { it.copy(sending = false, status = "Send failed: ${err.message}") } }
+        .onSuccess { update { it.copy(sending = false) }; showSnackbar("Sent '$value'") }
+        .onFailure { err -> update { it.copy(sending = false) }; showSnackbar("Send failed: ${err.message}") }
 }
 
 @SuppressLint("MissingPermission")
