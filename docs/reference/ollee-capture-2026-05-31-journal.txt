@@ -1,0 +1,11 @@
+=== capture journal 09:14:18 ===
+09:14:21 ACTION: open Faces tab
+09:16:11.301 ACTION: Faces tab -> Send to watch
+09:16:15.439 done
+09:16:54.742 ACTION: Faces -> Send to watch (retry y=1900)
+09:17:38.706 ACTION: toggle Temperature face OFF
+09:24:31.773 ACTION: toggle Temperature OFF @(784,992)
+09:25:16.811 ACTION: Send to watch (Temperature OFF pending)
+09:26:02.413 ACTION: toggle Temperature ON @(784,992)
+09:26:05.824 ACTION: Send to watch (Temperature ON)
+09:30:30.803 ACTION: toggle Sunrise/Sunset @(784,1338) [predict ID 0x11]
