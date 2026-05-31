@@ -22,25 +22,21 @@ ceiling, and "outdoor temp face" stays a nameplate UX.
 
 Default behaviour is unchanged (everything still routes to the `0x2F` nameplate).
 
-## The test (≈5 min, needs the watch)
+## The test (≈5 min, needs the watch) — ALREADY WIRED
 
-On branch `experiment/temp-to-face-field`, route the temperature send to `0x2E` and observe the
-watch. The single change is in `auto/AutoUpdateWorker.kt` `runTemperature(...)` (and the manual
-send in `MainActivity`): replace
+Branch **`experiment/temp-to-face-field`** already routes the Temperature face's sends (both the
+manual push in `MainActivity.pushIfWatch` and the background `AutoUpdateWorker.runTemperature`) to
+`OlleeProtocol.TARGET_TEMPERATURE` (`0x2E`) instead of the `0x2F` nameplate. Sun/Custom are
+unchanged. A debug APK is **already built** at `app/build/outputs/apk/debug/app-debug.apk`.
 
-```kotlin
-OlleeBleClient(ctx).send(address, payload)
-```
-with
-```kotlin
-OlleeBleClient(ctx).send(address, payload, OlleeProtocol.TARGET_TEMPERATURE)
-```
-
-Then:
-1. Build + install: `./gradlew :app:assembleDebug` → `adb install -r app/build/outputs/apk/debug/app-debug.apk`.
-2. In the app, trigger a temperature send (the normal flow / manual send).
-3. **Look at the watch's Temperature face.** Compare with the value the app sent
-   (e.g. it sent `"  72 F"`).
+To run the test:
+1. Install: `adb install -r app/build/outputs/apk/debug/app-debug.apk`
+   (if it refuses on signature mismatch with your existing install, `adb uninstall
+   com.blizzardcaron.freeolleefaces` first — you'll re-enter the watch address + coords).
+2. Open the app with the watch connected, make sure **Temperature** is the active face, and tap
+   **Update now** (or let the auto-update fire). The app fetches outdoor temp and now sends it to
+   `0x2E`.
+3. **Look at the watch's Temperature face.** Does it show the value the app sent (e.g. `"  72 F"`)?
 
 ### Decision tree
 - **Temperature face shows the pushed value** → hypothesis confirmed. Promote to a real feature:

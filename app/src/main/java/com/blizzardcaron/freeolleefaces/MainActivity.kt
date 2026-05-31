@@ -26,6 +26,7 @@ import com.blizzardcaron.freeolleefaces.auto.AutoUpdateScheduler
 import com.blizzardcaron.freeolleefaces.auto.SleepWindow
 import com.blizzardcaron.freeolleefaces.auto.isTempCacheFresh
 import com.blizzardcaron.freeolleefaces.ble.OlleeBleClient
+import com.blizzardcaron.freeolleefaces.ble.OlleeProtocol
 import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 import com.blizzardcaron.freeolleefaces.format.WeatherErrorCopy
@@ -129,7 +130,11 @@ private fun AppRoot(
 
     fun pushIfWatch(payload: String) {
         val addr = prefs.watchAddress ?: return
-        scope.launch { sendAndReport(ble, addr, payload, ::update, ::showSnackbar) }
+        // EXPERIMENT (temp-to-face-field): route the Temperature push to the temp field 0x2E
+        // instead of the 0x2F nameplate, to test whether the real Temperature face honors it.
+        scope.launch {
+            sendAndReport(ble, addr, payload, ::update, ::showSnackbar, OlleeProtocol.TARGET_TEMPERATURE)
+        }
     }
 
     fun sendCustom(text: String) {
@@ -515,9 +520,10 @@ private suspend fun sendAndReport(
     value: String,
     update: ((HomeState) -> HomeState) -> Unit,
     showSnackbar: (String) -> Unit,
+    target: Int = OlleeProtocol.TARGET_NAMEPLATE,
 ): Result<Unit> {
     update { it.copy(sending = true) }
-    return ble.send(address, value)
+    return ble.send(address, value, target)
         .onSuccess { update { it.copy(sending = false) }; showSnackbar("Sent '$value'") }
         .onFailure { err -> update { it.copy(sending = false) }; showSnackbar("Send failed: ${err.message}") }
 }
