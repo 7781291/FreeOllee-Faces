@@ -26,10 +26,18 @@ class OlleeBleClient(private val context: Context) {
         private const val CONNECT_TIMEOUT_MS = 8_000L
     }
 
+    suspend fun send(deviceAddress: String, value: String): Result<Unit> =
+        send(deviceAddress, value, OlleeProtocol.TARGET_NAMEPLATE)
+
+    /**
+     * Sends [value] to an arbitrary BLE [target] field. Defaults route through the
+     * nameplate (0x2F); pass [OlleeProtocol.TARGET_TEMPERATURE] (0x2E) to test writing
+     * the Temperature face's field directly.
+     */
     @SuppressLint("MissingPermission")
-    suspend fun send(deviceAddress: String, value: String): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun send(deviceAddress: String, value: String, target: Int): Result<Unit> = withContext(Dispatchers.IO) {
         runCatching {
-            val packet = OlleeProtocol.buildPacket(value.padEnd(OlleeProtocol.MAX_VALUE_LENGTH, ' '))
+            val packet = OlleeProtocol.buildPacket(target, value.padEnd(OlleeProtocol.MAX_VALUE_LENGTH, ' '))
 
             val manager = context.getSystemService(BluetoothManager::class.java)
                 ?: error("BluetoothManager unavailable")
