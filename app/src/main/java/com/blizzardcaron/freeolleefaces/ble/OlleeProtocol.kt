@@ -59,4 +59,25 @@ object OlleeProtocol {
 
     /** °F string matching the watch's read format ("  54 F"): right-justified to 6 chars. */
     fun formatTemperatureF(tempF: Int): String = "%4d F".format(tempF)
+
+    /** A parsed frame. [crcOk] reports whether the CRC validated over the inner bytes. */
+    data class Frame(val cmd: Int, val target: Int, val payload: ByteArray, val crcOk: Boolean)
+
+    /**
+     * Parses a complete framed message (00, len, AA, 55, crcHi, crcLo, cmd, target, payload…).
+     * Returns null if it is too short or lacks the AA 55 magic. The CRC is checked over the inner
+     * bytes (cmd, target, payload) and surfaced as [Frame.crcOk] rather than rejected, so callers
+     * can inspect malformed/partial frames during reverse-engineering. Use to decode watch
+     * responses, e.g. a temperature read-back at target 0x4E with payload "  54 F".
+     */
+    fun parseFrame(bytes: ByteArray): Frame? {
+        if (bytes.size < 8) return null
+        if (bytes[2] != 0xAA.toByte() || bytes[3] != 0x55.toByte()) return null
+        val crc = ((bytes[4].toInt() and 0xFF) shl 8) or (bytes[5].toInt() and 0xFF)
+        val inner = bytes.copyOfRange(6, bytes.size)
+        val cmd = inner[0].toInt() and 0xFF
+        val target = inner[1].toInt() and 0xFF
+        val payload = inner.copyOfRange(2, inner.size)
+        return Frame(cmd, target, payload, crc16(inner) == crc)
+    }
 }

@@ -2,6 +2,8 @@ package com.blizzardcaron.freeolleefaces.ble
 
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class OlleeProtocolTest {
@@ -100,5 +102,36 @@ class OlleeProtocolTest {
         assertEquals(" 105 F", OlleeProtocol.formatTemperatureF(105))
         assertEquals(6, OlleeProtocol.formatTemperatureF(72).length)
         assertEquals(6, OlleeProtocol.formatTemperatureF(105).length)
+    }
+
+    // --- frame parsing ---
+
+    private fun hex(s: String) = s.chunked(2).map { it.toInt(16).toByte() }.toByteArray()
+
+    @Test
+    fun `parseFrame round-trips buildPacket`() {
+        val packet = OlleeProtocol.buildPacket(OlleeProtocol.TARGET_TEMPERATURE, "  72 F")
+        val f = OlleeProtocol.parseFrame(packet)!!
+        assertEquals(0x02, f.cmd)
+        assertEquals(0x2e, f.target)
+        assertEquals("  72 F", String(f.payload, Charsets.US_ASCII))
+        assertTrue(f.crcOk)
+    }
+
+    @Test
+    fun `parseFrame decodes a real captured temperature read-back (target 0x4E)`() {
+        // Captured from the watch: cmd 02, target 4E, payload "  54 F", CRC 0xCB6D.
+        // crcOk == true validates our CRC-16 against the watch's actual bytes.
+        val f = OlleeProtocol.parseFrame(hex("000CAA55CB6D024E202035342046"))!!
+        assertEquals(0x02, f.cmd)
+        assertEquals(0x4e, f.target)
+        assertEquals("  54 F", String(f.payload, Charsets.US_ASCII))
+        assertTrue(f.crcOk)
+    }
+
+    @Test
+    fun `parseFrame returns null for too-short or wrong-magic input`() {
+        assertNull(OlleeProtocol.parseFrame(byteArrayOf(0x00, 0x06)))
+        assertNull(OlleeProtocol.parseFrame(hex("00060000022A"))) // no AA 55 magic
     }
 }
