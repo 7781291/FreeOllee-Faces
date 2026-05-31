@@ -60,4 +60,45 @@ class OlleeProtocolTest {
         // Length byte = inner.size + 4 = (2 + 2) + 4 = 8.
         assertEquals(8, packet[1].toInt() and 0xFF)
     }
+
+    // --- arbitrary-target support (temperature-field experiment) ---
+
+    @Test
+    fun `default buildPacket still targets the nameplate 0x2F`() {
+        val packet = OlleeProtocol.buildPacket("Hi")
+        assertEquals(0x2f.toByte(), packet[7]) // inner header byte 2 = target
+    }
+
+    @Test
+    fun `buildPacket can target the temperature field 0x2E with correct framing`() {
+        val value = "  72 F"
+        val packet = OlleeProtocol.buildPacket(OlleeProtocol.TARGET_TEMPERATURE, value)
+
+        val inner = byteArrayOf(0x02, 0x2e) + value.toByteArray(Charsets.US_ASCII)
+        val crc = OlleeProtocol.crc16(inner)
+        val expected = byteArrayOf(
+            0x00,
+            (inner.size + 4).toByte(),
+            0xaa.toByte(),
+            0x55,
+            (crc shr 8).toByte(),
+            (crc and 0xFF).toByte()
+        ) + inner
+
+        assertArrayEquals(expected, packet)
+        assertEquals(0x2e.toByte(), packet[7])
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `buildPacket rejects a target outside one byte`() {
+        OlleeProtocol.buildPacket(0x123, "Hi")
+    }
+
+    @Test
+    fun `formatTemperatureF matches the watch read format and stays 6 chars`() {
+        assertEquals("  72 F", OlleeProtocol.formatTemperatureF(72))
+        assertEquals(" 105 F", OlleeProtocol.formatTemperatureF(105))
+        assertEquals(6, OlleeProtocol.formatTemperatureF(72).length)
+        assertEquals(6, OlleeProtocol.formatTemperatureF(105).length)
+    }
 }
