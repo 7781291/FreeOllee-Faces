@@ -3,6 +3,21 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+// Single source of truth for the app version: the root-level VERSION file.
+// versionCode is derived as MAJOR*10000 + MINOR*100 + PATCH (MINOR/PATCH must stay <= 99).
+val appVersionName: String = rootProject.file("VERSION").readText().trim()
+val appVersionCode: Int = run {
+    val parts = appVersionName.split(".")
+    require(parts.size == 3 && parts.all { it.toIntOrNull() != null }) {
+        "VERSION must be MAJOR.MINOR.PATCH (got '$appVersionName')"
+    }
+    val (major, minor, patch) = parts.map { it.toInt() }
+    require(minor <= 99 && patch <= 99) {
+        "VERSION minor/patch must each be <= 99 for the versionCode formula (got '$appVersionName')"
+    }
+    major * 10000 + minor * 100 + patch
+}
+
 android {
     namespace = "com.blizzardcaron.freeolleefaces"
     compileSdk = 36
@@ -11,8 +26,21 @@ android {
         applicationId = "com.blizzardcaron.freeolleefaces"
         minSdk = 31
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = appVersionCode
+        versionName = appVersionName
+    }
+
+    signingConfigs {
+        create("release") {
+            // Populated only in CI (see .github/workflows/release.yml). Absent locally,
+            // which is fine: the release buildType only attaches this config when present.
+            System.getenv("KEYSTORE_FILE")?.let { ksPath ->
+                storeFile = file(ksPath)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
@@ -22,6 +50,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            if (System.getenv("KEYSTORE_FILE") != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
     compileOptions {

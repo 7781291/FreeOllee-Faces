@@ -1,0 +1,61 @@
+name: Version check
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  version-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out (full history + tags)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate VERSION bump (or honor [skip release])
+        env:
+          # Passed via env, never interpolated into the script, to avoid shell
+          # injection from a crafted PR title.
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+
+          case "$PR_TITLE" in
+            *"[skip release]"*)
+              echo "PR title opts out with [skip release]; skipping version-bump check."
+              exit 0
+              ;;
+          esac
+
+          if [ ! -f VERSION ]; then
+            echo "::error::VERSION file is missing. Add a root VERSION file (e.g. 0.6.3)."
+            exit 1
+          fi
+
+          VERSION="$(tr -d '[:space:]' < VERSION)"
+          if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::VERSION '$VERSION' is not MAJOR.MINOR.PATCH semver."
+            exit 1
+          fi
+
+          HIGHEST="$(git tag -l 'v*' | sed 's/^v//' \
+            | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1 || true)"
+
+          if [ -z "$HIGHEST" ]; then
+            echo "No existing v* release tag; VERSION '$VERSION' accepted."
+            exit 0
+          fi
+
+          if [ "$VERSION" = "$HIGHEST" ]; then
+            echo "::error::VERSION '$VERSION' equals the latest release tag v$HIGHEST — bump it (or add [skip release] to the PR title)."
+            exit 1
+          fi
+
+          TOP="$(printf '%s\n%s\n' "$HIGHEST" "$VERSION" | sort -V | tail -1)"
+          if [ "$TOP" != "$VERSION" ]; then
+            echo "::error::VERSION '$VERSION' is lower than the latest release tag v$HIGHEST — bump it past v$HIGHEST."
+            exit 1
+          fi
+
+          echo "VERSION '$VERSION' is a valid bump over v$HIGHEST."
