@@ -26,6 +26,7 @@ import com.blizzardcaron.freeolleefaces.auto.AutoUpdateScheduler
 import com.blizzardcaron.freeolleefaces.auto.SleepWindow
 import com.blizzardcaron.freeolleefaces.auto.isTempCacheFresh
 import com.blizzardcaron.freeolleefaces.ble.OlleeBleClient
+import com.blizzardcaron.freeolleefaces.ble.OlleeProtocol
 import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 import com.blizzardcaron.freeolleefaces.format.WeatherErrorCopy
@@ -515,9 +516,10 @@ private suspend fun sendAndReport(
     value: String,
     update: ((HomeState) -> HomeState) -> Unit,
     showSnackbar: (String) -> Unit,
+    target: Int = OlleeProtocol.TARGET_NAMEPLATE,
 ): Result<Unit> {
     update { it.copy(sending = true) }
-    return ble.send(address, value)
+    return ble.send(address, value, target)
         .onSuccess { update { it.copy(sending = false) }; showSnackbar("Sent '$value'") }
         .onFailure { err -> update { it.copy(sending = false) }; showSnackbar("Send failed: ${err.message}") }
 }
