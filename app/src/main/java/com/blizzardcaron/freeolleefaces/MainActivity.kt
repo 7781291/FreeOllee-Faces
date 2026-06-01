@@ -130,11 +130,7 @@ private fun AppRoot(
 
     fun pushIfWatch(payload: String) {
         val addr = prefs.watchAddress ?: return
-        // EXPERIMENT (temp-to-face-field): route the Temperature push to the temp field 0x2E
-        // instead of the 0x2F nameplate, to test whether the real Temperature face honors it.
-        scope.launch {
-            sendAndReport(ble, addr, payload, ::update, ::showSnackbar, OlleeProtocol.TARGET_TEMPERATURE)
-        }
+        scope.launch { sendAndReport(ble, addr, payload, ::update, ::showSnackbar) }
     }
 
     fun sendCustom(text: String) {

@@ -56,21 +56,37 @@ HCI snoop (`adb bugreport` → Wireshark, filter ATT writes to `6e400002-…`).
 
 ---
 
-## RESULT (2026-05-31): CONFIRMED ✅
+## RESULT (2026-06-01): DISCONFIRMED ❌
 
-Writing `02 2E "  77 F"` (outdoor temp) to the watch **overrode the temperature field.**
+> **Correction.** An earlier note here claimed this was CONFIRMED. That was a **false
+> positive**: it only verified that the *official app could read back* what we wrote to
+> `0x2E` — it never verified the **physical watch face**. With the watch in hand, the face
+> ignores `0x2E` entirely.
 
-- Before: official app read `02 2E` → `024E "  54 F"` (onboard sensor ≈54°F).
-- Action: the coexisting experiment app (`...freeolleefaces.exp`, routes Temperature → `0x2E`)
-  reported `Sent '  77 F'` to the Ollee (`00:80:E1:26:DC:86`).
-- After: official app read `02 2E` → `024E "  77 F"` — **the field now holds our outdoor value.**
+**Writing `0x2E` does NOT change what the Temperature face displays.** The face is
+firmware-locked to the onboard sensor.
 
-The Temperature face renders this field (with a firmware-drawn `°`), so it displays **77°F**.
-Hypothesis confirmed at the register level. (Final visual confirmation = glance at the watch;
-note the onboard sensor may re-overwrite the field on its refresh cycle, so the outdoor value
-must be re-pushed periodically — which the app's auto-update interval already does.)
+On-device test (watch `00:80:E1:26:DC:86`), two independent observations:
 
-### Next: promote to a feature
-Add a Temperature **source** option — "onboard sensor | outdoor weather" — that routes the
-existing outdoor-temp send to `0x2E` (this branch's behaviour) when "outdoor" is selected,
-keeping `0x2F` nameplate for the legacy mode. Warrants its own FreeOllee-Faces spec.
+| Onboard measurements | Watch face shows | `0x2E` register reads | Match? |
+|---|---|---|---|
+| ON  | `84 °F` live, refreshing every few seconds | `"  55 F"` (≈13 °C) | ✗ |
+| OFF*| `23 °C` (sensor cooling at rest)           | `"  55 F"` (≈13 °C) | ✗ |
+
+\* the official app's "Enables temperature measurements" toggle did not reliably persist OFF
+to the watch; the ON-state result alone is conclusive.
+
+Decisive detail: pressing **ALARM on the Temperature face** toggled the display `84 °F ↔ 29 °C`
+— a correct conversion of the face's **own** 84 °F value. If it were converting our injected
+`0x2E` value (`55 °F`) it would have shown `13 °C`. It never did. A full register sweep found
+**no** writable register holding the face's value; `0x2E` is the only ASCII temperature field
+and the face does not render it.
+
+### Conclusions
+- **Outdoor temperature cannot be placed on the watch's real Temperature face** over BLE.
+- The only surface for outdoor temp is the **`0x2F` nameplate / "Name tag"** (hold **ALARM on
+  the Clock face** to view it) — which the shipping FreeOllee-Faces app already uses.
+- The `experiment/temp-to-face-field` `0x2E` routing was reverted (it displayed nowhere the
+  user sees and wrongly routed the Sun face too). See
+  [`2026-06-01-temperature-target-toggle-design.md`](../superpowers/specs/2026-06-01-temperature-target-toggle-design.md)
+  for the re-scoped outcome (findings + in-app version display).

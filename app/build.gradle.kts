@@ -54,11 +54,6 @@ android {
                 signingConfig = signingConfigs.getByName("release")
             }
         }
-        debug {
-            // EXPERIMENT branch only: install alongside the user's FreeOllee-Faces
-            // (different signing key) without uninstalling it.
-            applicationIdSuffix = ".exp"
-        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.blizzardcaron.freeolleefaces.ble.OlleeBleClient
-import com.blizzardcaron.freeolleefaces.ble.OlleeProtocol
 import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
 import com.blizzardcaron.freeolleefaces.notify.ErrorNotifier
 import com.blizzardcaron.freeolleefaces.notify.FailureKind
@@ -77,8 +76,7 @@ class AutoUpdateWorker(
                 .onSuccess { temp ->
                     prefs.recordTempFetch(temp, prefs.tempUnit)
                     val payload = DisplayFormatter.temperature(temp, prefs.tempUnit)
-                    // EXPERIMENT (temp-to-face-field): write the temp field 0x2E, not the nameplate.
-                    OlleeBleClient(ctx).send(address, payload, OlleeProtocol.TARGET_TEMPERATURE)
+                    OlleeBleClient(ctx).send(address, payload)
                         .onSuccess {
                             prefs.recordAutoSend("Sent '$payload'")
                             applyHealth(ctx, prefs, null, inSleep)

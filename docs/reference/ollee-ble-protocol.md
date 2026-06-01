@@ -33,8 +33,8 @@ with the **same data at `target + 0x20`** (`2A→4A`, `2E→4E`, `37→57`, …)
 | `02 2A` → `4A` | R | `…DEADBEEF…01.05.0000.01.07…` | firmware / version string |
 | `02 2B` → `4B` | R | `00010017007E0A05C0FF0FFF` | (unknown config block) |
 | `02 2C` → `4C` | R | `00012800` | (unknown) |
-| **`02 2E` → `4E`** | R | ASCII `"  54 F"` | **Temperature (onboard sensor), right-justified °F** |
-| `02 2F` | W | ≤6 ASCII | **nameplate text** (the field FreeOllee-Faces writes) |
+| **`02 2E` → `4E`** | R | ASCII `"  54 F"` | Ambient read-back cache. **Does NOT drive the Temperature face** (firmware-locked to the onboard sensor — see below) |
+| `02 2F` | W | ≤6 ASCII | **nameplate / "Name tag"** (hold ALARM on the Clock face); the field FreeOllee-Faces writes |
 | `02 30` → `50` | R | `0000138800` | (unknown) |
 | `02 32` → `52` | R | `0206 7182 0000 0078 FFFF 0000` | world-time config |
 | `02 33` | W | `0206 7182 …` | write world-time config |
@@ -70,19 +70,25 @@ no record):
 Cross-check: the disabled faces shown in the UI (Alarm, Stopwatch, Timer, Sunrise/Sunset,
 World Time) are exactly the records with `ENABLED=0` (IDs `05,07,09,11,06`).
 
-## Temperature face — can it show outdoor weather?
+## Temperature face — can it show outdoor weather? (RESOLVED: no)
 
-**Finding:** the app only ever **reads** temperature (`02 2E` → `024E "  54 F"`). No write to
-a temperature target was observed; the face renders the onboard sensor in firmware.
+**The Temperature face is firmware-locked to the onboard sensor and cannot be overridden over
+BLE.** Tested on-device 2026-06-01 (watch `00:80:E1:26:DC:86`):
 
-**Open hypothesis to test (the goal):** does **writing** the temp field override what the face
-shows? Candidate writes, in priority order:
-1. `02 2E` + payload `"  72 F"` (same target as the read, ASCII like the read response).
-2. `02 0B …` (the face's ID) or a temp-specific write target adjacent to `0x2E`.
-3. Fallback (known-good): `02 2F` nameplate text — the current FreeOllee-Faces approach.
+- `0x2E`/`0x4E` is a **read-back ambient field that does NOT drive the face.** Writing it
+  changes only what the official app reads back, not the physical display.
+- With measurements **ON**, the face showed `84 °F` (live, refreshing every few seconds) while
+  `0x2E` held `"  55 F"` — no match. Pressing **ALARM on the Temperature face** toggled
+  `84 °F ↔ 29 °C`, i.e. it converted the face's *own* value, not our injected `0x2E` (which
+  would be `13 °C`).
+- A full register sweep found no writable register holding the face's value; `0x2E` is the only
+  ASCII temperature field and the face ignores it.
 
-If (1)/(2) make the **Temperature face** display the pushed value, outdoor-temp-on-the-real-face
-is achievable. If only (3) works, outdoor temp must remain a nameplate/text overlay.
+**Therefore:** outdoor temp can only be surfaced via the **`02 2F` nameplate** — the watch's
+**"Name tag"**, viewable by holding **ALARM on the Clock face**. This is the existing
+FreeOllee-Faces approach and the ceiling for this feature.
 
-> Test harness: `OlleeProtocol.buildPacket` is hard-wired to `02 2F`; an experimental build
-> parameterizes `(cmd,target)` so the value can be sent to `0x2E`/`0x0B` and observed on-watch.
+> Detail: an earlier experiment reported "CONFIRMED" because the official app read back our
+> `0x2E` write — a false positive that never checked the physical face. The
+> `experiment/temp-to-face-field` `0x2E` routing was reverted. Full write-up:
+> [`temp-face-experiment.md`](temp-face-experiment.md).
