@@ -53,3 +53,24 @@ To run the test:
 Reinstall the `ollee-graphene` `CAPTURE=1` build of the *official* app is **not** needed here —
 FreeOllee-Faces is our own code. But you can confirm the exact bytes leaving the phone with the
 HCI snoop (`adb bugreport` → Wireshark, filter ATT writes to `6e400002-…`).
+
+---
+
+## RESULT (2026-05-31): CONFIRMED ✅
+
+Writing `02 2E "  77 F"` (outdoor temp) to the watch **overrode the temperature field.**
+
+- Before: official app read `02 2E` → `024E "  54 F"` (onboard sensor ≈54°F).
+- Action: the coexisting experiment app (`...freeolleefaces.exp`, routes Temperature → `0x2E`)
+  reported `Sent '  77 F'` to the Ollee (`00:80:E1:26:DC:86`).
+- After: official app read `02 2E` → `024E "  77 F"` — **the field now holds our outdoor value.**
+
+The Temperature face renders this field (with a firmware-drawn `°`), so it displays **77°F**.
+Hypothesis confirmed at the register level. (Final visual confirmation = glance at the watch;
+note the onboard sensor may re-overwrite the field on its refresh cycle, so the outdoor value
+must be re-pushed periodically — which the app's auto-update interval already does.)
+
+### Next: promote to a feature
+Add a Temperature **source** option — "onboard sensor | outdoor weather" — that routes the
+existing outdoor-temp send to `0x2E` (this branch's behaviour) when "outdoor" is selected,
+keeping `0x2F` nameplate for the legacy mode. Warrants its own FreeOllee-Faces spec.
