@@ -5,6 +5,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.blizzardcaron.freeolleefaces.ble.OlleeBleClient
 import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
+import com.blizzardcaron.freeolleefaces.health.StepsRepository
 import com.blizzardcaron.freeolleefaces.notify.ErrorNotifier
 import com.blizzardcaron.freeolleefaces.notify.FailureKind
 import com.blizzardcaron.freeolleefaces.notify.NotifyAction
@@ -41,6 +42,17 @@ class AutoUpdateWorker(
             applyHealth(ctx, prefs, null, inSleep = false)
             return Result.success()
         }
+
+        // STEPS needs only a watch (no coordinates); handle before the location guard.
+        if (face == ActiveFace.STEPS) {
+            if (address == null) {
+                prefs.recordAutoSend("Skipped: set watch in app")
+                applyHealth(ctx, prefs, FailureKind.SETUP_INCOMPLETE, inSleepNow(prefs))
+                return Result.success()
+            }
+            return runSteps(ctx, prefs, address, ZonedDateTime.now(ZoneId.systemDefault()))
+        }
+
         if (lat == null || lng == null || address == null) {
             prefs.recordAutoSend("Skipped: set location/watch in app")
             applyHealth(ctx, prefs, FailureKind.SETUP_INCOMPLETE, inSleepNow(prefs))
@@ -51,8 +63,52 @@ class AutoUpdateWorker(
         return when (face) {
             ActiveFace.TEMPERATURE -> runTemperature(ctx, prefs, lat, lng, address, now)
             ActiveFace.SUN -> runSun(ctx, prefs, lat, lng, address, now)
-            ActiveFace.CUSTOM -> Result.success()
+            ActiveFace.STEPS, ActiveFace.CUSTOM -> Result.success() // handled above
         }
+    }
+
+    private suspend fun runSteps(
+        ctx: Context,
+        prefs: Prefs,
+        address: String,
+        now: ZonedDateTime,
+    ): Result {
+        val sleep = if (prefs.sleepEnabled) {
+            SleepWindow(prefs.sleepStartMin, prefs.sleepEndMin)
+        } else null
+        val nowMinOfDay = now.hour * 60 + now.minute
+        val inSleep = sleep != null &&
+            AutoUpdateSchedule.isInSleepWindow(nowMinOfDay, sleep.startMin, sleep.endMin)
+
+        if (!inSleep) {
+            StepsRepository(ctx).todaySteps()
+                .onSuccess { count ->
+                    prefs.recordStepsFetch(count)
+                    val payload = DisplayFormatter.steps(count)
+                    OlleeBleClient(ctx).send(address, payload)
+                        .onSuccess {
+                            prefs.recordAutoSend("Sent '$payload'")
+                            applyHealth(ctx, prefs, null, inSleep)
+                        }
+                        .onFailure {
+                            prefs.recordAutoSend("Skipped: watch unreachable")
+                            applyHealth(ctx, prefs, FailureKind.WATCH_UNREACHABLE, inSleep)
+                        }
+                }
+                .onFailure {
+                    prefs.recordAutoSend("Skipped: grant Health access")
+                    applyHealth(ctx, prefs, FailureKind.HEALTH_UNAVAILABLE, inSleep)
+                }
+        } else {
+            prefs.recordAutoSend("Asleep (power saving)")
+        }
+
+        val fire = AutoUpdateSchedule.nextTemperatureFire(
+            now, AutoUpdateScheduler.STEPS_INTERVAL_MINUTES, sleep,
+        )
+        val delayMs = Duration.between(now, fire).toMillis().coerceAtLeast(0)
+        AutoUpdateScheduler.enqueueNext(ctx, delayMs, sunAttempt = 0)
+        return Result.success()
     }
 
     private suspend fun runTemperature(

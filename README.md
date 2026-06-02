@@ -1,10 +1,14 @@
 # FreeOllee Faces
 
-A self-contained Android app that takes a latitude/longitude and pushes one of three
-values to an Ollee Watch over Bluetooth Low Energy:
+A self-contained Android app that pushes one of four values to an Ollee Watch over
+Bluetooth Low Energy (shown on the watch's 6-character "Name tag", held under ALARM on the
+Clock face):
 
 - The current temperature in °F (via Open-Meteo).
 - The next sunrise or sunset time (computed locally with the NOAA solar algorithm).
+- Today's step count, read from Android Health Connect (whatever app you use writes it
+  there — a fitness ring, phone pedometer, etc.). See
+  [`docs/superpowers/specs/2026-06-02-steps-face-design.md`](docs/superpowers/specs/2026-06-02-steps-face-design.md).
 - A custom 6-character string (for experimentation).
 
 Built as a workaround for GrapheneOS users — the official Ollee app relies on Google Play

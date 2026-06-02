@@ -20,6 +20,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import androidx.health.connect.client.PermissionController
 import com.blizzardcaron.freeolleefaces.auto.ActiveFace
 import com.blizzardcaron.freeolleefaces.auto.AutoUpdateSchedule
 import com.blizzardcaron.freeolleefaces.auto.AutoUpdateScheduler
@@ -30,6 +31,7 @@ import com.blizzardcaron.freeolleefaces.ble.OlleeProtocol
 import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 import com.blizzardcaron.freeolleefaces.format.WeatherErrorCopy
+import com.blizzardcaron.freeolleefaces.health.StepsRepository
 import com.blizzardcaron.freeolleefaces.location.LocationSource
 import com.blizzardcaron.freeolleefaces.location.freshnessLabel
 import com.blizzardcaron.freeolleefaces.location.isLocationStale
@@ -78,6 +80,8 @@ private fun clockTime(ms: Long): String =
 private fun locLabel(lat: Double?, lng: Double?): String =
     if (lat != null && lng != null) "Location: %.4f, %.4f".format(lat, lng) else "Location: not set"
 
+private fun stepsHuman(count: Long): String = "Today: %,d steps".format(Locale.US, count)
+
 @Composable
 private fun AppRoot(
     snackbarHostState: SnackbarHostState,
@@ -87,6 +91,7 @@ private fun AppRoot(
     val prefs = remember { Prefs(context) }
     val ble = remember { OlleeBleClient(context) }
     val locationSource = remember { LocationSource(context) }
+    val stepsRepo = remember { StepsRepository(context) }
     val scope = rememberCoroutineScope()
 
     fun showSnackbar(message: String) {
@@ -113,6 +118,10 @@ private fun AppRoot(
                 sleepEndMin = prefs.sleepEndMin,
                 custom = prefs.customText,
                 customSent = prefs.customSentMs?.let { "Sent '${prefs.customText}' at ${clockTime(it)}" },
+                stepsPreview = prefs.lastStepCount?.let {
+                    PreviewState.Ready(DisplayFormatter.steps(it), stepsHuman(it))
+                } ?: PreviewState.Loading,
+                stepsUpdated = prefs.stepsFetchedMs?.let { "Updated ${clockTime(it)}" },
                 locationLabel = locLabel(prefs.lastLat, prefs.lastLng),
                 locationFreshness = freshnessLabel(prefs.lastLocationFetchedMs, System.currentTimeMillis()),
             )
@@ -227,10 +236,39 @@ private fun AppRoot(
         if (push) pushIfWatch(payload)
     }
 
+    fun refreshSteps(push: Boolean) {
+        scope.launch {
+            if (!stepsRepo.hasReadPermission()) {
+                update { it.copy(
+                    stepsHealthGranted = false,
+                    stepsPreview = PreviewState.Error("Grant Health access to read steps"),
+                ) }
+                return@launch
+            }
+            update { it.copy(stepsHealthGranted = true, stepsPreview = PreviewState.Loading) }
+            stepsRepo.todaySteps()
+                .onSuccess { count ->
+                    prefs.recordStepsFetch(count)
+                    val payload = DisplayFormatter.steps(count)
+                    update { it.copy(
+                        stepsPreview = PreviewState.Ready(payload, stepsHuman(count)),
+                        stepsUpdated = "Updated ${clockTime(prefs.stepsFetchedMs!!)}",
+                    ) }
+                    if (push) pushIfWatch(payload)
+                }
+                .onFailure {
+                    update { it.copy(
+                        stepsPreview = PreviewState.Error("Couldn't read steps from Health Connect"),
+                    ) }
+                }
+        }
+    }
+
     fun refreshActive(force: Boolean, push: Boolean) {
         when (state.activeFace) {
             ActiveFace.TEMPERATURE -> refreshTemp(force, push)
             ActiveFace.SUN -> refreshSun(push)
+            ActiveFace.STEPS -> refreshSteps(push)
             ActiveFace.CUSTOM -> {}
         }
     }
@@ -243,6 +281,10 @@ private fun AppRoot(
         when (face) {
             ActiveFace.TEMPERATURE -> refreshTemp(force = false, push = true)
             ActiveFace.SUN -> refreshSun(push = true)
+            ActiveFace.STEPS -> {
+                update { it.copy(showLocationFallback = false) }
+                refreshSteps(push = true)
+            }
             ActiveFace.CUSTOM -> {
                 update { it.copy(showLocationFallback = false) }
                 val text = prefs.customText
@@ -394,6 +436,17 @@ private fun AppRoot(
         }
     }
 
+    val healthPermissionLauncher = rememberLauncherForActivityResult(
+        PermissionController.createRequestPermissionResultContract()
+    ) { granted ->
+        // The read permission alone is enough to show steps; background read just lets the
+        // worker keep updating while the app is closed.
+        refreshSteps(push = state.activeFace == ActiveFace.STEPS)
+        if (!granted.containsAll(StepsRepository.PERMISSIONS)) {
+            showSnackbar("Allow background read too, so steps keep syncing when the app is closed.")
+        }
+    }
+
     val callbacks = HomeCallbacks(
         onOpenFaces = { screen = Screen.FacesList },
         onSelectWatch = {
@@ -475,6 +528,16 @@ private fun AppRoot(
                         Manifest.permission.ACCESS_COARSE_LOCATION,
                     )
                 )
+            }
+        },
+        onGrantHealth = {
+            when (stepsRepo.availability()) {
+                StepsRepository.Availability.AVAILABLE ->
+                    healthPermissionLauncher.launch(StepsRepository.PERMISSIONS)
+                StepsRepository.Availability.UPDATE_REQUIRED ->
+                    showSnackbar("Update Health Connect (in system settings) to read steps.")
+                StepsRepository.Availability.UNAVAILABLE ->
+                    showSnackbar("Health Connect isn't available on this device.")
             }
         },
     )

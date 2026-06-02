@@ -39,4 +39,14 @@ object DisplayFormatter {
 
     fun custom(text: String): String =
         text.padEnd(LENGTH, ' ').take(LENGTH)
+
+    /**
+     * Today's step count, right-justified in [LENGTH] chars (e.g. `" 12345"`). Negatives
+     * clamp to 0; counts that would exceed 6 digits clamp to `"999999"` (no real day of
+     * walking comes close, so this only guards against bogus aggregates).
+     */
+    fun steps(count: Long): String {
+        val clamped = count.coerceIn(0L, 999_999L)
+        return "%${LENGTH}d".format(clamped)
+    }
 }

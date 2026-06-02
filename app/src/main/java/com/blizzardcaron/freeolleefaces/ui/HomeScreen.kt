@@ -56,6 +56,10 @@ data class HomeState(
     val sunUpdated: String? = null,
     val sunNext: String? = null,
 
+    val stepsPreview: PreviewState = PreviewState.Loading,
+    val stepsUpdated: String? = null,
+    val stepsHealthGranted: Boolean = false,
+
     val custom: String = "",
     val customSent: String? = null,
 
@@ -78,6 +82,7 @@ data class HomeCallbacks(
     val onLatChange: (String) -> Unit,
     val onLngChange: (String) -> Unit,
     val onUseMyLocation: () -> Unit,
+    val onGrantHealth: () -> Unit,
 )
 
 @Composable
@@ -134,6 +139,7 @@ fun HomeScreen(
             when (state.activeFace) {
                 ActiveFace.TEMPERATURE -> TemperatureBody(state, callbacks)
                 ActiveFace.SUN -> SunBody(state, callbacks)
+                ActiveFace.STEPS -> StepsBody(state, callbacks)
                 ActiveFace.CUSTOM -> CustomBody(state, callbacks)
             }
         }
@@ -157,6 +163,7 @@ fun HomeScreen(
 private fun faceTitle(face: ActiveFace): String = when (face) {
     ActiveFace.TEMPERATURE -> "Temperature"
     ActiveFace.SUN -> "Sun event"
+    ActiveFace.STEPS -> "Steps"
     ActiveFace.CUSTOM -> "Custom"
 }
 
@@ -237,6 +244,11 @@ private fun TemperatureBody(state: HomeState, callbacks: HomeCallbacks) {
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         modifier = Modifier.fillMaxWidth(),
     )
+    SleepControls(state, callbacks)
+}
+
+@Composable
+private fun SleepControls(state: HomeState, callbacks: HomeCallbacks) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -258,6 +270,33 @@ private fun TemperatureBody(state: HomeState, callbacks: HomeCallbacks) {
             ) { Text("To ${minutesToLabel(state.sleepEndMin)}") }
         }
     }
+}
+
+@Composable
+private fun StepsBody(state: HomeState, callbacks: HomeCallbacks) {
+    if (!state.stepsHealthGranted) {
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text("Health access needed", style = MaterialTheme.typography.titleSmall)
+                Text(
+                    "Steps come from Health Connect, where your step-tracking app writes them. " +
+                        "Grant read access to show today's count on your watch.",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Button(onClick = callbacks.onGrantHealth, modifier = Modifier.fillMaxWidth()) {
+                    Text("Grant Health access")
+                }
+            }
+        }
+    }
+    FaceValue(state.stepsPreview, state.stepsUpdated, next = null)
+    Button(onClick = callbacks.onUpdateNow, modifier = Modifier.fillMaxWidth()) { Text("Update now") }
+    HorizontalDivider()
+    Text("Pushed every 15 min while awake.", style = MaterialTheme.typography.bodySmall)
+    SleepControls(state, callbacks)
 }
 
 @Composable

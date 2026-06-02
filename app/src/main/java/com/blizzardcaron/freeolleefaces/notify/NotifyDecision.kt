@@ -1,7 +1,7 @@
 package com.blizzardcaron.freeolleefaces.notify
 
 /** A background failure worth notifying about. Null elsewhere means "healthy". */
-enum class FailureKind { WATCH_UNREACHABLE, WEATHER_FETCH_FAILED, SETUP_INCOMPLETE, SUN_UNREACHABLE }
+enum class FailureKind { WATCH_UNREACHABLE, WEATHER_FETCH_FAILED, SETUP_INCOMPLETE, SUN_UNREACHABLE, HEALTH_UNAVAILABLE }
 
 /** What to do with the single error notification after one worker outcome. */
 sealed interface NotifyAction {

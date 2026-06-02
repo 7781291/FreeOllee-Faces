@@ -77,6 +77,20 @@ class Prefs(context: Context) {
         get() = sp.getInt(KEY_TEMP_INTERVAL, 60)
         set(value) = sp.edit { putInt(KEY_TEMP_INTERVAL, value) }
 
+    var lastStepCount: Long?
+        get() = if (sp.contains(KEY_STEPS_COUNT)) sp.getLong(KEY_STEPS_COUNT, 0L) else null
+        set(value) = sp.edit { if (value == null) remove(KEY_STEPS_COUNT) else putLong(KEY_STEPS_COUNT, value) }
+
+    var stepsFetchedMs: Long?
+        get() = if (sp.contains(KEY_STEPS_FETCHED_MS)) sp.getLong(KEY_STEPS_FETCHED_MS, 0L) else null
+        set(value) = sp.edit { if (value == null) remove(KEY_STEPS_FETCHED_MS) else putLong(KEY_STEPS_FETCHED_MS, value) }
+
+    /** Stamp the cached step count and the time it was read from Health Connect. */
+    fun recordStepsFetch(count: Long) {
+        lastStepCount = count
+        stepsFetchedMs = System.currentTimeMillis()
+    }
+
     var sleepEnabled: Boolean
         get() = sp.getBoolean(KEY_SLEEP_ENABLED, true)
         set(value) = sp.edit { putBoolean(KEY_SLEEP_ENABLED, value) }
@@ -123,6 +137,8 @@ class Prefs(context: Context) {
         private const val KEY_CUSTOM_TEXT = "custom_text"
         private const val KEY_CUSTOM_SENT_MS = "custom_sent_ms"
         private const val KEY_TEMP_INTERVAL = "temp_interval_min"
+        private const val KEY_STEPS_COUNT = "steps_last_count"
+        private const val KEY_STEPS_FETCHED_MS = "steps_fetched_ms"
         private const val KEY_SLEEP_ENABLED = "sleep_enabled"
         private const val KEY_SLEEP_START = "sleep_start_min"
         private const val KEY_SLEEP_END = "sleep_end_min"
