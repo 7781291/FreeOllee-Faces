@@ -103,9 +103,7 @@ class AutoUpdateWorker(
             prefs.recordAutoSend("Asleep (power saving)")
         }
 
-        val fire = AutoUpdateSchedule.nextTemperatureFire(
-            now, AutoUpdateScheduler.STEPS_INTERVAL_MINUTES, sleep,
-        )
+        val fire = AutoUpdateSchedule.nextTemperatureFire(now, prefs.updateIntervalMinutes, sleep)
         val delayMs = Duration.between(now, fire).toMillis().coerceAtLeast(0)
         AutoUpdateScheduler.enqueueNext(ctx, delayMs, sunAttempt = 0)
         return Result.success()
@@ -151,7 +149,7 @@ class AutoUpdateWorker(
             prefs.recordAutoSend("Asleep (power saving)")
         }
 
-        val fire = AutoUpdateSchedule.nextTemperatureFire(now, prefs.tempIntervalMinutes, sleep)
+        val fire = AutoUpdateSchedule.nextTemperatureFire(now, prefs.updateIntervalMinutes, sleep)
         val delayMs = Duration.between(now, fire).toMillis().coerceAtLeast(0)
         AutoUpdateScheduler.enqueueNext(ctx, delayMs, sunAttempt = 0)
         return Result.success()

@@ -44,6 +44,8 @@ import com.blizzardcaron.freeolleefaces.ui.HomeState
 import com.blizzardcaron.freeolleefaces.ui.FacesListScreen
 import com.blizzardcaron.freeolleefaces.ui.PreviewState
 import com.blizzardcaron.freeolleefaces.ui.Screen
+import com.blizzardcaron.freeolleefaces.ui.SettingsCallbacks
+import com.blizzardcaron.freeolleefaces.ui.SettingsScreen
 import com.blizzardcaron.freeolleefaces.ui.theme.FreeOlleeFacesTheme
 import com.blizzardcaron.freeolleefaces.weather.OpenMeteoClient
 import com.blizzardcaron.freeolleefaces.weather.RetryPolicy
@@ -112,7 +114,7 @@ private fun AppRoot(
                 watchLabel = labelForAddress(context, prefs.watchAddress),
                 watchSelected = prefs.watchAddress != null,
                 tempUnit = prefs.tempUnit,
-                tempIntervalText = prefs.tempIntervalMinutes.toString(),
+                updateIntervalMinutes = prefs.updateIntervalMinutes,
                 sleepEnabled = prefs.sleepEnabled,
                 sleepStartMin = prefs.sleepStartMin,
                 sleepEndMin = prefs.sleepEndMin,
@@ -154,12 +156,14 @@ private fun AppRoot(
         }
     }
 
-    fun interval(): Int = state.tempIntervalText.toIntOrNull()?.coerceAtLeast(15) ?: 60
+    fun interval(): Int = state.updateIntervalMinutes
 
+    // Reads from prefs (the just-persisted source of truth) so a setting change reflects
+    // immediately — computing from `state` inside the same copy would see the pre-change value.
     fun tempNextText(): String {
-        val sleep = if (state.sleepEnabled) SleepWindow(state.sleepStartMin, state.sleepEndMin) else null
+        val sleep = if (prefs.sleepEnabled) SleepWindow(prefs.sleepStartMin, prefs.sleepEndMin) else null
         val fire = AutoUpdateSchedule.nextTemperatureFire(
-            ZonedDateTime.now(ZoneId.systemDefault()), interval(), sleep,
+            ZonedDateTime.now(ZoneId.systemDefault()), prefs.updateIntervalMinutes, sleep,
         )
         return "Next update ${fire.format(CLOCK)}"
     }
@@ -167,10 +171,7 @@ private fun AppRoot(
     fun refreshTemp(force: Boolean, push: Boolean) {
         val c = validCoords()
         if (c == null) {
-            update { it.copy(
-                tempPreview = PreviewState.Error("Enter coordinates to see temperature"),
-                showLocationFallback = true,
-            ) }
+            update { it.copy(tempPreview = PreviewState.Error("Location not set — open Settings (⚙)")) }
             return
         }
         val (lat, lng) = c
@@ -213,10 +214,7 @@ private fun AppRoot(
     fun refreshSun(push: Boolean) {
         val c = validCoords()
         if (c == null) {
-            update { it.copy(
-                sunPreview = PreviewState.Error("Enter coordinates to see sun event"),
-                showLocationFallback = true,
-            ) }
+            update { it.copy(sunPreview = PreviewState.Error("Location not set — open Settings (⚙)")) }
             return
         }
         val (lat, lng) = c
@@ -281,12 +279,8 @@ private fun AppRoot(
         when (face) {
             ActiveFace.TEMPERATURE -> refreshTemp(force = false, push = true)
             ActiveFace.SUN -> refreshSun(push = true)
-            ActiveFace.STEPS -> {
-                update { it.copy(showLocationFallback = false) }
-                refreshSteps(push = true)
-            }
+            ActiveFace.STEPS -> refreshSteps(push = true)
             ActiveFace.CUSTOM -> {
-                update { it.copy(showLocationFallback = false) }
                 val text = prefs.customText
                 if (text.isNotEmpty()) sendCustom(text)
             }
@@ -334,7 +328,6 @@ private fun AppRoot(
                         update { it.copy(
                             lat = coords.lat.toString(),
                             lng = coords.lng.toString(),
-                            showLocationFallback = false,
                             locating = false,
                             locationLabel = locLabel(coords.lat, coords.lng),
                             locationFreshness = "just now",
@@ -361,24 +354,18 @@ private fun AppRoot(
                         update { it.copy(
                             lat = coords.lat.toString(),
                             lng = coords.lng.toString(),
-                            showLocationFallback = false,
                             locating = false,
                             locationLabel = locLabel(coords.lat, coords.lng),
                             locationFreshness = "just now",
                         ) }
                     }
                     .onFailure {
-                        update { it.copy(
-                            locating = false,
-                            showLocationFallback = state.activeFace != ActiveFace.CUSTOM,
-                        ) }
+                        update { it.copy(locating = false) }
                     }
             }
 
-            // No permission: manual entry / grant fallback (Custom needs no coords).
-            else -> {
-                update { it.copy(showLocationFallback = state.activeFace != ActiveFace.CUSTOM) }
-            }
+            // No permission and no saved coords: the user sets location in Settings.
+            else -> { /* nothing to fetch */ }
         }
 
         refreshActive(force = false, push = false)
@@ -419,7 +406,6 @@ private fun AppRoot(
                         update { it.copy(
                             lat = coords.lat.toString(),
                             lng = coords.lng.toString(),
-                            showLocationFallback = false,
                             locating = false,
                             locationLabel = locLabel(coords.lat, coords.lng),
                             locationFreshness = "just now",
@@ -447,28 +433,84 @@ private fun AppRoot(
         }
     }
 
-    val callbacks = HomeCallbacks(
+    fun selectWatch() {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT)
+            == PackageManager.PERMISSION_GRANTED
+        ) showPicker = true
+        else btPermissionLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT)
+    }
+
+    fun useMyLocation() {
+        val hasAny =
+            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
+                PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) ==
+                PackageManager.PERMISSION_GRANTED
+        if (hasAny) {
+            scope.launch {
+                update { it.copy(locating = true) }
+                locationSource.fetch()
+                    .onSuccess { coords ->
+                        prefs.lastLat = coords.lat; prefs.lastLng = coords.lng
+                        prefs.lastLocationFetchedMs = System.currentTimeMillis()
+                        update { it.copy(
+                            lat = coords.lat.toString(),
+                            lng = coords.lng.toString(),
+                            locating = false,
+                            locationLabel = locLabel(coords.lat, coords.lng),
+                            locationFreshness = "just now",
+                        ) }
+                        refreshActive(force = true, push = false)
+                    }
+                    .onFailure { err ->
+                        update { it.copy(locating = false) }
+                        showSnackbar("Location failed: ${err.message}")
+                    }
+            }
+        } else {
+            locationPermissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                )
+            )
+        }
+    }
+
+    val homeCallbacks = HomeCallbacks(
         onOpenFaces = { screen = Screen.FacesList },
-        onSelectWatch = {
-            if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT)
-                == PackageManager.PERMISSION_GRANTED
-            ) showPicker = true
-            else btPermissionLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT)
-        },
+        onOpenSettings = { screen = Screen.Settings },
         onUpdateNow = { refreshActive(force = true, push = true) },
         onTempUnitChange = { newUnit ->
             prefs.tempUnit = newUnit
             update { it.copy(tempUnit = newUnit) }
             refreshTemp(force = false, push = state.activeFace == ActiveFace.TEMPERATURE)
         },
-        onTempIntervalChange = { text ->
-            update { it.copy(tempIntervalText = text) }
-            val mins = text.toIntOrNull()
-            if (mins != null) {
-                prefs.tempIntervalMinutes = mins.coerceAtLeast(15)
-                AutoUpdateScheduler.reschedule(context)
-                update { it.copy(tempNext = tempNextText()) }
+        onCustomChange = { text ->
+            val capped = text.take(6)
+            update { it.copy(custom = capped) }
+            prefs.customText = capped
+        },
+        onSendCustom = { sendCustom(state.custom) },
+        onGrantHealth = {
+            when (stepsRepo.availability()) {
+                StepsRepository.Availability.AVAILABLE ->
+                    healthPermissionLauncher.launch(StepsRepository.PERMISSIONS)
+                StepsRepository.Availability.UPDATE_REQUIRED ->
+                    showSnackbar("Update Health Connect (in system settings) to read steps.")
+                StepsRepository.Availability.UNAVAILABLE ->
+                    showSnackbar("Health Connect isn't available on this device.")
             }
+        },
+    )
+
+    val settingsCallbacks = SettingsCallbacks(
+        onBack = { screen = Screen.Home },
+        onSelectWatch = ::selectWatch,
+        onIntervalChange = { mins ->
+            prefs.updateIntervalMinutes = mins
+            update { it.copy(updateIntervalMinutes = prefs.updateIntervalMinutes, tempNext = tempNextText()) }
+            AutoUpdateScheduler.reschedule(context)
         },
         onSleepEnabledChange = { enabled ->
             prefs.sleepEnabled = enabled
@@ -485,69 +527,22 @@ private fun AppRoot(
             update { it.copy(sleepEndMin = min, tempNext = tempNextText()) }
             AutoUpdateScheduler.reschedule(context)
         },
-        onCustomChange = { text ->
-            val capped = text.take(6)
-            update { it.copy(custom = capped) }
-            prefs.customText = capped
-        },
-        onSendCustom = { sendCustom(state.custom) },
         onLatChange = { onCoordEdit(it, state.lng) },
         onLngChange = { onCoordEdit(state.lat, it) },
-        onUseMyLocation = {
-            val hasAny =
-                ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
-                    PackageManager.PERMISSION_GRANTED ||
-                    ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) ==
-                    PackageManager.PERMISSION_GRANTED
-            if (hasAny) {
-                scope.launch {
-                    update { it.copy(locating = true) }
-                    locationSource.fetch()
-                        .onSuccess { coords ->
-                            prefs.lastLat = coords.lat; prefs.lastLng = coords.lng
-                            prefs.lastLocationFetchedMs = System.currentTimeMillis()
-                            update { it.copy(
-                                lat = coords.lat.toString(),
-                                lng = coords.lng.toString(),
-                                showLocationFallback = false,
-                                locating = false,
-                                locationLabel = locLabel(coords.lat, coords.lng),
-                                locationFreshness = "just now",
-                            ) }
-                            refreshActive(force = true, push = false)
-                        }
-                        .onFailure { err ->
-                            update { it.copy(locating = false) }
-                            showSnackbar("Location failed: ${err.message}")
-                        }
-                }
-            } else {
-                locationPermissionLauncher.launch(
-                    arrayOf(
-                        Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.ACCESS_COARSE_LOCATION,
-                    )
-                )
-            }
-        },
-        onGrantHealth = {
-            when (stepsRepo.availability()) {
-                StepsRepository.Availability.AVAILABLE ->
-                    healthPermissionLauncher.launch(StepsRepository.PERMISSIONS)
-                StepsRepository.Availability.UPDATE_REQUIRED ->
-                    showSnackbar("Update Health Connect (in system settings) to read steps.")
-                StepsRepository.Availability.UNAVAILABLE ->
-                    showSnackbar("Health Connect isn't available on this device.")
-            }
-        },
+        onUseMyLocation = ::useMyLocation,
     )
 
     when (screen) {
-        Screen.Home -> HomeScreen(state = state, callbacks = callbacks, modifier = modifier)
+        Screen.Home -> HomeScreen(state = state, callbacks = homeCallbacks, modifier = modifier)
         Screen.FacesList -> FacesListScreen(
             active = state.activeFace,
             onSelect = { activate(it) },
             onBack = { screen = Screen.Home },
+            modifier = modifier,
+        )
+        Screen.Settings -> SettingsScreen(
+            state = state,
+            callbacks = settingsCallbacks,
             modifier = modifier,
         )
     }

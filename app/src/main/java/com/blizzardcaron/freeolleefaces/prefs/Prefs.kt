@@ -73,9 +73,10 @@ class Prefs(context: Context) {
         tempFetchedMs = System.currentTimeMillis()
     }
 
-    var tempIntervalMinutes: Int
-        get() = sp.getInt(KEY_TEMP_INTERVAL, 60)
-        set(value) = sp.edit { putInt(KEY_TEMP_INTERVAL, value) }
+    /** Shared push cadence (minutes) for the interval-driven faces; one of [IntervalOptions.ALLOWED]. */
+    var updateIntervalMinutes: Int
+        get() = IntervalOptions.coerce(sp.getInt(KEY_UPDATE_INTERVAL, IntervalOptions.DEFAULT))
+        set(value) = sp.edit { putInt(KEY_UPDATE_INTERVAL, IntervalOptions.coerce(value)) }
 
     var lastStepCount: Long?
         get() = if (sp.contains(KEY_STEPS_COUNT)) sp.getLong(KEY_STEPS_COUNT, 0L) else null
@@ -136,7 +137,7 @@ class Prefs(context: Context) {
         private const val KEY_LOCATION_FETCHED_MS = "location_fetched_ms"
         private const val KEY_CUSTOM_TEXT = "custom_text"
         private const val KEY_CUSTOM_SENT_MS = "custom_sent_ms"
-        private const val KEY_TEMP_INTERVAL = "temp_interval_min"
+        private const val KEY_UPDATE_INTERVAL = "update_interval_min"
         private const val KEY_STEPS_COUNT = "steps_last_count"
         private const val KEY_STEPS_FETCHED_MS = "steps_fetched_ms"
         private const val KEY_SLEEP_ENABLED = "sleep_enabled"

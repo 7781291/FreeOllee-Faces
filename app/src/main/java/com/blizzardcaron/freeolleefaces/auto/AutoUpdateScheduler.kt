@@ -19,9 +19,6 @@ object AutoUpdateScheduler {
     const val WORK_NAME = "auto_update_chain"
     const val WATCHDOG_NAME = "auto_update_watchdog"
 
-    /** Fixed push cadence for the Steps face (minutes); WorkManager's practical floor. */
-    const val STEPS_INTERVAL_MINUTES = 15
-
     /** Re-arm the chain from current Prefs. Safe to call repeatedly (always REPLACEs). */
     fun reschedule(context: Context) {
         val ctx = context.applicationContext
@@ -33,9 +30,9 @@ object AutoUpdateScheduler {
         when (prefs.activeFace) {
             ActiveFace.CUSTOM -> wm.cancelUniqueWork(WORK_NAME)
 
-            ActiveFace.TEMPERATURE -> scheduleIntervalFace(ctx, prefs, prefs.tempIntervalMinutes)
+            ActiveFace.TEMPERATURE -> scheduleIntervalFace(ctx, prefs, prefs.updateIntervalMinutes)
 
-            ActiveFace.STEPS -> scheduleIntervalFace(ctx, prefs, STEPS_INTERVAL_MINUTES)
+            ActiveFace.STEPS -> scheduleIntervalFace(ctx, prefs, prefs.updateIntervalMinutes)
 
             ActiveFace.SUN -> enqueueNext(ctx, 0L, sunAttempt = 0)
         }
