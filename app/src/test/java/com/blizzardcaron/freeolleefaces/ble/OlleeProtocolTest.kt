@@ -174,4 +174,14 @@ class OlleeProtocolTest {
     fun `buildWeekdayPacket rejects a slot that is not exactly 2 chars`() {
         OlleeProtocol.buildWeekdayPacket(List(7) { "X" })
     }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `buildWeekdayPacket rejects a non-ASCII slot`() {
+        OlleeProtocol.buildWeekdayPacket(List(7) { "é2" }) // length 2 but non-ASCII
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `buildRawPacket rejects a target outside one byte`() {
+        OlleeProtocol.buildRawPacket(0x123, byteArrayOf(0x00))
+    }
 }
