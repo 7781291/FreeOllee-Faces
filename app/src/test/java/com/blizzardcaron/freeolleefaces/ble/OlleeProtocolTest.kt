@@ -134,4 +134,44 @@ class OlleeProtocolTest {
         assertNull(OlleeProtocol.parseFrame(byteArrayOf(0x00, 0x06)))
         assertNull(OlleeProtocol.parseFrame(hex("00060000022A"))) // no AA 55 magic
     }
+
+    // --- raw / weekday-table packets (upper-left panel foundation) ---
+    //
+    // The watch's upper-left letter pair renders the current day's 2-char slot from a 7-entry
+    // weekday table written at target 0x34, preceded by a 4-byte 00 00 7E 90 prefix. Captured
+    // from the official app: inner = 02 34 | 00 00 7E 90 | "MOTUWETHFRSASU", CRC 0x7EAB.
+
+    @Test
+    fun `buildRawPacket reproduces the captured 0x34 weekday write byte-for-byte`() {
+        val payload = hex("00007E90") + "MOTUWETHFRSASU".toByteArray(Charsets.US_ASCII)
+        val packet = OlleeProtocol.buildRawPacket(0x34, payload)
+        assertArrayEquals(hex("0018AA557EAB023400007E904D4F545557455448465253415355"), packet)
+    }
+
+    @Test
+    fun `buildWeekdayPacket from the standard abbreviations matches the captured frame`() {
+        val packet = OlleeProtocol.buildWeekdayPacket(
+            listOf("MO", "TU", "WE", "TH", "FR", "SA", "SU")
+        )
+        assertArrayEquals(hex("0018AA557EAB023400007E904D4F545557455448465253415355"), packet)
+    }
+
+    @Test
+    fun `buildWeekdayPacket with all TE slots produces a valid frame the watch will accept`() {
+        val packet = OlleeProtocol.buildWeekdayPacket(List(7) { "TE" })
+        val f = OlleeProtocol.parseFrame(packet)!!
+        assertEquals(0x34, f.target)
+        assertTrue(f.crcOk)
+        assertArrayEquals(hex("00007E90") + "TETETETETETETE".toByteArray(Charsets.US_ASCII), f.payload)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `buildWeekdayPacket rejects a table that is not 7 slots`() {
+        OlleeProtocol.buildWeekdayPacket(listOf("MO", "TU"))
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `buildWeekdayPacket rejects a slot that is not exactly 2 chars`() {
+        OlleeProtocol.buildWeekdayPacket(List(7) { "X" })
+    }
 }

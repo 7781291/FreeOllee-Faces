@@ -12,6 +12,13 @@ object OlleeProtocol {
     // See docs/reference/ollee-ble-protocol.md.
     const val TARGET_TEMPERATURE = 0x2e
 
+    // The weekday table. The watch's upper-left letter pair (the only BLE-writable text in the
+    // upper panel) renders the current day's 2-char slot from this 7-entry table. The official
+    // app writes it at 0x34 behind a 4-byte 00 00 7E 90 prefix. Foundation for a future custom
+    // 2-char always-on label; no UI/face uses it yet.
+    const val TARGET_WEEKDAYS = 0x34
+    private val WEEKDAY_PREFIX = byteArrayOf(0x00, 0x00, 0x7E, 0x90.toByte())
+
     fun crc16(data: ByteArray): Int {
         var crc = 0xFFFF
         for (b in data) {
@@ -44,7 +51,18 @@ object OlleeProtocol {
             "value must be ASCII (got '$value')"
         }
 
-        val inner = byteArrayOf(0x02, target.toByte()) + value.toByteArray(Charsets.US_ASCII)
+        return buildRawPacket(target, value.toByteArray(Charsets.US_ASCII))
+    }
+
+    /**
+     * Builds a framed packet writing arbitrary raw [payload] bytes to [target]. Unlike
+     * [buildPacket] this imposes no ASCII or 6-char limit, so it can carry binary-prefixed
+     * fields like the weekday table (0x34). Framing/CRC are identical.
+     */
+    fun buildRawPacket(target: Int, payload: ByteArray): ByteArray {
+        require(target in 0..0xFF) { "target must be a single byte (got $target)" }
+
+        val inner = byteArrayOf(0x02, target.toByte()) + payload
         val crc = crc16(inner)
 
         return byteArrayOf(
@@ -55,6 +73,21 @@ object OlleeProtocol {
             (crc shr 8).toByte(),
             (crc and 0xFF).toByte()
         ) + inner
+    }
+
+    /**
+     * Builds the weekday-table write (0x34). [slots] must be 7 entries of exactly 2 ASCII chars,
+     * in Mon..Sun order (captured default: `MO TU WE TH FR SA SU`). The firmware shows the slot
+     * matching the current date in the upper-left letter pair. Pass all-identical slots (e.g.
+     * `List(7){"TE"}`) to make the panel show a fixed 2-char label regardless of weekday.
+     */
+    fun buildWeekdayPacket(slots: List<String>): ByteArray {
+        require(slots.size == 7) { "weekday table needs 7 slots (got ${slots.size})" }
+        require(slots.all { it.length == 2 && it.all { c -> c.code in 0..127 } }) {
+            "each slot must be exactly 2 ASCII chars (got $slots)"
+        }
+        val payload = WEEKDAY_PREFIX + slots.joinToString("").toByteArray(Charsets.US_ASCII)
+        return buildRawPacket(TARGET_WEEKDAYS, payload)
     }
 
     /** °F string matching the watch's read format ("  54 F"): right-justified to 6 chars. */
