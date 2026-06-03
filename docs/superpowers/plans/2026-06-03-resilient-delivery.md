@@ -517,13 +517,42 @@ context, device resolution, and the retry loop:
         }
 ```
 
-- [ ] **Step 4: Verify it compiles and existing unit tests still pass**
+- [ ] **Step 4: Fast-fail a dropped/refused connection (so retries don't each wait 8s)**
+
+(Carried from Task 2's code review.) Today `onConnectionStateChange` only `close()`s on
+`STATE_DISCONNECTED` and never resumes the coroutine, so a connect that drops before discovery
+(e.g. GATT status 133) hangs until the 8 s `withTimeout` — wasteful once we retry 3×. In
+`writePacket`'s `onConnectionStateChange`, resume-with-exception on an early disconnect, and
+document the single-threaded `next` mutation:
+
+```kotlin
+                override fun onConnectionStateChange(g: BluetoothGatt, status: Int, newState: Int) {
+                    if (newState == BluetoothProfile.STATE_CONNECTED) {
+                        g.discoverServices()
+                    } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                        // Fail fast if we dropped before resuming (e.g. status 133), rather than
+                        // hanging until the 8s timeout — the retry loop re-attempts immediately.
+                        if (cont.isActive) {
+                            cont.resumeWithException(IllegalStateException("connection lost: status=$status"))
+                        }
+                        g.close()
+                    }
+                }
+```
+
+And add a one-line comment at the `var next = 0` declaration:
+
+```kotlin
+            var next = 0 // mutated only on the single GATT callback thread — no synchronization needed
+```
+
+- [ ] **Step 5: Verify it compiles and existing unit tests still pass**
 
 Run: `./gradlew :app:compileDebugKotlin :app:testDebugUnitTest`
 Expected: BUILD SUCCESSFUL; all existing tests pass. The two-arg `send(deviceAddress, value)`
 overload (which delegates to the three-arg form) is unchanged.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add app/src/main/java/com/blizzardcaron/freeolleefaces/ble/OlleeBleClient.kt
