@@ -8,28 +8,29 @@ import com.blizzardcaron.freeolleefaces.format.TempUnit
 class DisplayFormatterTest {
 
     @Test
-    fun `temperature rounds and right-justifies with F suffix - typical`() {
-        assertEquals("  72 F", DisplayFormatter.temperature(72.0))
-        assertEquals("  72 F", DisplayFormatter.temperature(71.6)) // rounds up
-        assertEquals("  72 F", DisplayFormatter.temperature(72.4)) // rounds down
-        assertEquals("   0 F", DisplayFormatter.temperature(0.0))
+    fun `temperature rounds and right-justifies with degree F suffix - typical`() {
+        // '#' is the watch font's degree glyph (renders as '°'); see DisplayFormatter.temperature.
+        assertEquals("  72#F", DisplayFormatter.temperature(72.0))
+        assertEquals("  72#F", DisplayFormatter.temperature(71.6)) // rounds up
+        assertEquals("  72#F", DisplayFormatter.temperature(72.4)) // rounds down
+        assertEquals("   0#F", DisplayFormatter.temperature(0.0))
     }
 
     @Test
     fun `temperature handles negative values`() {
-        assertEquals(" -12 F", DisplayFormatter.temperature(-12.0))
+        assertEquals(" -12#F", DisplayFormatter.temperature(-12.0))
     }
 
     @Test
     fun `temperature handles three-digit values`() {
-        assertEquals(" 102 F", DisplayFormatter.temperature(102.0))
-        assertEquals("-100 F", DisplayFormatter.temperature(-100.0))
+        assertEquals(" 102#F", DisplayFormatter.temperature(102.0))
+        assertEquals("-100#F", DisplayFormatter.temperature(-100.0))
     }
 
     @Test
     fun `temperature with explicit Celsius uses C suffix`() {
-        assertEquals("  22 C", DisplayFormatter.temperature(22.0, TempUnit.CELSIUS))
-        assertEquals(" -12 C", DisplayFormatter.temperature(-12.0, TempUnit.CELSIUS))
+        assertEquals("  22#C", DisplayFormatter.temperature(22.0, TempUnit.CELSIUS))
+        assertEquals(" -12#C", DisplayFormatter.temperature(-12.0, TempUnit.CELSIUS))
     }
 
     @Test
@@ -43,7 +44,7 @@ class DisplayFormatterTest {
     @Test
     fun `temperature default overload still produces F suffix`() {
         // Regression guard for v0.1 callers that pass just a Double.
-        assertEquals("  72 F", DisplayFormatter.temperature(72.0))
+        assertEquals("  72#F", DisplayFormatter.temperature(72.0))
     }
 
     @Test

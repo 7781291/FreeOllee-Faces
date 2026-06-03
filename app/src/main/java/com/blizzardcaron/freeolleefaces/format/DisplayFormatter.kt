@@ -10,8 +10,11 @@ object DisplayFormatter {
     private const val LENGTH = 6
 
     fun temperature(value: Double, unit: TempUnit): String {
+        // The watch's segment font (firmware OW-FW-APP, font table indexed by ASCII) maps '#'
+        // (0x23) to segments a+b+f+g — the top square that reads as a degree '°'. There is no
+        // glyph at Latin-1 0xB0, so we send '#' to get the degree ring, e.g. "  66#F" -> 66°F.
         val rounded = value.roundToInt()
-        return "%4d ${unit.symbol}".format(rounded)
+        return "%4d#${unit.symbol}".format(rounded)
     }
 
     fun temperature(value: Double): String = temperature(value, TempUnit.FAHRENHEIT)
