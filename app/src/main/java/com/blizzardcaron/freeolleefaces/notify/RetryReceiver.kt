@@ -21,7 +21,7 @@ class RetryReceiver : BroadcastReceiver() {
         // kind unchanged and stay silent — the user would tap Retry and get no feedback that it
         // failed again.
         Prefs(ctx).lastNotifiedKind = null
-        AutoUpdateScheduler.enqueueNext(ctx, 0L, sunAttempt = 0)
+        AutoUpdateScheduler.enqueueNext(ctx, 0L, sendAttempt = 0)
     }
 
     companion object {
