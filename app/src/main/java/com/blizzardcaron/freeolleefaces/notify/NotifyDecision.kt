@@ -1,7 +1,18 @@
 package com.blizzardcaron.freeolleefaces.notify
 
-/** A background failure worth notifying about. Null elsewhere means "healthy". */
-enum class FailureKind { WATCH_UNREACHABLE, WEATHER_FETCH_FAILED, SETUP_INCOMPLETE, SUN_UNREACHABLE, HEALTH_UNAVAILABLE }
+/**
+ * A background failure worth notifying about. Null elsewhere means "healthy".
+ * [retryable] gates the notification's "Retry" action — only failures an immediate re-run
+ * can plausibly fix (the watch back in range, the network recovered), not ones needing the
+ * app (set up watch/location, grant Health access).
+ */
+enum class FailureKind(val retryable: Boolean) {
+    WATCH_UNREACHABLE(retryable = true),
+    WEATHER_FETCH_FAILED(retryable = true),
+    SETUP_INCOMPLETE(retryable = false),
+    SUN_UNREACHABLE(retryable = true),
+    HEALTH_UNAVAILABLE(retryable = false),
+}
 
 /** What to do with the single error notification after one worker outcome. */
 sealed interface NotifyAction {

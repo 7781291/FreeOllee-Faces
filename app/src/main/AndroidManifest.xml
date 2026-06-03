@@ -58,5 +58,10 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+
+        <!-- Backs the error notification's "Retry" action. -->
+        <receiver
+            android:name=".notify.RetryReceiver"
+            android:exported="false" />
     </application>
 </manifest>

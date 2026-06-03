@@ -30,7 +30,12 @@ The non-retryable kinds keep only the existing tap-to-open-app content intent.
 
 Tapping **Retry**:
 1. Clears the current notification (`ErrorNotifier.clear`).
-2. Calls `AutoUpdateScheduler.enqueueNext(ctx, 0L, sunAttempt = 0)` — fires the existing
+2. Resets `prefs.lastNotifiedKind = null`. The notification state machine
+   (`NotifyDecision`) is transition-only: it stays silent while the same failure persists.
+   After a manual Retry we *want* a repeat of the same failure to surface again (otherwise the
+   user taps Retry, it fails again, and they get no feedback), so we forget the dismissed kind
+   and let the retried run treat it as fresh.
+3. Calls `AutoUpdateScheduler.enqueueNext(ctx, 0L, sunAttempt = 0)` — fires the existing
    self-rescheduling `AutoUpdateWorker` once for whatever face is active. The worker re-sends
    and re-evaluates the notification (clears on success via `applyHealth`, or re-posts on a
    fresh failure), then re-arms the normal chain.
