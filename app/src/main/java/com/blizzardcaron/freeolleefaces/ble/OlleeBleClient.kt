@@ -24,6 +24,9 @@ class OlleeBleClient(private val context: Context) {
         val SERVICE_UUID: UUID = UUID.fromString("6e400001-b5a3-f393-e0a9-e50e24dcca9e")
         val CHAR_UUID: UUID = UUID.fromString("6e400002-b5a3-f393-e0a9-e50e24dcca9e")
         private const val CONNECT_TIMEOUT_MS = 8_000L
+        // ATT payload for the watch's default 23-byte MTU (MTU - 3). Frames longer than this are
+        // fragmented across sequential writes and reassembled by the firmware via the LEN field.
+        private const val ATT_PAYLOAD = 20
     }
 
     suspend fun send(deviceAddress: String, value: String): Result<Unit> =
@@ -49,10 +52,47 @@ class OlleeBleClient(private val context: Context) {
         }
     }
 
+    /**
+     * Sends a fully-built [packet] (e.g. from [OlleeProtocol.buildWeekdayPacket] /
+     * [OlleeProtocol.buildRawPacket]) without the ASCII/6-char nameplate framing path.
+     */
+    @SuppressLint("MissingPermission")
+    suspend fun sendPacket(deviceAddress: String, packet: ByteArray): Result<Unit> = withContext(Dispatchers.IO) {
+        runCatching {
+            val manager = context.getSystemService(BluetoothManager::class.java)
+                ?: error("BluetoothManager unavailable")
+            val device: BluetoothDevice = manager.adapter.getRemoteDevice(deviceAddress)
+
+            withTimeout(CONNECT_TIMEOUT_MS) {
+                writePacket(device, packet)
+            }
+        }
+    }
+
     @SuppressLint("MissingPermission")
     private suspend fun writePacket(device: BluetoothDevice, packet: ByteArray) =
         suspendCancellableCoroutine<Unit> { cont ->
             var gatt: BluetoothGatt? = null
+
+            // The watch's ATT MTU stays at the 23-byte default, so messages longer than the 20-byte
+            // ATT payload must be fragmented across sequential writes; the firmware reassembles them
+            // by the LEN field. Small frames (e.g. the 14-byte nameplate) are a single chunk.
+            val chunks = packet.toList().chunked(ATT_PAYLOAD).map { it.toByteArray() }
+            var next = 0
+
+            fun writeChunk(g: BluetoothGatt, char: BluetoothGattCharacteristic): Boolean =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    g.writeCharacteristic(
+                        char, chunks[next], BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+                    ) == BluetoothStatusCodes.SUCCESS
+                } else {
+                    @Suppress("DEPRECATION") run {
+                        char.value = chunks[next]
+                        char.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+                        g.writeCharacteristic(char)
+                    }
+                }
+
             val callback = object : BluetoothGattCallback() {
 
                 override fun onConnectionStateChange(g: BluetoothGatt, status: Int, newState: Int) {
@@ -81,21 +121,7 @@ class OlleeBleClient(private val context: Context) {
                             g.disconnect()
                             return
                         }
-                    val ok: Boolean = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        g.writeCharacteristic(
-                            char,
-                            packet,
-                            BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
-                        ) == BluetoothStatusCodes.SUCCESS
-                    } else {
-                        @Suppress("DEPRECATION")
-                        char.value = packet
-                        @Suppress("DEPRECATION")
-                        char.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
-                        @Suppress("DEPRECATION")
-                        g.writeCharacteristic(char)
-                    }
-                    if (!ok) {
+                    if (!writeChunk(g, char)) {
                         cont.resumeWithException(IllegalStateException("writeCharacteristic returned false"))
                         g.disconnect()
                     }
@@ -107,14 +133,20 @@ class OlleeBleClient(private val context: Context) {
                     characteristic: BluetoothGattCharacteristic,
                     status: Int,
                 ) {
-                    if (cont.isActive) {
-                        if (status == BluetoothGatt.GATT_SUCCESS) {
-                            cont.resume(Unit)
-                        } else {
-                            cont.resumeWithException(IllegalStateException("write failed: $status"))
-                        }
+                    if (!cont.isActive) { g.disconnect(); return }
+                    if (status != BluetoothGatt.GATT_SUCCESS) {
+                        cont.resumeWithException(IllegalStateException("write failed: $status"))
+                        g.disconnect()
+                        return
                     }
-                    g.disconnect()
+                    next++
+                    if (next >= chunks.size) {
+                        cont.resume(Unit)
+                        g.disconnect()
+                    } else if (!writeChunk(g, characteristic)) {
+                        cont.resumeWithException(IllegalStateException("writeCharacteristic returned false"))
+                        g.disconnect()
+                    }
                 }
             }
 
