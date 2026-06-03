@@ -127,6 +127,7 @@ class OlleeBleClient(private val context: Context) {
                 }
 
                 override fun onServicesDiscovered(g: BluetoothGatt, status: Int) {
+                    if (!cont.isActive) { g.disconnect(); return }
                     if (status != BluetoothGatt.GATT_SUCCESS) {
                         cont.resumeWithException(IllegalStateException("service discovery failed: $status"))
                         g.disconnect()

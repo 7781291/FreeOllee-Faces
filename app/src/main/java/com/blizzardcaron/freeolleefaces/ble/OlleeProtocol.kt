@@ -63,6 +63,9 @@ object OlleeProtocol {
         require(target in 0..0xFF) { "target must be a single byte (got $target)" }
 
         val inner = byteArrayOf(0x02, target.toByte()) + payload
+        // LEN is a single byte the firmware uses to reassemble fragments; guard against a payload
+        // large enough to truncate it (no current caller approaches this).
+        require(inner.size + 4 <= 0xFF) { "payload too large for single-byte LEN (inner ${inner.size})" }
         val crc = crc16(inner)
 
         return byteArrayOf(
