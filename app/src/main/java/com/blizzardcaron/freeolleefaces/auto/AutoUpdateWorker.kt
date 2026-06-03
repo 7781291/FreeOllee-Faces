@@ -10,6 +10,7 @@ import com.blizzardcaron.freeolleefaces.notify.ErrorNotifier
 import com.blizzardcaron.freeolleefaces.notify.FailureKind
 import com.blizzardcaron.freeolleefaces.notify.NotifyAction
 import com.blizzardcaron.freeolleefaces.notify.NotifyDecision
+import com.blizzardcaron.freeolleefaces.notify.StepsFailureClassifier
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
 import com.blizzardcaron.freeolleefaces.sun.SunCalc
 import com.blizzardcaron.freeolleefaces.weather.OpenMeteoClient
@@ -95,9 +96,18 @@ class AutoUpdateWorker(
                             applyHealth(ctx, prefs, FailureKind.WATCH_UNREACHABLE, inSleep)
                         }
                 }
-                .onFailure {
-                    prefs.recordAutoSend("Skipped: grant Health access")
-                    applyHealth(ctx, prefs, FailureKind.HEALTH_UNAVAILABLE, inSleep)
+                .onFailure { error ->
+                    when (val kind = StepsFailureClassifier.kindFor(error)) {
+                        // Transient read glitch with access intact — don't alarm the user; the
+                        // chain re-arms below and retries next cycle.
+                        null -> prefs.recordAutoSend("Skipped: steps read failed (will retry)")
+                        // Genuine access gap (HC unavailable, or steps/background read not
+                        // granted) — actionable, so notify with "grant Health access".
+                        else -> {
+                            prefs.recordAutoSend("Skipped: grant Health access")
+                            applyHealth(ctx, prefs, kind, inSleep)
+                        }
+                    }
                 }
         } else {
             prefs.recordAutoSend("Asleep (power saving)")
