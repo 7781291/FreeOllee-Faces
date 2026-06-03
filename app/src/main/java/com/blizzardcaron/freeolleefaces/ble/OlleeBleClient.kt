@@ -11,6 +11,7 @@ import android.bluetooth.BluetoothStatusCodes
 import android.content.Context
 import android.os.Build
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
@@ -38,36 +39,49 @@ class OlleeBleClient(private val context: Context) {
      * the Temperature face's field directly.
      */
     @SuppressLint("MissingPermission")
-    suspend fun send(deviceAddress: String, value: String, target: Int): Result<Unit> = withContext(Dispatchers.IO) {
-        runCatching {
-            val packet = OlleeProtocol.buildPacket(target, value.padEnd(OlleeProtocol.MAX_VALUE_LENGTH, ' '))
-
-            val manager = context.getSystemService(BluetoothManager::class.java)
-                ?: error("BluetoothManager unavailable")
-            val device: BluetoothDevice = manager.adapter.getRemoteDevice(deviceAddress)
-
-            withTimeout(CONNECT_TIMEOUT_MS) {
-                writePacket(device, packet)
-            }
-        }
+    suspend fun send(deviceAddress: String, value: String, target: Int): Result<Unit> {
+        val packet = OlleeProtocol.buildPacket(target, value.padEnd(OlleeProtocol.MAX_VALUE_LENGTH, ' '))
+        return deliver(deviceAddress, packet)
     }
 
     /**
      * Sends a fully-built [packet] (e.g. from [OlleeProtocol.buildWeekdayPacket] /
      * [OlleeProtocol.buildRawPacket]) without the ASCII/6-char nameplate framing path.
      */
-    @SuppressLint("MissingPermission")
-    suspend fun sendPacket(deviceAddress: String, packet: ByteArray): Result<Unit> = withContext(Dispatchers.IO) {
-        runCatching {
-            val manager = context.getSystemService(BluetoothManager::class.java)
-                ?: error("BluetoothManager unavailable")
-            val device: BluetoothDevice = manager.adapter.getRemoteDevice(deviceAddress)
+    suspend fun sendPacket(deviceAddress: String, packet: ByteArray): Result<Unit> =
+        deliver(deviceAddress, packet)
 
-            withTimeout(CONNECT_TIMEOUT_MS) {
-                writePacket(device, packet)
+    /**
+     * Resolves the device once, then attempts connect + chunked write up to
+     * [BleRetryPolicy.MAX_ATTEMPTS] times with backoff between tries (each attempt bounded by the
+     * 8s [CONNECT_TIMEOUT_MS]). Returns on first success; surfaces the last error only after the
+     * budget is spent.
+     */
+    @SuppressLint("MissingPermission")
+    private suspend fun deliver(deviceAddress: String, packet: ByteArray): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val manager = context.getSystemService(BluetoothManager::class.java)
+                    ?: error("BluetoothManager unavailable")
+                val device: BluetoothDevice = manager.adapter.getRemoteDevice(deviceAddress)
+
+                var lastError: Throwable? = null
+                for (attempt in 0 until BleRetryPolicy.MAX_ATTEMPTS) {
+                    val result = runCatching {
+                        withTimeout(CONNECT_TIMEOUT_MS) { writePacket(device, packet) }
+                    }
+                    if (result.isSuccess) return@runCatching
+                    val error = result.exceptionOrNull()!!
+                    lastError = error
+                    val isLastAttempt = attempt == BleRetryPolicy.MAX_ATTEMPTS - 1
+                    if (isLastAttempt || !BleRetryPolicy.isRetryable(error)) {
+                        throw error
+                    }
+                    delay(BleRetryPolicy.backoffForAttempt(attempt))
+                }
+                throw lastError ?: IllegalStateException("send failed with no attempts")
             }
         }
-    }
 
     @SuppressLint("MissingPermission")
     private suspend fun writePacket(device: BluetoothDevice, packet: ByteArray) =
@@ -78,7 +92,7 @@ class OlleeBleClient(private val context: Context) {
             // ATT payload must be fragmented across sequential writes; the firmware reassembles them
             // by the LEN field. Small frames (e.g. the 14-byte nameplate) are a single chunk.
             val chunks = packet.toList().chunked(ATT_PAYLOAD).map { it.toByteArray() }
-            var next = 0
+            var next = 0 // mutated only on the single GATT callback thread — no synchronization needed
 
             fun writeChunk(g: BluetoothGatt, char: BluetoothGattCharacteristic): Boolean =
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -99,6 +113,11 @@ class OlleeBleClient(private val context: Context) {
                     if (newState == BluetoothProfile.STATE_CONNECTED) {
                         g.discoverServices()
                     } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                        // Fail fast if we dropped before resuming (e.g. status 133), rather than
+                        // hanging until the 8s timeout — the retry loop re-attempts immediately.
+                        if (cont.isActive) {
+                            cont.resumeWithException(IllegalStateException("connection lost: status=$status"))
+                        }
                         g.close()
                     }
                 }
