@@ -1,0 +1,25 @@
+package com.blizzardcaron.freeolleefaces.notify
+
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class FailureKindTest {
+
+    @Test fun transientFailuresAreRetryable() {
+        assertTrue(FailureKind.WATCH_UNREACHABLE.retryable)
+        assertTrue(FailureKind.WEATHER_FETCH_FAILED.retryable)
+        assertTrue(FailureKind.SUN_UNREACHABLE.retryable)
+    }
+
+    @Test fun setupFailuresAreNotRetryable() {
+        assertFalse(FailureKind.SETUP_INCOMPLETE.retryable)
+        assertFalse(FailureKind.HEALTH_UNAVAILABLE.retryable)
+    }
+
+    @Test fun everyKindHasAnExplicitRetryableValue() {
+        // Guard against a future kind silently defaulting; exactly three are retryable today.
+        assertEquals(3, FailureKind.entries.count { it.retryable })
+    }
+}

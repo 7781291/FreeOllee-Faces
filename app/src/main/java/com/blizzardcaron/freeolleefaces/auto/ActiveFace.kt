@@ -5,6 +5,9 @@ enum class ActiveFace {
     TEMPERATURE,
     SUN,
 
+    /** Today's step count, read from Health Connect. */
+    STEPS,
+
     /** Not reachable via [fromLegacyAutoSource] — the legacy AutoSource enum had no CUSTOM value. */
     CUSTOM;
 

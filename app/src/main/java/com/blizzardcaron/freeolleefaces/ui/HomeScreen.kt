@@ -7,19 +7,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -28,7 +26,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.blizzardcaron.freeolleefaces.auto.ActiveFace
 import com.blizzardcaron.freeolleefaces.format.TempUnit
@@ -47,7 +44,7 @@ data class HomeState(
     val tempPreview: PreviewState = PreviewState.WaitingForCoords,
     val tempUpdated: String? = null,
     val tempNext: String? = null,
-    val tempIntervalText: String = "60",
+    val updateIntervalMinutes: Int = 15,
     val sleepEnabled: Boolean = true,
     val sleepStartMin: Int = 22 * 60,
     val sleepEndMin: Int = 6 * 60,
@@ -56,28 +53,25 @@ data class HomeState(
     val sunUpdated: String? = null,
     val sunNext: String? = null,
 
+    val stepsPreview: PreviewState = PreviewState.Loading,
+    val stepsUpdated: String? = null,
+    val stepsHealthGranted: Boolean = false,
+
     val custom: String = "",
     val customSent: String? = null,
 
-    val showLocationFallback: Boolean = false,
     val lat: String = "",
     val lng: String = "",
 )
 
 data class HomeCallbacks(
     val onOpenFaces: () -> Unit,
-    val onSelectWatch: () -> Unit,
+    val onOpenSettings: () -> Unit,
     val onUpdateNow: () -> Unit,
     val onTempUnitChange: (TempUnit) -> Unit,
-    val onTempIntervalChange: (String) -> Unit,
-    val onSleepEnabledChange: (Boolean) -> Unit,
-    val onSleepStartChange: (Int) -> Unit,
-    val onSleepEndChange: (Int) -> Unit,
     val onCustomChange: (String) -> Unit,
     val onSendCustom: () -> Unit,
-    val onLatChange: (String) -> Unit,
-    val onLngChange: (String) -> Unit,
-    val onUseMyLocation: () -> Unit,
+    val onGrantHealth: () -> Unit,
 )
 
 @Composable
@@ -96,32 +90,11 @@ fun HomeScreen(
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(faceTitle(state.activeFace), style = MaterialTheme.typography.headlineSmall)
-            TextButton(onClick = callbacks.onOpenFaces) { Text("Faces") }
-        }
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(state.watchLabel, style = MaterialTheme.typography.bodyMedium)
-            TextButton(onClick = callbacks.onSelectWatch) {
-                Text(if (state.watchSelected) "change" else "select")
-            }
-        }
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(
-                if (state.locating) "Locating…"
-                else state.locationLabel + (state.locationFreshness?.let { " · $it" } ?: ""),
-                style = MaterialTheme.typography.bodySmall,
-            )
-            TextButton(onClick = callbacks.onUseMyLocation) {
-                Text(if (state.locationFreshness == null) "set" else "refresh")
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = callbacks.onOpenFaces) { Text("Faces") }
+                IconButton(onClick = callbacks.onOpenSettings) {
+                    Text("⚙", style = MaterialTheme.typography.titleLarge)
+                }
             }
         }
 
@@ -131,9 +104,13 @@ fun HomeScreen(
             modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            if (!state.watchSelected && state.activeFace != ActiveFace.CUSTOM) {
+                SettingsHint("No watch selected — open Settings (⚙)")
+            }
             when (state.activeFace) {
                 ActiveFace.TEMPERATURE -> TemperatureBody(state, callbacks)
                 ActiveFace.SUN -> SunBody(state, callbacks)
+                ActiveFace.STEPS -> StepsBody(state, callbacks)
                 ActiveFace.CUSTOM -> CustomBody(state, callbacks)
             }
         }
@@ -157,7 +134,13 @@ fun HomeScreen(
 private fun faceTitle(face: ActiveFace): String = when (face) {
     ActiveFace.TEMPERATURE -> "Temperature"
     ActiveFace.SUN -> "Sun event"
+    ActiveFace.STEPS -> "Steps"
     ActiveFace.CUSTOM -> "Custom"
+}
+
+@Composable
+private fun SettingsHint(text: String) {
+    Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
 }
 
 @Composable
@@ -179,41 +162,9 @@ private fun FaceValue(preview: PreviewState, updated: String?, next: String?) {
     if (next != null) Text(next, style = MaterialTheme.typography.bodySmall)
 }
 
-@Composable
-private fun LocationFallback(state: HomeState, callbacks: HomeCallbacks) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text("Location unavailable", style = MaterialTheme.typography.titleSmall)
-            OutlinedTextField(
-                value = state.lat,
-                onValueChange = callbacks.onLatChange,
-                label = { Text("Latitude") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth(),
-            )
-            OutlinedTextField(
-                value = state.lng,
-                onValueChange = callbacks.onLngChange,
-                label = { Text("Longitude") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth(),
-            )
-            OutlinedButton(onClick = callbacks.onUseMyLocation, modifier = Modifier.fillMaxWidth()) {
-                Text("Use my location")
-            }
-        }
-    }
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TemperatureBody(state: HomeState, callbacks: HomeCallbacks) {
-    if (state.showLocationFallback) LocationFallback(state, callbacks)
     FaceValue(state.tempPreview, state.tempUpdated, state.tempNext)
     Button(onClick = callbacks.onUpdateNow, modifier = Modifier.fillMaxWidth()) { Text("Update now") }
     HorizontalDivider()
@@ -229,40 +180,39 @@ private fun TemperatureBody(state: HomeState, callbacks: HomeCallbacks) {
             shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
         ) { Text("°C") }
     }
-    OutlinedTextField(
-        value = state.tempIntervalText,
-        onValueChange = callbacks.onTempIntervalChange,
-        label = { Text("Every (minutes, min 15)") },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-        modifier = Modifier.fillMaxWidth(),
-    )
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Text("Power-saving sleep")
-        Switch(checked = state.sleepEnabled, onCheckedChange = callbacks.onSleepEnabledChange)
-    }
-    if (state.sleepEnabled) {
-        val context = LocalContext.current
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            OutlinedButton(
-                onClick = { showTimePicker(context, state.sleepStartMin, callbacks.onSleepStartChange) },
-                modifier = Modifier.weight(1f),
-            ) { Text("From ${minutesToLabel(state.sleepStartMin)}") }
-            OutlinedButton(
-                onClick = { showTimePicker(context, state.sleepEndMin, callbacks.onSleepEndChange) },
-                modifier = Modifier.weight(1f),
-            ) { Text("To ${minutesToLabel(state.sleepEndMin)}") }
+}
+
+@Composable
+private fun StepsBody(state: HomeState, callbacks: HomeCallbacks) {
+    if (!state.stepsHealthGranted) {
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text("Health access needed", style = MaterialTheme.typography.titleSmall)
+                Text(
+                    "Steps come from Health Connect, where your step-tracking app writes them. " +
+                        "Grant read access to show today's count on your watch.",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Button(onClick = callbacks.onGrantHealth, modifier = Modifier.fillMaxWidth()) {
+                    Text("Grant Health access")
+                }
+            }
         }
     }
+    FaceValue(state.stepsPreview, state.stepsUpdated, next = null)
+    Button(onClick = callbacks.onUpdateNow, modifier = Modifier.fillMaxWidth()) { Text("Update now") }
+    HorizontalDivider()
+    Text(
+        "Pushed every ${state.updateIntervalMinutes} min while awake.",
+        style = MaterialTheme.typography.bodySmall,
+    )
 }
 
 @Composable
 private fun SunBody(state: HomeState, callbacks: HomeCallbacks) {
-    if (state.showLocationFallback) LocationFallback(state, callbacks)
     FaceValue(state.sunPreview, state.sunUpdated, state.sunNext)
     Button(onClick = callbacks.onUpdateNow, modifier = Modifier.fillMaxWidth()) { Text("Update now") }
 }
@@ -284,20 +234,4 @@ private fun CustomBody(state: HomeState, callbacks: HomeCallbacks) {
     if (state.customSent != null) {
         Text(state.customSent, style = MaterialTheme.typography.bodySmall)
     }
-}
-
-private fun minutesToLabel(min: Int): String = "%02d:%02d".format(min / 60, min % 60)
-
-private fun showTimePicker(
-    context: android.content.Context,
-    currentMin: Int,
-    onPicked: (Int) -> Unit,
-) {
-    android.app.TimePickerDialog(
-        context,
-        { _, hour, minute -> onPicked(hour * 60 + minute) },
-        currentMin / 60,
-        currentMin % 60,
-        true,
-    ).show()
 }

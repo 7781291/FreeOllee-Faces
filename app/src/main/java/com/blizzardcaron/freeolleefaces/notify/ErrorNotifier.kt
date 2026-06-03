@@ -37,14 +37,23 @@ object ErrorNotifier {
         val pending = PendingIntent.getActivity(
             ctx, 0, intent, PendingIntent.FLAG_IMMUTABLE,
         )
-        val notification = NotificationCompat.Builder(ctx, CHANNEL_ID)
+        val builder = NotificationCompat.Builder(ctx, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_notify_error)
             .setContentTitle(titleFor(kind))
             .setContentText(textFor(kind))
             .setContentIntent(pending)
             .setAutoCancel(true)
-            .build()
-        NotificationManagerCompat.from(ctx).notify(NOTIFICATION_ID, notification)
+
+        // Transient failures get a Retry action that re-runs the update in the background.
+        if (kind.retryable) {
+            val retryIntent = Intent(ctx, RetryReceiver::class.java)
+            val retryPending = PendingIntent.getBroadcast(
+                ctx, RetryReceiver.REQUEST_CODE, retryIntent, PendingIntent.FLAG_IMMUTABLE,
+            )
+            builder.addAction(0, "Retry", retryPending)
+        }
+
+        NotificationManagerCompat.from(ctx).notify(NOTIFICATION_ID, builder.build())
         return true
     }
 
@@ -66,6 +75,7 @@ object ErrorNotifier {
         FailureKind.WEATHER_FETCH_FAILED -> "Weather update failed"
         FailureKind.SETUP_INCOMPLETE -> "Setup incomplete"
         FailureKind.SUN_UNREACHABLE -> "Sun update missed"
+        FailureKind.HEALTH_UNAVAILABLE -> "Health access needed"
     }
 
     private fun textFor(kind: FailureKind): String = when (kind) {
@@ -73,5 +83,6 @@ object ErrorNotifier {
         FailureKind.WEATHER_FETCH_FAILED -> "Couldn't fetch the temperature. The watch value may be stale."
         FailureKind.SETUP_INCOMPLETE -> "Open the app to set your location and watch."
         FailureKind.SUN_UNREACHABLE -> "Couldn't deliver the next sunrise/sunset to your watch."
+        FailureKind.HEALTH_UNAVAILABLE -> "Open the app and grant Health access so step counts can sync."
     }
 }

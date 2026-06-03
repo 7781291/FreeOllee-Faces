@@ -96,4 +96,38 @@ class DisplayFormatterTest {
     fun `custom passes through exactly-6-char input`() {
         assertEquals("123456", DisplayFormatter.custom("123456"))
     }
+
+    @Test
+    fun `steps right-justifies the raw count in six chars`() {
+        assertEquals("     0", DisplayFormatter.steps(0))
+        assertEquals("     5", DisplayFormatter.steps(5))
+        assertEquals("  8421", DisplayFormatter.steps(8421))
+        assertEquals(" 12345", DisplayFormatter.steps(12345))
+        assertEquals(" 99999", DisplayFormatter.steps(99999))
+    }
+
+    @Test
+    fun `steps fits an exactly-six-digit count with no leading space`() {
+        assertEquals("100000", DisplayFormatter.steps(100_000))
+        assertEquals("999999", DisplayFormatter.steps(999_999))
+    }
+
+    @Test
+    fun `steps clamps physically impossible counts to six nines`() {
+        assertEquals("999999", DisplayFormatter.steps(1_000_000))
+        assertEquals("999999", DisplayFormatter.steps(Long.MAX_VALUE))
+    }
+
+    @Test
+    fun `steps clamps negative counts to zero`() {
+        assertEquals("     0", DisplayFormatter.steps(-1))
+        assertEquals("     0", DisplayFormatter.steps(Long.MIN_VALUE))
+    }
+
+    @Test
+    fun `steps output is always exactly six chars`() {
+        listOf(0L, 9L, 99L, 12_345L, 999_999L, 1_000_000L, -5L).forEach {
+            assertEquals("len for $it", 6, DisplayFormatter.steps(it).length)
+        }
+    }
 }
