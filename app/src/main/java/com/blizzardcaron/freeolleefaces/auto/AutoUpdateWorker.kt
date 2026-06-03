@@ -81,6 +81,9 @@ class AutoUpdateWorker(
         val inSleep = sleep != null &&
             AutoUpdateSchedule.isInSleepWindow(nowMinOfDay, sleep.startMin, sleep.endMin)
 
+        // Set true only inside the !inSleep block when handleSendFailure enqueues a backstop
+        // retry; the asleep branch never writes it. Guards the normal re-arm below so a failed
+        // run enqueues either a backstop or the normal next run, never both.
         var backstopped = false
         if (!inSleep) {
             StepsRepository(ctx).todaySteps()
@@ -139,6 +142,9 @@ class AutoUpdateWorker(
         // Guard: if we somehow fired inside the sleep window, skip the send.
         val inSleep = sleep != null &&
             AutoUpdateSchedule.isInSleepWindow(nowMinOfDay, sleep.startMin, sleep.endMin)
+        // Set true only inside the !inSleep block when handleSendFailure enqueues a backstop
+        // retry; the asleep branch never writes it. Guards the normal re-arm below so a failed
+        // run enqueues either a backstop or the normal next run, never both.
         var backstopped = false
         if (!inSleep) {
             OpenMeteoClient.currentTemp(lat, lng, prefs.tempUnit, RetryPolicy.Background)
