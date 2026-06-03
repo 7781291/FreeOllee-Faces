@@ -10,7 +10,9 @@ import android.bluetooth.BluetoothProfile
 import android.bluetooth.BluetoothStatusCodes
 import android.content.Context
 import android.os.Build
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -65,21 +67,23 @@ class OlleeBleClient(private val context: Context) {
                     ?: error("BluetoothManager unavailable")
                 val device: BluetoothDevice = manager.adapter.getRemoteDevice(deviceAddress)
 
-                var lastError: Throwable? = null
                 for (attempt in 0 until BleRetryPolicy.MAX_ATTEMPTS) {
-                    val result = runCatching {
-                        withTimeout(CONNECT_TIMEOUT_MS) { writePacket(device, packet) }
-                    }
-                    if (result.isSuccess) return@runCatching
-                    val error = result.exceptionOrNull()!!
-                    lastError = error
                     val isLastAttempt = attempt == BleRetryPolicy.MAX_ATTEMPTS - 1
-                    if (isLastAttempt || !BleRetryPolicy.isRetryable(error)) {
-                        throw error
+                    try {
+                        withTimeout(CONNECT_TIMEOUT_MS) { writePacket(device, packet) }
+                        return@runCatching // first success
+                    } catch (timeout: TimeoutCancellationException) {
+                        // The attempt exceeded its 8s budget — a retryable connect/write failure,
+                        // not external cancellation. (Caught before CancellationException below
+                        // since it is a subclass.)
+                        if (isLastAttempt) throw timeout
+                    } catch (cancel: CancellationException) {
+                        throw cancel // genuine coroutine cancellation must propagate, never retried
+                    } catch (error: Exception) {
+                        if (isLastAttempt || !BleRetryPolicy.isRetryable(error)) throw error
                     }
                     delay(BleRetryPolicy.backoffForAttempt(attempt))
                 }
-                throw lastError ?: IllegalStateException("send failed with no attempts")
             }
         }
 
