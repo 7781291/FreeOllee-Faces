@@ -102,4 +102,26 @@ class AutoUpdateScheduleTest {
         val event = at(6, 29)
         assertEquals(event.plusSeconds(60), AutoUpdateSchedule.nextSunWake(event))
     }
+
+    // ----- backstop backoff + budget (Layer 2) -----
+
+    @Test
+    fun `backstop backoff is 2 then 5 then 15 minutes`() {
+        assertEquals(2L * 60_000L, AutoUpdateSchedule.backstopDelayMs(0))
+        assertEquals(5L * 60_000L, AutoUpdateSchedule.backstopDelayMs(1))
+        assertEquals(15L * 60_000L, AutoUpdateSchedule.backstopDelayMs(2))
+    }
+
+    @Test
+    fun `backstop backoff stays at 15 minutes past the schedule`() {
+        assertEquals(15L * 60_000L, AutoUpdateSchedule.backstopDelayMs(3))
+    }
+
+    @Test
+    fun `budget remains for the first three attempts and is then exhausted`() {
+        assertTrue(AutoUpdateSchedule.hasBackstopBudget(0))
+        assertTrue(AutoUpdateSchedule.hasBackstopBudget(1))
+        assertTrue(AutoUpdateSchedule.hasBackstopBudget(2))
+        assertFalse(AutoUpdateSchedule.hasBackstopBudget(3))
+    }
 }

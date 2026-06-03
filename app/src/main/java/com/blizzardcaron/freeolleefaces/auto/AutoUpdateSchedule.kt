@@ -38,6 +38,25 @@ object AutoUpdateSchedule {
     fun nextSunWake(eventTime: ZonedDateTime, bufferSeconds: Long = 60): ZonedDateTime =
         eventTime.plusSeconds(bufferSeconds)
 
+    /** Backstop retry budget: up to this many re-tries after the first failed send. */
+    const val MAX_SEND_RETRIES = 3
+
+    /** Whether a send that failed at the (0-based) [attempt] still has backstop budget left. */
+    fun hasBackstopBudget(attempt: Int): Boolean = attempt < MAX_SEND_RETRIES
+
+    /**
+     * Backoff before the backstop retry that follows the (0-based) failed [attempt]:
+     * 2 min → 5 min → 15 min, then held at 15 min. Replaces SUN's old flat 15/15/15.
+     */
+    fun backstopDelayMs(attempt: Int): Long {
+        val minutes = when (attempt) {
+            0 -> 2L
+            1 -> 5L
+            else -> 15L
+        }
+        return minutes * 60_000L
+    }
+
     private fun snapToEnd(from: ZonedDateTime, endMin: Int): ZonedDateTime {
         var candidate = from
             .withHour(endMin / 60)
