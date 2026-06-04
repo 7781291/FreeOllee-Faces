@@ -40,6 +40,7 @@ fun FacesListScreen(
         FaceRow("Sun event", ActiveFace.SUN, active, onSelect)
         FaceRow("Steps", ActiveFace.STEPS, active, onSelect)
         FaceRow("Custom", ActiveFace.CUSTOM, active, onSelect)
+        FaceRow("Notifications", ActiveFace.NOTIFICATIONS, active, onSelect)
     }
 }
 

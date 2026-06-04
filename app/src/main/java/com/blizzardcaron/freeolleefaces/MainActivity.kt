@@ -5,7 +5,9 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.provider.Settings
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -19,6 +21,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.health.connect.client.PermissionController
 import com.blizzardcaron.freeolleefaces.auto.ActiveFace
@@ -136,6 +139,8 @@ private fun AppRoot(
                 stepsUpdated = prefs.stepsFetchedMs?.let { "Updated ${clockTime(it)}" },
                 locationLabel = locLabel(prefs.lastLat, prefs.lastLng),
                 locationFreshness = freshnessLabel(prefs.lastLocationFetchedMs, System.currentTimeMillis()),
+                notificationCount = prefs.notificationCount,
+                notificationAccessGranted = isNotificationAccessGranted(context),
             )
         )
     }
@@ -448,6 +453,15 @@ private fun AppRoot(
         }
     }
 
+    LaunchedEffect(screen) {
+        if (screen == Screen.Home) {
+            update { it.copy(
+                notificationCount = prefs.notificationCount,
+                notificationAccessGranted = isNotificationAccessGranted(context),
+            ) }
+        }
+    }
+
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { results ->
@@ -557,6 +571,12 @@ private fun AppRoot(
                 StepsRepository.Availability.UNAVAILABLE ->
                     showSnackbar("Health Connect isn't available on this device.")
             }
+        },
+        onGrantNotificationAccess = {
+            context.startActivity(
+                Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
         },
     )
 
@@ -675,6 +695,9 @@ private fun bondedDevices(context: Context): List<BluetoothDevice> {
     if (!adapter.isEnabled) return emptyList()
     return adapter.bondedDevices?.toList().orEmpty()
 }
+
+private fun isNotificationAccessGranted(context: Context): Boolean =
+    NotificationManagerCompat.getEnabledListenerPackages(context).contains(context.packageName)
 
 @SuppressLint("MissingPermission")
 private fun labelForAddress(context: Context, address: String?): String {
