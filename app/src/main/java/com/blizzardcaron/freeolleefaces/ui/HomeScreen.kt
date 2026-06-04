@@ -66,6 +66,7 @@ data class HomeState(
 
 data class HomeCallbacks(
     val onOpenFaces: () -> Unit,
+    val onOpenTimerSets: () -> Unit,
     val onOpenSettings: () -> Unit,
     val onUpdateNow: () -> Unit,
     val onTempUnitChange: (TempUnit) -> Unit,
@@ -91,6 +92,7 @@ fun HomeScreen(
         ) {
             Text(faceTitle(state.activeFace), style = MaterialTheme.typography.headlineSmall)
             Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = callbacks.onOpenTimerSets) { Text("Timers") }
                 TextButton(onClick = callbacks.onOpenFaces) { Text("Faces") }
                 IconButton(onClick = callbacks.onOpenSettings) {
                     Text("⚙", style = MaterialTheme.typography.titleLarge)

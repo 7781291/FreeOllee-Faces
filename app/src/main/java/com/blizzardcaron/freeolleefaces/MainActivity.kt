@@ -46,7 +46,12 @@ import com.blizzardcaron.freeolleefaces.ui.PreviewState
 import com.blizzardcaron.freeolleefaces.ui.Screen
 import com.blizzardcaron.freeolleefaces.ui.SettingsCallbacks
 import com.blizzardcaron.freeolleefaces.ui.SettingsScreen
+import com.blizzardcaron.freeolleefaces.ui.TimerSetEditScreen
+import com.blizzardcaron.freeolleefaces.ui.TimerSetsScreen
 import com.blizzardcaron.freeolleefaces.ui.theme.FreeOlleeFacesTheme
+import com.blizzardcaron.freeolleefaces.timer.TimerSet
+import com.blizzardcaron.freeolleefaces.timer.TimerSetsRepository
+import java.util.UUID
 import com.blizzardcaron.freeolleefaces.weather.OpenMeteoClient
 import com.blizzardcaron.freeolleefaces.weather.RetryPolicy
 import kotlinx.coroutines.Job
@@ -92,6 +97,10 @@ private fun AppRoot(
     val context = LocalContext.current
     val prefs = remember { Prefs(context) }
     val ble = remember { OlleeBleClient(context) }
+    val timerRepo = remember { TimerSetsRepository(context) }
+    var timerSets by remember { mutableStateOf(timerRepo.getAll()) }
+    var timerActiveId by remember { mutableStateOf(timerRepo.activeId()) }
+    var editingSet by remember { mutableStateOf<TimerSet?>(null) }
     val locationSource = remember { LocationSource(context) }
     val stepsRepo = remember { StepsRepository(context) }
     val scope = rememberCoroutineScope()
@@ -131,6 +140,38 @@ private fun AppRoot(
     }
 
     fun update(transform: (HomeState) -> HomeState) { state = transform(state) }
+
+    fun refreshTimers() {
+        timerSets = timerRepo.getAll()
+        timerActiveId = timerRepo.activeId()
+    }
+
+    fun newTimerSet() {
+        val set = TimerSet.blank(UUID.randomUUID().toString(), "Set ${timerSets.size + 1}")
+        timerRepo.save(set)
+        refreshTimers()
+        editingSet = set
+        screen = Screen.TimerSetEdit
+    }
+
+    fun sendTimerSet(set: TimerSet) {
+        val addr = prefs.watchAddress
+        if (addr == null) { showSnackbar("No watch selected — open Settings (⚙)"); return }
+        scope.launch {
+            update { it.copy(sending = true) }
+            val result = ble.sendPacket(addr, OlleeProtocol.buildTimerPacket(set.durations()))
+            update { it.copy(sending = false) }
+            result
+                .onSuccess {
+                    timerRepo.setActive(set.id)
+                    timerActiveId = set.id
+                    showSnackbar("Sent '${set.name}' to watch")
+                }
+                .onFailure {
+                    showSnackbar("Send failed — long-press ALARM to wake the watch, then retry")
+                }
+        }
+    }
 
     fun validCoords(): Pair<Double, Double>? {
         val lat = state.lat.toDoubleOrNull(); val lng = state.lng.toDoubleOrNull()
@@ -479,6 +520,7 @@ private fun AppRoot(
 
     val homeCallbacks = HomeCallbacks(
         onOpenFaces = { screen = Screen.FacesList },
+        onOpenTimerSets = { refreshTimers(); screen = Screen.TimerSets },
         onOpenSettings = { screen = Screen.Settings },
         onUpdateNow = { refreshActive(force = true, push = true) },
         onTempUnitChange = { newUnit ->
@@ -545,6 +587,36 @@ private fun AppRoot(
             callbacks = settingsCallbacks,
             modifier = modifier,
         )
+        Screen.TimerSets -> TimerSetsScreen(
+            sets = timerSets,
+            activeId = timerActiveId,
+            onOpen = { editingSet = it; screen = Screen.TimerSetEdit },
+            onNew = { newTimerSet() },
+            onDuplicate = { src ->
+                if (timerSets.size < TimerSetsRepository.MAX_SETS) {
+                    timerRepo.save(src.copy(id = UUID.randomUUID().toString(), name = src.name + " copy"))
+                    refreshTimers()
+                }
+            },
+            onDelete = { timerRepo.delete(it.id); refreshTimers() },
+            onSend = { sendTimerSet(it) },
+            onBack = { screen = Screen.Home },
+            modifier = modifier,
+        )
+        Screen.TimerSetEdit -> {
+            val editing = editingSet
+            if (editing == null) {
+                screen = Screen.TimerSets
+            } else {
+                TimerSetEditScreen(
+                    set = editing,
+                    onSave = { s -> timerRepo.save(s); refreshTimers(); screen = Screen.TimerSets },
+                    onSend = { s -> timerRepo.save(s); refreshTimers(); sendTimerSet(s) },
+                    onBack = { screen = Screen.TimerSets },
+                    modifier = modifier,
+                )
+            }
+        }
     }
 
     if (showPicker) {
