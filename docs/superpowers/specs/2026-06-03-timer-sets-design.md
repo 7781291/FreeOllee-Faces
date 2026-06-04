@@ -33,10 +33,12 @@ inner = 02 26 │ HH MM SS 00 │ d1 d2 … d10
 
 - Each `dN` is a **little-endian uint32 = duration in seconds**; a blank/unused slot is
   `00000000`.
-- The 4-byte **header** observed in captures (`00 01 17 00`, `00 00 2D 00`) merely echoes the
-  **last-edited timer's** H:M:S — transient UI scratch, carrying no slot data. We will send
-  `00 00 00 00` and confirm on-device that all 10 durations persist regardless (validation gate
-  §8).
+- The 4-byte **header** `[00, MM, SS, 00]` observed in captures (`00 01 17 00`, `00 00 2D 00`)
+  echoes the **last-edited timer's** minutes:seconds. It carries **no slot data** (the 10 words
+  persist regardless — verified §9), but it is **not** pure scratch: on-device it seeds the Timer
+  face's **default/primary countdown** (the timer shown before you scroll into the 10 slots). We
+  seed it from **Slot 1's MM:SS** so the face comes up showing the first interval (§9 gate 1b). It
+  has only a minutes and a seconds byte (no hour), so Slot 1 ≥ 1 h clamps the display seed.
 - Standard framing `00 LEN AA55 CRChi CRClo …` (`LEN = inner.size + 4 = 0x32`), CRC-16/CCITT-FALSE
   over the inner bytes. The 50-byte frame fragments into 20+20+12-byte BLE writes and reassembles
   by `LEN` — handled by the existing chunked `writePacket`.
@@ -86,11 +88,14 @@ Mirror the existing `buildWeekdayPacket`:
 ```kotlin
 const val TARGET_TIMERS = 0x26
 
-/** 10 durations (seconds) → a framed 02 26 packet. Header is a 4-byte zero prefix. */
+/** 10 durations (seconds) → a framed 02 26 packet. The 4-byte header [00, MM, SS, 00] seeds the
+ *  face's default countdown from Slot 1 (minutes clamped to one byte); see §9 gate 1b. */
 fun buildTimerPacket(durationsSeconds: List<Int>): ByteArray {
     require(durationsSeconds.size == 10) { "timer table needs exactly 10 slots" }
     require(durationsSeconds.all { it in 0..359_999 }) { "duration out of range" }
-    val payload = ByteArray(4) +  // header 00 00 00 00
+    val slot1 = durationsSeconds[0]
+    val header = byteArrayOf(0, (slot1 / 60).coerceAtMost(0xFF).toByte(), (slot1 % 60).toByte(), 0)
+    val payload = header +
         durationsSeconds.flatMap { s ->
             listOf(s, s ushr 8, s ushr 16, s ushr 24).map { (it and 0xFF).toByte() }
         }.toByteArray()
@@ -156,10 +161,23 @@ switch in `MainActivity`):
 
 - Push failures reuse the v0.8.0 WATCH_UNREACHABLE wake notification + Retry.
 - Repository never throws to the UI (malformed JSON → empty list; caps enforced on save).
-- **On-device gate 1 — header:** confirm all 10 durations persist on the watch when we send
-  header `00 00 00 00`. If the firmware needs a specific header, adjust `buildTimerPacket`.
-- **On-device gate 2 — face enabled:** the watch's Timer face must be enabled (via the official
-  app, or a future faces-table write) for the user to see the result. Documented, not automated.
+- **On-device gate 1 — durations persist:** ✅ **PASS (2026-06-04).** Built a set of 10 × `00:01:40`
+  (Slot 1 entered, then *Fill down*), selected the bonded Ollee Watch, tapped **Send** — succeeded
+  first try ("Sent 'Set 1' to watch", row flipped to **● active**). User confirmed on the watch:
+  all 10 timer slots read `1:40`.
+- **On-device gate 1b — header / default timer:** the zero header we originally sent left the Timer
+  face's **default/primary countdown** (shown before scrolling into the 10 slots) at `00:00:00`.
+  This revealed the 4-byte header is *not* pure scratch — it seeds that default timer. Fixed:
+  `buildTimerPacket` now seeds the header from Slot 1's MM:SS (clamped to one minute-byte; the
+  stored Slot 1 word stays full-precision) so the face comes up showing the first interval. The 10
+  slot words were unaffected by the header in either case.
+- **On-device gate 2 — face enabled:** ✅ the watch's Timer face was enabled, so the user could
+  step through and read the 10 slots. (Enabling remains the user's responsibility — via the
+  official app or a future faces-table write — and is documented, not automated.)
+- **Known limitation — no read-back / no sync:** only the *write* (`02 26`→`46`) is decoded; no
+  timer *read* command was ever captured. FreeOllee-Faces and the official Ollee app therefore do
+  **not** reconcile — the watch's 10 slots are simply whatever app wrote last (last-writer-wins).
+  Each app treats its own storage as the source of truth. See §10.
 
 ## 10. Out of scope (YAGNI)
 
