@@ -212,14 +212,18 @@ class OlleeProtocolTest {
 
     @Test
     fun `buildTimerPacket round-trips through parseFrame to target 0x26 with valid CRC`() {
-        val packet = OlleeProtocol.buildTimerPacket(listOf(83, 100, 100, 100, 100, 100, 0, 600, 900, 1800))
+        // slot 8 = 100_000 (0x000186A0) exercises bytes beyond the low 16 bits.
+        val packet = OlleeProtocol.buildTimerPacket(listOf(83, 100, 100, 100, 100, 100, 0, 100_000, 900, 1800))
         val f = OlleeProtocol.parseFrame(packet)!!
         assertEquals(0x26, f.target)
         assertTrue(f.crcOk)
-        // payload = 4-byte header + 10 LE uint32; decode slot 8 (index 7) = 600.
-        val slot8 = (f.payload[4 + 7 * 4].toInt() and 0xFF) or
-            ((f.payload[5 + 7 * 4].toInt() and 0xFF) shl 8)
-        assertEquals(600, slot8)
+        // payload = 4-byte header + 10 LE uint32; full 4-byte decode of slot 8 (index 7).
+        val base = 4 + 7 * 4
+        val slot8 = (f.payload[base].toInt() and 0xFF) or
+            ((f.payload[base + 1].toInt() and 0xFF) shl 8) or
+            ((f.payload[base + 2].toInt() and 0xFF) shl 16) or
+            ((f.payload[base + 3].toInt() and 0xFF) shl 24)
+        assertEquals(100_000, slot8)
     }
 
     @Test(expected = IllegalArgumentException::class)

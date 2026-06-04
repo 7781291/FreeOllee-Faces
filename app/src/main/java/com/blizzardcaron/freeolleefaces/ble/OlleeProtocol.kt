@@ -110,9 +110,14 @@ object OlleeProtocol {
         require(durationsSeconds.all { it in 0..359_999 }) {
             "each duration must be 0..359999 s (got $durationsSeconds)"
         }
-        val payload = ByteArray(4) + durationsSeconds.flatMap { s ->
-            listOf(s and 0xFF, (s shr 8) and 0xFF, (s shr 16) and 0xFF, (s shr 24) and 0xFF)
-        }.map { it.toByte() }.toByteArray()
+        val payload = ByteArray(4 + 10 * 4) // 4-byte zero header + 10 LE-uint32 words
+        durationsSeconds.forEachIndexed { i, s ->
+            val off = 4 + i * 4
+            payload[off] = (s and 0xFF).toByte()
+            payload[off + 1] = ((s shr 8) and 0xFF).toByte()
+            payload[off + 2] = ((s shr 16) and 0xFF).toByte()
+            payload[off + 3] = ((s shr 24) and 0xFF).toByte()
+        }
         return buildRawPacket(TARGET_TIMERS, payload)
     }
 
