@@ -79,10 +79,10 @@ object ErrorNotifier {
     }
 
     private fun textFor(kind: FailureKind): String = when (kind) {
-        FailureKind.WATCH_UNREACHABLE -> "The last update didn't reach your watch. Is it on and in range?"
+        FailureKind.WATCH_UNREACHABLE -> "Couldn't reach your watch after several tries. Long-press the ALARM button to wake its Bluetooth, then tap Retry."
         FailureKind.WEATHER_FETCH_FAILED -> "Couldn't fetch the temperature. The watch value may be stale."
         FailureKind.SETUP_INCOMPLETE -> "Open the app to set your location and watch."
-        FailureKind.SUN_UNREACHABLE -> "Couldn't deliver the next sunrise/sunset to your watch."
+        FailureKind.SUN_UNREACHABLE -> "Couldn't deliver the next sunrise/sunset after several tries. Long-press the ALARM button to wake your watch, then tap Retry."
         FailureKind.HEALTH_UNAVAILABLE -> "Open the app and grant Health access so step counts can sync."
     }
 }

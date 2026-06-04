@@ -34,7 +34,7 @@ object AutoUpdateScheduler {
 
             ActiveFace.STEPS -> scheduleIntervalFace(ctx, prefs, prefs.updateIntervalMinutes)
 
-            ActiveFace.SUN -> enqueueNext(ctx, 0L, sunAttempt = 0)
+            ActiveFace.SUN -> enqueueNext(ctx, 0L, sendAttempt = 0)
         }
     }
 
@@ -58,13 +58,13 @@ object AutoUpdateScheduler {
             val fire = AutoUpdateSchedule.nextTemperatureFire(now, intervalMinutes, sleep)
             Duration.between(now, fire).toMillis().coerceAtLeast(0)
         }
-        enqueueNext(ctx, delayMs, sunAttempt = 0)
+        enqueueNext(ctx, delayMs, sendAttempt = 0)
     }
 
     /** Enqueue the single next chain run (REPLACE keeps exactly one pending). */
-    fun enqueueNext(context: Context, delayMs: Long, sunAttempt: Int) {
+    fun enqueueNext(context: Context, delayMs: Long, sendAttempt: Int) {
         val data = Data.Builder()
-            .putInt(AutoUpdateWorker.KEY_SUN_ATTEMPT, sunAttempt)
+            .putInt(AutoUpdateWorker.KEY_SEND_ATTEMPT, sendAttempt)
             .build()
         val req = OneTimeWorkRequestBuilder<AutoUpdateWorker>()
             .setInitialDelay(delayMs, TimeUnit.MILLISECONDS)

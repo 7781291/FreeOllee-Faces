@@ -81,6 +81,10 @@ class AutoUpdateWorker(
         val inSleep = sleep != null &&
             AutoUpdateSchedule.isInSleepWindow(nowMinOfDay, sleep.startMin, sleep.endMin)
 
+        // Set true only inside the !inSleep block when handleSendFailure enqueues a backstop
+        // retry; the asleep branch never writes it. Guards the normal re-arm below so a failed
+        // run enqueues either a backstop or the normal next run, never both.
+        var backstopped = false
         if (!inSleep) {
             StepsRepository(ctx).todaySteps()
                 .onSuccess { count ->
@@ -92,8 +96,9 @@ class AutoUpdateWorker(
                             applyHealth(ctx, prefs, null, inSleep)
                         }
                         .onFailure {
-                            prefs.recordAutoSend("Skipped: watch unreachable")
-                            applyHealth(ctx, prefs, FailureKind.WATCH_UNREACHABLE, inSleep)
+                            backstopped = handleSendFailure(
+                                ctx, prefs, FailureKind.WATCH_UNREACHABLE, inSleep,
+                            )
                         }
                 }
                 .onFailure { error ->
@@ -113,9 +118,11 @@ class AutoUpdateWorker(
             prefs.recordAutoSend("Asleep (power saving)")
         }
 
-        val fire = AutoUpdateSchedule.nextTemperatureFire(now, prefs.updateIntervalMinutes, sleep)
-        val delayMs = Duration.between(now, fire).toMillis().coerceAtLeast(0)
-        AutoUpdateScheduler.enqueueNext(ctx, delayMs, sunAttempt = 0)
+        if (!backstopped) {
+            val fire = AutoUpdateSchedule.nextTemperatureFire(now, prefs.updateIntervalMinutes, sleep)
+            val delayMs = Duration.between(now, fire).toMillis().coerceAtLeast(0)
+            AutoUpdateScheduler.enqueueNext(ctx, delayMs, sendAttempt = 0)
+        }
         return Result.success()
     }
 
@@ -135,6 +142,10 @@ class AutoUpdateWorker(
         // Guard: if we somehow fired inside the sleep window, skip the send.
         val inSleep = sleep != null &&
             AutoUpdateSchedule.isInSleepWindow(nowMinOfDay, sleep.startMin, sleep.endMin)
+        // Set true only inside the !inSleep block when handleSendFailure enqueues a backstop
+        // retry; the asleep branch never writes it. Guards the normal re-arm below so a failed
+        // run enqueues either a backstop or the normal next run, never both.
+        var backstopped = false
         if (!inSleep) {
             OpenMeteoClient.currentTemp(lat, lng, prefs.tempUnit, RetryPolicy.Background)
                 .onSuccess { temp ->
@@ -146,8 +157,9 @@ class AutoUpdateWorker(
                             applyHealth(ctx, prefs, null, inSleep)
                         }
                         .onFailure {
-                            prefs.recordAutoSend("Skipped: watch unreachable")
-                            applyHealth(ctx, prefs, FailureKind.WATCH_UNREACHABLE, inSleep)
+                            backstopped = handleSendFailure(
+                                ctx, prefs, FailureKind.WATCH_UNREACHABLE, inSleep,
+                            )
                         }
                 }
                 .onFailure { err ->
@@ -159,9 +171,11 @@ class AutoUpdateWorker(
             prefs.recordAutoSend("Asleep (power saving)")
         }
 
-        val fire = AutoUpdateSchedule.nextTemperatureFire(now, prefs.updateIntervalMinutes, sleep)
-        val delayMs = Duration.between(now, fire).toMillis().coerceAtLeast(0)
-        AutoUpdateScheduler.enqueueNext(ctx, delayMs, sunAttempt = 0)
+        if (!backstopped) {
+            val fire = AutoUpdateSchedule.nextTemperatureFire(now, prefs.updateIntervalMinutes, sleep)
+            val delayMs = Duration.between(now, fire).toMillis().coerceAtLeast(0)
+            AutoUpdateScheduler.enqueueNext(ctx, delayMs, sendAttempt = 0)
+        }
         return Result.success()
     }
 
@@ -177,7 +191,7 @@ class AutoUpdateWorker(
         val event = SunCalc.nextEvent(now.toInstant(), lat, lng, ZoneId.systemDefault())
         if (event == null) {
             prefs.recordAutoSend("Skipped: no sun event (polar)")
-            AutoUpdateScheduler.enqueueNext(ctx, Duration.ofHours(12).toMillis(), sunAttempt = 0)
+            AutoUpdateScheduler.enqueueNext(ctx, Duration.ofHours(12).toMillis(), sendAttempt = 0)
             return Result.success()
         }
 
@@ -188,18 +202,9 @@ class AutoUpdateWorker(
             prefs.recordAutoSend("Sent '$payload'")
             applyHealth(ctx, prefs, null, inSleep)
             scheduleAfterEvent(ctx, now, event.time)
-        } else {
-            val attempt = inputData.getInt(KEY_SUN_ATTEMPT, 0)
-            if (attempt < MAX_SUN_RETRIES) {
-                prefs.recordAutoSend("Retry ${attempt + 1}: watch unreachable")
-                AutoUpdateScheduler.enqueueNext(
-                    ctx, Duration.ofMinutes(15).toMillis(), sunAttempt = attempt + 1,
-                )
-            } else {
-                prefs.recordAutoSend("Skipped: watch unreachable")
-                applyHealth(ctx, prefs, FailureKind.SUN_UNREACHABLE, inSleep)
-                scheduleAfterEvent(ctx, now, event.time)
-            }
+        } else if (!handleSendFailure(ctx, prefs, FailureKind.SUN_UNREACHABLE, inSleep)) {
+            // Budget exhausted — resume the normal sun chain after the (missed) event.
+            scheduleAfterEvent(ctx, now, event.time)
         }
         return Result.success()
     }
@@ -207,7 +212,33 @@ class AutoUpdateWorker(
     private fun scheduleAfterEvent(ctx: Context, now: ZonedDateTime, eventTime: ZonedDateTime) {
         val wake = AutoUpdateSchedule.nextSunWake(eventTime)
         val delayMs = Duration.between(now, wake).toMillis().coerceAtLeast(0)
-        AutoUpdateScheduler.enqueueNext(ctx, delayMs, sunAttempt = 0)
+        AutoUpdateScheduler.enqueueNext(ctx, delayMs, sendAttempt = 0)
+    }
+
+    /**
+     * A watch send failed. While budget remains, re-enqueue a backstop run with backoff and post
+     * no notification (returns true — caller must NOT also enqueue the normal next run). Once the
+     * budget is exhausted, surface [kind] via the notification path and return false so the caller
+     * resumes the normal chain. The attempt count is carried in the worker's input data.
+     */
+    private fun handleSendFailure(
+        ctx: Context,
+        prefs: Prefs,
+        kind: FailureKind,
+        inSleep: Boolean,
+    ): Boolean {
+        val attempt = inputData.getInt(KEY_SEND_ATTEMPT, 0)
+        return if (AutoUpdateSchedule.hasBackstopBudget(attempt)) {
+            prefs.recordAutoSend("Retry ${attempt + 1}: watch unreachable")
+            AutoUpdateScheduler.enqueueNext(
+                ctx, AutoUpdateSchedule.backstopDelayMs(attempt), sendAttempt = attempt + 1,
+            )
+            true
+        } else {
+            prefs.recordAutoSend("Skipped: watch unreachable")
+            applyHealth(ctx, prefs, kind, inSleep)
+            false
+        }
     }
 
     private fun applyHealth(ctx: Context, prefs: Prefs, kind: FailureKind?, inSleep: Boolean) {
@@ -235,7 +266,6 @@ class AutoUpdateWorker(
     }
 
     companion object {
-        const val KEY_SUN_ATTEMPT = "sun_attempt"
-        const val MAX_SUN_RETRIES = 3
+        const val KEY_SEND_ATTEMPT = "send_attempt"
     }
 }
