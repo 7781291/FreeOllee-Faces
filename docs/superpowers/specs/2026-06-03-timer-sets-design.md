@@ -165,12 +165,13 @@ switch in `MainActivity`):
   (Slot 1 entered, then *Fill down*), selected the bonded Ollee Watch, tapped **Send** — succeeded
   first try ("Sent 'Set 1' to watch", row flipped to **● active**). User confirmed on the watch:
   all 10 timer slots read `1:40`.
-- **On-device gate 1b — header / default timer:** the zero header we originally sent left the Timer
-  face's **default/primary countdown** (shown before scrolling into the 10 slots) at `00:00:00`.
-  This revealed the 4-byte header is *not* pure scratch — it seeds that default timer. Fixed:
-  `buildTimerPacket` now seeds the header from Slot 1's MM:SS (clamped to one minute-byte; the
-  stored Slot 1 word stays full-precision) so the face comes up showing the first interval. The 10
-  slot words were unaffected by the header in either case.
+- **On-device gate 1b — header / default timer:** ✅ **PASS (2026-06-04).** The zero header we
+  originally sent left the Timer face's **default/primary countdown** (shown before scrolling into
+  the 10 slots) at `00:00:00`. This revealed the 4-byte header is *not* pure scratch — it seeds that
+  default timer. Fixed: `buildTimerPacket` now seeds the header from Slot 1's MM:SS (clamped to one
+  minute-byte; the stored Slot 1 word stays full-precision). User confirmed after re-send: the
+  face's default countdown now reads `1:40`. The 10 slot words were unaffected by the header in
+  either case.
 - **On-device gate 2 — face enabled:** ✅ the watch's Timer face was enabled, so the user could
   step through and read the 10 slots. (Enabling remains the user's responsibility — via the
   official app or a future faces-table write — and is documented, not automated.)
