@@ -157,6 +157,7 @@ private fun AppRoot(
     fun sendTimerSet(set: TimerSet) {
         val addr = prefs.watchAddress
         if (addr == null) { showSnackbar("No watch selected — open Settings (⚙)"); return }
+        if (state.sending) return // a push is already in flight; ignore re-taps to avoid overlapping writes
         scope.launch {
             update { it.copy(sending = true) }
             val result = ble.sendPacket(addr, OlleeProtocol.buildTimerPacket(set.durations()))
