@@ -19,6 +19,9 @@ object OlleeProtocol {
     const val TARGET_WEEKDAYS = 0x34
     private val WEEKDAY_PREFIX = byteArrayOf(0x00, 0x00, 0x7E, 0x90.toByte())
 
+    /** Timer-face slots (10 countdown durations) — write target. Ack at 0x46. */
+    const val TARGET_TIMERS = 0x26
+
     fun crc16(data: ByteArray): Int {
         var crc = 0xFFFF
         for (b in data) {
@@ -91,6 +94,26 @@ object OlleeProtocol {
         }
         val payload = WEEKDAY_PREFIX + slots.joinToString("").toByteArray(Charsets.US_ASCII)
         return buildRawPacket(TARGET_WEEKDAYS, payload)
+    }
+
+    /**
+     * Builds the Timer-slots write (0x26). [durationsSeconds] must be exactly 10 entries, each a
+     * countdown length in seconds (0 = blank slot). Emits a 4-byte zero header followed by ten
+     * little-endian uint32 durations, then delegates to [buildRawPacket]. The header is a transient
+     * field the official app fills with the last-edited timer's H:M:S; the watch stores the ten
+     * words regardless (validated on-device). Per-slot labels are phone-side only and never sent.
+     */
+    fun buildTimerPacket(durationsSeconds: List<Int>): ByteArray {
+        require(durationsSeconds.size == 10) {
+            "timer table needs exactly 10 slots (got ${durationsSeconds.size})"
+        }
+        require(durationsSeconds.all { it in 0..359_999 }) {
+            "each duration must be 0..359999 s (got $durationsSeconds)"
+        }
+        val payload = ByteArray(4) + durationsSeconds.flatMap { s ->
+            listOf(s and 0xFF, (s shr 8) and 0xFF, (s shr 16) and 0xFF, (s shr 24) and 0xFF)
+        }.map { it.toByte() }.toByteArray()
+        return buildRawPacket(TARGET_TIMERS, payload)
     }
 
     /** °F string matching the watch's read format ("  54 F"): right-justified to 6 chars. */

@@ -184,4 +184,51 @@ class OlleeProtocolTest {
     fun `buildRawPacket rejects a target outside one byte`() {
         OlleeProtocol.buildRawPacket(0x123, byteArrayOf(0x00))
     }
+
+    // --- Timer slots (0x26) ---
+
+    @Test
+    fun `buildTimerPacket with all-zero durations equals a zero-header raw 0x26 packet`() {
+        val packet = OlleeProtocol.buildTimerPacket(List(10) { 0 })
+        // 4-byte zero header + 10 * 4-byte zero words = 44 zero payload bytes.
+        val expected = OlleeProtocol.buildRawPacket(OlleeProtocol.TARGET_TIMERS, ByteArray(44))
+        assertArrayEquals(expected, packet)
+    }
+
+    @Test
+    fun `buildTimerPacket encodes each slot as a little-endian uint32 of seconds`() {
+        // slot 1 = 83 s (the captured 00:01:23); rest blank.
+        val packet = OlleeProtocol.buildTimerPacket(listOf(83, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+        // Layout: [0..5] frame header, [6..7] = 02 26, [8..11] = 4-byte slot header,
+        // [12..15] = slot-1 little-endian uint32.
+        assertEquals(0x02.toByte(), packet[6])
+        assertEquals(0x26.toByte(), packet[7])
+        assertEquals(0x00.toByte(), packet[8])  // header byte 0
+        assertEquals(0x53.toByte(), packet[12]) // 83 low byte
+        assertEquals(0x00.toByte(), packet[13])
+        assertEquals(0x00.toByte(), packet[14])
+        assertEquals(0x00.toByte(), packet[15])
+    }
+
+    @Test
+    fun `buildTimerPacket round-trips through parseFrame to target 0x26 with valid CRC`() {
+        val packet = OlleeProtocol.buildTimerPacket(listOf(83, 100, 100, 100, 100, 100, 0, 600, 900, 1800))
+        val f = OlleeProtocol.parseFrame(packet)!!
+        assertEquals(0x26, f.target)
+        assertTrue(f.crcOk)
+        // payload = 4-byte header + 10 LE uint32; decode slot 8 (index 7) = 600.
+        val slot8 = (f.payload[4 + 7 * 4].toInt() and 0xFF) or
+            ((f.payload[5 + 7 * 4].toInt() and 0xFF) shl 8)
+        assertEquals(600, slot8)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `buildTimerPacket rejects a list that is not exactly 10 slots`() {
+        OlleeProtocol.buildTimerPacket(listOf(1, 2, 3))
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `buildTimerPacket rejects an out-of-range duration`() {
+        OlleeProtocol.buildTimerPacket(listOf(360_000, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+    }
 }
