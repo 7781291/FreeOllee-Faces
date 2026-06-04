@@ -1,5 +1,7 @@
 package com.blizzardcaron.freeolleefaces.notifications
 
+import com.blizzardcaron.freeolleefaces.ble.OlleeProtocol
+
 /**
  * Pure logic for the notification badge shown in the watch's weekday slot. Framework-free
  * so it unit-tests without Android objects; the service maps live notifications onto
@@ -37,5 +39,18 @@ object NotificationCount {
         n <= 0 -> null
         n >= 99 -> "99"
         else -> "%02d".format(n)
+    }
+
+    /** The captured default weekday table (Mon..Sun), restored when the count is zero. */
+    val REAL_WEEKDAYS = listOf("MO", "TU", "WE", "TH", "FR", "SA", "SU")
+
+    /**
+     * The weekday-table BLE packet for [n]: the formatted count in all 7 slots (so it shows
+     * regardless of the current day), or the real weekday table when [n] is zero.
+     */
+    fun packetFor(n: Int): ByteArray {
+        val label = format(n)
+        val slots = if (label == null) REAL_WEEKDAYS else List(7) { label }
+        return OlleeProtocol.buildWeekdayPacket(slots)
     }
 }

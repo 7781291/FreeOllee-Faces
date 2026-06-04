@@ -1,5 +1,7 @@
 package com.blizzardcaron.freeolleefaces.notifications
 
+import com.blizzardcaron.freeolleefaces.ble.OlleeProtocol
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -59,5 +61,20 @@ class NotificationCountTest {
     @Test fun formatCapsAtNinetyNine() {
         assertEquals("99", NotificationCount.format(100))
         assertEquals("99", NotificationCount.format(4321))
+    }
+
+    @Test fun packetForCountFillsAllSevenSlots() {
+        // 3 notifications -> "03" in every weekday slot.
+        val expected = OlleeProtocol.buildWeekdayPacket(List(7) { "03" })
+        assertArrayEquals(expected, NotificationCount.packetFor(3))
+    }
+
+    @Test fun packetForZeroRestoresRealWeekdays() {
+        val expected = OlleeProtocol.buildWeekdayPacket(NotificationCount.REAL_WEEKDAYS)
+        assertArrayEquals(expected, NotificationCount.packetFor(0))
+    }
+
+    @Test fun realWeekdaysAreTheCapturedDefault() {
+        assertEquals(listOf("MO", "TU", "WE", "TH", "FR", "SA", "SU"), NotificationCount.REAL_WEEKDAYS)
     }
 }
