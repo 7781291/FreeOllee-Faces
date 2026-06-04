@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">FreeOllee Faces</string>
+    <string name="notification_listener_label">FreeOllee notification count</string>
 </resources>
