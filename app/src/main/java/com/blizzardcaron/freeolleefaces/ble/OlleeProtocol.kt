@@ -98,10 +98,17 @@ object OlleeProtocol {
 
     /**
      * Builds the Timer-slots write (0x26). [durationsSeconds] must be exactly 10 entries, each a
-     * countdown length in seconds (0 = blank slot). Emits a 4-byte zero header followed by ten
-     * little-endian uint32 durations, then delegates to [buildRawPacket]. The header is a transient
-     * field the official app fills with the last-edited timer's H:M:S; the watch stores the ten
-     * words regardless (validated on-device). Per-slot labels are phone-side only and never sent.
+     * countdown length in seconds (0 = blank slot). Emits a 4-byte header followed by ten
+     * little-endian uint32 durations, then delegates to [buildRawPacket]. Per-slot labels are
+     * phone-side only and never sent.
+     *
+     * The header is `[00, MM, SS, 00]` and seeds the Timer face's **default/primary countdown**
+     * (the one shown before you scroll into the ten slots) — verified on-device: a zero header
+     * left that timer at 00:00:00. We seed it from Slot 1's minutes:seconds so the face comes up
+     * showing the first interval, ready to start (matching the official app, which parks the
+     * last-edited timer there). The header carries no slot data — the ten words persist regardless.
+     * It only has a minutes and a seconds byte (no hour), so Slot 1 durations ≥ 1 h are clamped to
+     * MM:SS for the *display* seed only; the stored Slot 1 word stays full-precision.
      */
     fun buildTimerPacket(durationsSeconds: List<Int>): ByteArray {
         require(durationsSeconds.size == 10) {
@@ -110,7 +117,11 @@ object OlleeProtocol {
         require(durationsSeconds.all { it in 0..359_999 }) {
             "each duration must be 0..359999 s (got $durationsSeconds)"
         }
-        val payload = ByteArray(4 + 10 * 4) // 4-byte zero header + 10 LE-uint32 words
+        val payload = ByteArray(4 + 10 * 4) // 4-byte header + 10 LE-uint32 words
+        // Seed the face's default countdown from Slot 1 (MM:SS; minutes clamped to one byte).
+        val slot1 = durationsSeconds[0]
+        payload[1] = (slot1 / 60).coerceAtMost(0xFF).toByte() // MM
+        payload[2] = (slot1 % 60).toByte()                    // SS
         durationsSeconds.forEachIndexed { i, s ->
             val off = 4 + i * 4
             payload[off] = (s and 0xFF).toByte()
