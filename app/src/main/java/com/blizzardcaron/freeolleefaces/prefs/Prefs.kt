@@ -66,6 +66,11 @@ class Prefs(context: Context) {
         get() = if (sp.contains(KEY_CUSTOM_SENT_MS)) sp.getLong(KEY_CUSTOM_SENT_MS, 0L) else null
         set(value) = sp.edit { if (value == null) remove(KEY_CUSTOM_SENT_MS) else putLong(KEY_CUSTOM_SENT_MS, value) }
 
+    /** Live count of undismissed, non-persistent notifications, kept by the listener service. */
+    var notificationCount: Int
+        get() = sp.getInt(KEY_NOTIFICATION_COUNT, 0)
+        set(value) = sp.edit { putInt(KEY_NOTIFICATION_COUNT, value) }
+
     /** Stamp the cached temperature value, the unit it was fetched in, and the fetch time. */
     fun recordTempFetch(value: Double, unit: TempUnit) {
         tempValue = value
@@ -137,6 +142,7 @@ class Prefs(context: Context) {
         private const val KEY_LOCATION_FETCHED_MS = "location_fetched_ms"
         private const val KEY_CUSTOM_TEXT = "custom_text"
         private const val KEY_CUSTOM_SENT_MS = "custom_sent_ms"
+        private const val KEY_NOTIFICATION_COUNT = "notification_count"
         private const val KEY_UPDATE_INTERVAL = "update_interval_min"
         private const val KEY_STEPS_COUNT = "steps_last_count"
         private const val KEY_STEPS_FETCHED_MS = "steps_fetched_ms"
