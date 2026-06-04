@@ -37,6 +37,8 @@ import com.blizzardcaron.freeolleefaces.location.freshnessLabel
 import com.blizzardcaron.freeolleefaces.location.isLocationStale
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
 import com.blizzardcaron.freeolleefaces.sun.SunCalc
+import com.blizzardcaron.freeolleefaces.timer.TimerSet
+import com.blizzardcaron.freeolleefaces.timer.TimerSetsRepository
 import com.blizzardcaron.freeolleefaces.ui.BondedDevicesDialog
 import com.blizzardcaron.freeolleefaces.ui.HomeCallbacks
 import com.blizzardcaron.freeolleefaces.ui.HomeScreen
@@ -49,9 +51,6 @@ import com.blizzardcaron.freeolleefaces.ui.SettingsScreen
 import com.blizzardcaron.freeolleefaces.ui.TimerSetEditScreen
 import com.blizzardcaron.freeolleefaces.ui.TimerSetsScreen
 import com.blizzardcaron.freeolleefaces.ui.theme.FreeOlleeFacesTheme
-import com.blizzardcaron.freeolleefaces.timer.TimerSet
-import com.blizzardcaron.freeolleefaces.timer.TimerSetsRepository
-import java.util.UUID
 import com.blizzardcaron.freeolleefaces.weather.OpenMeteoClient
 import com.blizzardcaron.freeolleefaces.weather.RetryPolicy
 import kotlinx.coroutines.Job
@@ -62,6 +61,7 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import java.util.UUID
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
