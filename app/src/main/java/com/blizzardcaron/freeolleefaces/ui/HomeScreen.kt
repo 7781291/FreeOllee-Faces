@@ -60,6 +60,9 @@ data class HomeState(
     val custom: String = "",
     val customSent: String? = null,
 
+    val notificationCount: Int = 0,
+    val notificationAccessGranted: Boolean = false,
+
     val lat: String = "",
     val lng: String = "",
 )
@@ -114,6 +117,7 @@ fun HomeScreen(
                 ActiveFace.SUN -> SunBody(state, callbacks)
                 ActiveFace.STEPS -> StepsBody(state, callbacks)
                 ActiveFace.CUSTOM -> CustomBody(state, callbacks)
+                ActiveFace.NOTIFICATIONS -> NotificationsBody(state, callbacks)
             }
         }
 
@@ -138,6 +142,7 @@ private fun faceTitle(face: ActiveFace): String = when (face) {
     ActiveFace.SUN -> "Sun event"
     ActiveFace.STEPS -> "Steps"
     ActiveFace.CUSTOM -> "Custom"
+    ActiveFace.NOTIFICATIONS -> "Notifications"
 }
 
 @Composable
@@ -236,4 +241,9 @@ private fun CustomBody(state: HomeState, callbacks: HomeCallbacks) {
     if (state.customSent != null) {
         Text(state.customSent, style = MaterialTheme.typography.bodySmall)
     }
+}
+
+@Composable
+private fun NotificationsBody(state: HomeState, callbacks: HomeCallbacks) {
+    Text("Notifications: ${state.notificationCount}", style = MaterialTheme.typography.headlineMedium)
 }

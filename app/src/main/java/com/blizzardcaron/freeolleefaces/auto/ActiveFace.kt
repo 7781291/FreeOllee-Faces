@@ -9,7 +9,10 @@ enum class ActiveFace {
     STEPS,
 
     /** Not reachable via [fromLegacyAutoSource] — the legacy AutoSource enum had no CUSTOM value. */
-    CUSTOM;
+    CUSTOM,
+
+    /** Count of undismissed, non-persistent notifications, shown in the weekday slot. */
+    NOTIFICATIONS;
 
     companion object {
         /** Map the legacy `AutoSource` pref name to an [ActiveFace]. "OFF"/null/unknown -> TEMPERATURE. */

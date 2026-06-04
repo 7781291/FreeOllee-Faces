@@ -6,6 +6,7 @@ import androidx.work.WorkerParameters
 import com.blizzardcaron.freeolleefaces.ble.OlleeBleClient
 import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
 import com.blizzardcaron.freeolleefaces.health.StepsRepository
+import com.blizzardcaron.freeolleefaces.notifications.NotificationCount
 import com.blizzardcaron.freeolleefaces.notify.ErrorNotifier
 import com.blizzardcaron.freeolleefaces.notify.FailureKind
 import com.blizzardcaron.freeolleefaces.notify.NotifyAction
@@ -54,6 +55,17 @@ class AutoUpdateWorker(
             return runSteps(ctx, prefs, address, ZonedDateTime.now(ZoneId.systemDefault()))
         }
 
+        // NOTIFICATIONS needs only a watch; push the cached count as a backstop to the
+        // listener's live pushes. Handle before the location guard.
+        if (face == ActiveFace.NOTIFICATIONS) {
+            if (address == null) {
+                prefs.recordAutoSend("Skipped: set watch in app")
+                applyHealth(ctx, prefs, FailureKind.SETUP_INCOMPLETE, inSleepNow(prefs))
+                return Result.success()
+            }
+            return runNotifications(ctx, prefs, address, ZonedDateTime.now(ZoneId.systemDefault()))
+        }
+
         if (lat == null || lng == null || address == null) {
             prefs.recordAutoSend("Skipped: set location/watch in app")
             applyHealth(ctx, prefs, FailureKind.SETUP_INCOMPLETE, inSleepNow(prefs))
@@ -64,7 +76,7 @@ class AutoUpdateWorker(
         return when (face) {
             ActiveFace.TEMPERATURE -> runTemperature(ctx, prefs, lat, lng, address, now)
             ActiveFace.SUN -> runSun(ctx, prefs, lat, lng, address, now)
-            ActiveFace.STEPS, ActiveFace.CUSTOM -> Result.success() // handled above
+            ActiveFace.STEPS, ActiveFace.CUSTOM, ActiveFace.NOTIFICATIONS -> Result.success() // handled above
         }
     }
 
@@ -113,6 +125,43 @@ class AutoUpdateWorker(
                             applyHealth(ctx, prefs, kind, inSleep)
                         }
                     }
+                }
+        } else {
+            prefs.recordAutoSend("Asleep (power saving)")
+        }
+
+        if (!backstopped) {
+            val fire = AutoUpdateSchedule.nextTemperatureFire(now, prefs.updateIntervalMinutes, sleep)
+            val delayMs = Duration.between(now, fire).toMillis().coerceAtLeast(0)
+            AutoUpdateScheduler.enqueueNext(ctx, delayMs, sendAttempt = 0)
+        }
+        return Result.success()
+    }
+
+    private suspend fun runNotifications(
+        ctx: Context,
+        prefs: Prefs,
+        address: String,
+        now: ZonedDateTime,
+    ): Result {
+        val sleep = if (prefs.sleepEnabled) {
+            SleepWindow(prefs.sleepStartMin, prefs.sleepEndMin)
+        } else null
+        val nowMinOfDay = now.hour * 60 + now.minute
+        val inSleep = sleep != null &&
+            AutoUpdateSchedule.isInSleepWindow(nowMinOfDay, sleep.startMin, sleep.endMin)
+
+        var backstopped = false
+        if (!inSleep) {
+            val count = prefs.notificationCount
+            val packet = NotificationCount.packetFor(count)
+            OlleeBleClient(ctx).sendPacket(address, packet)
+                .onSuccess {
+                    prefs.recordAutoSend("Sent notifications: $count")
+                    applyHealth(ctx, prefs, null, inSleep)
+                }
+                .onFailure {
+                    backstopped = handleSendFailure(ctx, prefs, FailureKind.WATCH_UNREACHABLE, inSleep)
                 }
         } else {
             prefs.recordAutoSend("Asleep (power saving)")

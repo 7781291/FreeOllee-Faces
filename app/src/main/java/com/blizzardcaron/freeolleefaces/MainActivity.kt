@@ -35,6 +35,7 @@ import com.blizzardcaron.freeolleefaces.health.StepsRepository
 import com.blizzardcaron.freeolleefaces.location.LocationSource
 import com.blizzardcaron.freeolleefaces.location.freshnessLabel
 import com.blizzardcaron.freeolleefaces.location.isLocationStale
+import com.blizzardcaron.freeolleefaces.notifications.NotificationCount
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
 import com.blizzardcaron.freeolleefaces.sun.SunCalc
 import com.blizzardcaron.freeolleefaces.timer.TimerSet
@@ -186,6 +187,16 @@ private fun AppRoot(
         scope.launch { sendAndReport(ble, addr, payload, ::update, ::showSnackbar) }
     }
 
+    fun pushCountIfWatch() {
+        val addr = prefs.watchAddress ?: return
+        val packet = NotificationCount.packetFor(prefs.notificationCount)
+        scope.launch {
+            ble.sendPacket(addr, packet)
+                .onSuccess { showSnackbar("Sent notifications: ${prefs.notificationCount}") }
+                .onFailure { showSnackbar("Send failed — long-press ALARM to wake the watch, then retry") }
+        }
+    }
+
     fun sendCustom(text: String) {
         val addr = prefs.watchAddress ?: return
         prefs.customText = text
@@ -310,6 +321,7 @@ private fun AppRoot(
             ActiveFace.SUN -> refreshSun(push)
             ActiveFace.STEPS -> refreshSteps(push)
             ActiveFace.CUSTOM -> {}
+            ActiveFace.NOTIFICATIONS -> if (push) pushCountIfWatch()
         }
     }
 
@@ -326,6 +338,7 @@ private fun AppRoot(
                 val text = prefs.customText
                 if (text.isNotEmpty()) sendCustom(text)
             }
+            ActiveFace.NOTIFICATIONS -> pushCountIfWatch()
         }
     }
 
