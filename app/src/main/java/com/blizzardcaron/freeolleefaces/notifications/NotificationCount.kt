@@ -31,14 +31,23 @@ object NotificationCount {
         }
 
     /**
-     * Formats a count for the 2-cell slot: null at zero (caller restores the real weekday),
-     * zero-padded for 1..9, plain for 10..99, capped "99" beyond (two cells can't show three
-     * digits).
+     * Formats a count for the 2-cell weekday slot. The slot's **right cell garbles several digits**
+     * (2/5/9 render as 8/garbled — verified on hardware 2026-06-04); only the **left cell** renders
+     * every digit. So:
+     * - `0` → null (caller restores the real weekday table).
+     * - `1..9` → left-aligned `"N "` (the digit in the legible left cell, blank right cell).
+     * - `10`, `11` → `"10"`/`"11"` — the only two-digit counts whose units (`0`/`1`) the right cell
+     *   renders cleanly.
+     * - `12+` → `"11"`, i.e. "11 or more" — any higher count would land a garbled digit in the
+     *   right cell.
+     *
+     * Every result is exactly two ASCII chars whose right cell is one of blank/`0`/`1`.
      */
     fun format(n: Int): String? = when {
         n <= 0 -> null
-        n >= 99 -> "99"
-        else -> "%02d".format(n)
+        n <= 9 -> "$n "
+        n <= 11 -> n.toString()
+        else -> "11"
     }
 
     /** The captured default weekday table (Mon..Sun), restored when the count is zero. */

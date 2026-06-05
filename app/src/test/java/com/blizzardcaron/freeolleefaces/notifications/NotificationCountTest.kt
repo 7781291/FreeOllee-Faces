@@ -4,6 +4,7 @@ import com.blizzardcaron.freeolleefaces.ble.OlleeProtocol
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class NotificationCountTest {
@@ -48,24 +49,41 @@ class NotificationCountTest {
         assertNull(NotificationCount.format(0))
     }
 
-    @Test fun formatSingleDigitIsZeroPadded() {
-        assertEquals("01", NotificationCount.format(1))
-        assertEquals("09", NotificationCount.format(9))
+    // The weekday slot's RIGHT cell garbles several digits (2/5/9 -> 8/garbled, verified on
+    // hardware); only the LEFT cell renders every digit. So single-digit counts are left-aligned
+    // ("N " + blank) to keep the digit in the legible left cell.
+    @Test fun formatSingleDigitIsLeftAligned() {
+        assertEquals("1 ", NotificationCount.format(1))
+        assertEquals("9 ", NotificationCount.format(9))
     }
 
-    @Test fun formatTwoDigits() {
+    // 10 and 11 are the only two-digit counts whose units (0/1) the right cell renders cleanly.
+    @Test fun formatTenAndElevenAreTwoDigit() {
         assertEquals("10", NotificationCount.format(10))
-        assertEquals("99", NotificationCount.format(99))
+        assertEquals("11", NotificationCount.format(11))
     }
 
-    @Test fun formatCapsAtNinetyNine() {
-        assertEquals("99", NotificationCount.format(100))
-        assertEquals("99", NotificationCount.format(4321))
+    // 12+ would land a garbled digit in the right cell, so the badge caps at "11" (= "11 or more").
+    @Test fun formatCapsAtEleven() {
+        assertEquals("11", NotificationCount.format(12))
+        assertEquals("11", NotificationCount.format(99))
+        assertEquals("11", NotificationCount.format(4321))
+    }
+
+    // Invariant: every badge is exactly two chars and its right cell only ever uses a glyph the
+    // slot renders legibly (blank, 0, or 1).
+    @Test fun formatRightCellIsAlwaysLegible() {
+        val legibleRight = setOf(' ', '0', '1')
+        for (count in 1..500) {
+            val s = NotificationCount.format(count)!!
+            assertEquals("count $count -> '$s' is not 2 chars", 2, s.length)
+            assertTrue("count $count -> '$s' has an illegible right cell", s[1] in legibleRight)
+        }
     }
 
     @Test fun packetForCountFillsAllSevenSlots() {
-        // 3 notifications -> "03" in every weekday slot.
-        val expected = OlleeProtocol.buildWeekdayPacket(List(7) { "03" })
+        // 3 notifications -> left-aligned "3 " in every weekday slot.
+        val expected = OlleeProtocol.buildWeekdayPacket(List(7) { "3 " })
         assertArrayEquals(expected, NotificationCount.packetFor(3))
     }
 
