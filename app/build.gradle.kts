@@ -54,6 +54,14 @@ android {
                 signingConfig = signingConfigs.getByName("release")
             }
         }
+        debug {
+            // Install dev/test builds as a SEPARATE app (….debug) so the debug-signed build never
+            // collides with the release-signed GitHub build. Different signing certs can't update
+            // over each other; a distinct applicationId lets both coexist. The label is overridden
+            // in src/debug/res so it's easy to tell apart in the drawer.
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
