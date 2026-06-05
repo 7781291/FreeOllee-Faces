@@ -41,3 +41,28 @@ Tagged versions are published as GitHub Releases with the debug-signed APK attac
 see the [Releases page](https://github.com/kenblizzardcaron/FreeOllee-Faces/releases).
 Pushing a `v*` tag triggers `.github/workflows/release.yml`, which builds and publishes
 the APK; APKs are not committed to the repository.
+
+## License
+
+FreeOllee Faces is free software, licensed under the **GNU General Public License v3.0**
+(see [`LICENSE`](LICENSE)). You may redistribute and/or modify it under those terms; any
+distributed derivative must remain GPL-licensed with source available.
+
+    Copyright (C) 2026 Ken Blizzard-Caron <ken@blizzardcaron.com>
+
+    This program is free software: you can redistribute it and/or modify it under the
+    terms of the GNU General Public License as published by the Free Software Foundation,
+    either version 3 of the License, or (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful, but WITHOUT ANY
+    WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+    PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along with this
+    program. If not, see <https://www.gnu.org/licenses/>.
+
+The BLE protocol (packet framing, CRC-16/CCITT-FALSE, Nordic UART UUIDs) was originally
+reverse-engineered by Arthur86000's [FreeOllee](https://github.com/Arthur86000/FreeOllee);
+this app is an independent in-tree re-implementation. Those are interoperability facts, not
+copied code — the attribution is a courtesy, not a license obligation (FreeOllee declares no
+license of its own).
