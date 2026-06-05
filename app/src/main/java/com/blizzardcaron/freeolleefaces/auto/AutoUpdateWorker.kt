@@ -6,6 +6,7 @@ import androidx.work.WorkerParameters
 import com.blizzardcaron.freeolleefaces.ble.OlleeBleClient
 import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
 import com.blizzardcaron.freeolleefaces.health.StepsRepository
+import com.blizzardcaron.freeolleefaces.notifications.NotificationAccess
 import com.blizzardcaron.freeolleefaces.notifications.NotificationCount
 import com.blizzardcaron.freeolleefaces.notify.ErrorNotifier
 import com.blizzardcaron.freeolleefaces.notify.FailureKind
@@ -75,14 +76,19 @@ class AutoUpdateWorker(
     }
 
     /**
-     * Best-effort re-push of the cached notification count to the weekday slot when the overlay is
-     * enabled, the watch is set, and we're awake. Fire-and-forget: it must not touch the active
-     * face's failure accounting or re-arm logic (the live listener service is the primary path).
+     * Best-effort re-push of the notification overlay to the weekday slot when it's enabled, the
+     * watch is set, and we're awake. Fire-and-forget: it must not touch the active face's failure
+     * accounting or re-arm logic (the live listener service is the primary path).
+     *
+     * Self-heals the orphaned-count case: if the overlay is enabled but notification access has
+     * been revoked, the live service is dead and the count can no longer update — so instead of
+     * re-asserting a stale number we restore the real weekday table (`packetFor(0)`).
      */
     private suspend fun maybePushNotificationCount(ctx: Context, prefs: Prefs, address: String?) {
         if (!prefs.notificationsEnabled || address == null || inSleepNow(prefs)) return
+        val count = if (NotificationAccess.isGranted(ctx)) prefs.notificationCount else 0
         runCatching {
-            OlleeBleClient(ctx).sendPacket(address, NotificationCount.packetFor(prefs.notificationCount))
+            OlleeBleClient(ctx).sendPacket(address, NotificationCount.packetFor(count))
         }
     }
 

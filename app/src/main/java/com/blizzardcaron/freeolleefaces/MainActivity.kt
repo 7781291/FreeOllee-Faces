@@ -21,7 +21,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.app.NotificationManagerCompat
+import com.blizzardcaron.freeolleefaces.notifications.NotificationAccess
 import androidx.core.content.ContextCompat
 import androidx.health.connect.client.PermissionController
 import com.blizzardcaron.freeolleefaces.auto.ActiveFace
@@ -735,7 +735,7 @@ private fun bondedDevices(context: Context): List<BluetoothDevice> {
 }
 
 private fun isNotificationAccessGranted(context: Context): Boolean =
-    NotificationManagerCompat.getEnabledListenerPackages(context).contains(context.packageName)
+    NotificationAccess.isGranted(context)
 
 @SuppressLint("MissingPermission")
 private fun labelForAddress(context: Context, address: String?): String {
