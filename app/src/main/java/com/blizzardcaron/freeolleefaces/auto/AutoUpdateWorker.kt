@@ -39,6 +39,11 @@ class AutoUpdateWorker(
         val lng = prefs.lastLng
         val address = prefs.watchAddress
 
+        // The notification count is an independent overlay on the weekday slot, decoupled from the
+        // name-tag face. Best-effort backstop to the listener's live pushes; it piggybacks on
+        // whatever schedule the active face arms and never affects that face's success/scheduling.
+        maybePushNotificationCount(ctx, prefs, address)
+
         // CUSTOM has no schedule; clear any stale error notification and stop the chain.
         if (face == ActiveFace.CUSTOM) {
             applyHealth(ctx, prefs, null, inSleep = false)
@@ -55,17 +60,6 @@ class AutoUpdateWorker(
             return runSteps(ctx, prefs, address, ZonedDateTime.now(ZoneId.systemDefault()))
         }
 
-        // NOTIFICATIONS needs only a watch; push the cached count as a backstop to the
-        // listener's live pushes. Handle before the location guard.
-        if (face == ActiveFace.NOTIFICATIONS) {
-            if (address == null) {
-                prefs.recordAutoSend("Skipped: set watch in app")
-                applyHealth(ctx, prefs, FailureKind.SETUP_INCOMPLETE, inSleepNow(prefs))
-                return Result.success()
-            }
-            return runNotifications(ctx, prefs, address, ZonedDateTime.now(ZoneId.systemDefault()))
-        }
-
         if (lat == null || lng == null || address == null) {
             prefs.recordAutoSend("Skipped: set location/watch in app")
             applyHealth(ctx, prefs, FailureKind.SETUP_INCOMPLETE, inSleepNow(prefs))
@@ -76,7 +70,19 @@ class AutoUpdateWorker(
         return when (face) {
             ActiveFace.TEMPERATURE -> runTemperature(ctx, prefs, lat, lng, address, now)
             ActiveFace.SUN -> runSun(ctx, prefs, lat, lng, address, now)
-            ActiveFace.STEPS, ActiveFace.CUSTOM, ActiveFace.NOTIFICATIONS -> Result.success() // handled above
+            ActiveFace.STEPS, ActiveFace.CUSTOM -> Result.success() // handled above
+        }
+    }
+
+    /**
+     * Best-effort re-push of the cached notification count to the weekday slot when the overlay is
+     * enabled, the watch is set, and we're awake. Fire-and-forget: it must not touch the active
+     * face's failure accounting or re-arm logic (the live listener service is the primary path).
+     */
+    private suspend fun maybePushNotificationCount(ctx: Context, prefs: Prefs, address: String?) {
+        if (!prefs.notificationsEnabled || address == null || inSleepNow(prefs)) return
+        runCatching {
+            OlleeBleClient(ctx).sendPacket(address, NotificationCount.packetFor(prefs.notificationCount))
         }
     }
 
@@ -125,43 +131,6 @@ class AutoUpdateWorker(
                             applyHealth(ctx, prefs, kind, inSleep)
                         }
                     }
-                }
-        } else {
-            prefs.recordAutoSend("Asleep (power saving)")
-        }
-
-        if (!backstopped) {
-            val fire = AutoUpdateSchedule.nextTemperatureFire(now, prefs.updateIntervalMinutes, sleep)
-            val delayMs = Duration.between(now, fire).toMillis().coerceAtLeast(0)
-            AutoUpdateScheduler.enqueueNext(ctx, delayMs, sendAttempt = 0)
-        }
-        return Result.success()
-    }
-
-    private suspend fun runNotifications(
-        ctx: Context,
-        prefs: Prefs,
-        address: String,
-        now: ZonedDateTime,
-    ): Result {
-        val sleep = if (prefs.sleepEnabled) {
-            SleepWindow(prefs.sleepStartMin, prefs.sleepEndMin)
-        } else null
-        val nowMinOfDay = now.hour * 60 + now.minute
-        val inSleep = sleep != null &&
-            AutoUpdateSchedule.isInSleepWindow(nowMinOfDay, sleep.startMin, sleep.endMin)
-
-        var backstopped = false
-        if (!inSleep) {
-            val count = prefs.notificationCount
-            val packet = NotificationCount.packetFor(count)
-            OlleeBleClient(ctx).sendPacket(address, packet)
-                .onSuccess {
-                    prefs.recordAutoSend("Sent notifications: $count")
-                    applyHealth(ctx, prefs, null, inSleep)
-                }
-                .onFailure {
-                    backstopped = handleSendFailure(ctx, prefs, FailureKind.WATCH_UNREACHABLE, inSleep)
                 }
         } else {
             prefs.recordAutoSend("Asleep (power saving)")

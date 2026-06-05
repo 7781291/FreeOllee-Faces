@@ -48,6 +48,7 @@ import com.blizzardcaron.freeolleefaces.ui.HomeCallbacks
 import com.blizzardcaron.freeolleefaces.ui.HomeScreen
 import com.blizzardcaron.freeolleefaces.ui.HomeState
 import com.blizzardcaron.freeolleefaces.ui.FacesListScreen
+import com.blizzardcaron.freeolleefaces.ui.NotificationsScreen
 import com.blizzardcaron.freeolleefaces.ui.PreviewState
 import com.blizzardcaron.freeolleefaces.ui.Screen
 import com.blizzardcaron.freeolleefaces.ui.SettingsCallbacks
@@ -141,6 +142,7 @@ private fun AppRoot(
                 locationFreshness = freshnessLabel(prefs.lastLocationFetchedMs, System.currentTimeMillis()),
                 notificationCount = prefs.notificationCount,
                 notificationAccessGranted = isNotificationAccessGranted(context),
+                notificationsEnabled = prefs.notificationsEnabled,
             )
         )
     }
@@ -326,7 +328,6 @@ private fun AppRoot(
             ActiveFace.SUN -> refreshSun(push)
             ActiveFace.STEPS -> refreshSteps(push)
             ActiveFace.CUSTOM -> {}
-            ActiveFace.NOTIFICATIONS -> if (push) pushCountIfWatch()
         }
     }
 
@@ -343,7 +344,25 @@ private fun AppRoot(
                 val text = prefs.customText
                 if (text.isNotEmpty()) sendCustom(text)
             }
-            ActiveFace.NOTIFICATIONS -> pushCountIfWatch()
+        }
+    }
+
+    /**
+     * Toggle the notification-count overlay (independent of the name-tag face). Enabling pushes the
+     * current count to the weekday slot; disabling restores the real weekday table (count 0).
+     */
+    fun setNotificationsEnabled(enabled: Boolean) {
+        prefs.notificationsEnabled = enabled
+        update { it.copy(notificationsEnabled = enabled) }
+        val addr = prefs.watchAddress ?: return
+        val packet = if (enabled) {
+            NotificationCount.packetFor(prefs.notificationCount)
+        } else {
+            NotificationCount.packetFor(0) // restores the real weekday table
+        }
+        scope.launch {
+            ble.sendPacket(addr, packet)
+                .onFailure { showSnackbar("Send failed — long-press ALARM to wake the watch, then retry") }
         }
     }
 
@@ -454,10 +473,11 @@ private fun AppRoot(
     }
 
     LaunchedEffect(screen) {
-        if (screen == Screen.Home) {
+        if (screen == Screen.Home || screen == Screen.Notifications) {
             update { it.copy(
                 notificationCount = prefs.notificationCount,
                 notificationAccessGranted = isNotificationAccessGranted(context),
+                notificationsEnabled = prefs.notificationsEnabled,
             ) }
         }
     }
@@ -612,8 +632,26 @@ private fun AppRoot(
         Screen.Home -> HomeScreen(state = state, callbacks = homeCallbacks, modifier = modifier)
         Screen.FacesList -> FacesListScreen(
             active = state.activeFace,
+            notificationsEnabled = state.notificationsEnabled,
             onSelect = { activate(it) },
+            onToggleNotifications = { setNotificationsEnabled(it) },
+            onOpenNotifications = { screen = Screen.Notifications },
             onBack = { screen = Screen.Home },
+            modifier = modifier,
+        )
+        Screen.Notifications -> NotificationsScreen(
+            enabled = state.notificationsEnabled,
+            accessGranted = state.notificationAccessGranted,
+            count = state.notificationCount,
+            onToggleEnabled = { setNotificationsEnabled(it) },
+            onGrantAccess = {
+                context.startActivity(
+                    Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                )
+            },
+            onUpdateNow = { pushCountIfWatch() },
+            onBack = { screen = Screen.FacesList },
             modifier = modifier,
         )
         Screen.Settings -> SettingsScreen(

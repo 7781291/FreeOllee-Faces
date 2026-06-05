@@ -63,6 +63,7 @@ data class HomeState(
 
     val notificationCount: Int = 0,
     val notificationAccessGranted: Boolean = false,
+    val notificationsEnabled: Boolean = false,
 
     val lat: String = "",
     val lng: String = "",
@@ -119,7 +120,6 @@ fun HomeScreen(
                 ActiveFace.SUN -> SunBody(state, callbacks)
                 ActiveFace.STEPS -> StepsBody(state, callbacks)
                 ActiveFace.CUSTOM -> CustomBody(state, callbacks)
-                ActiveFace.NOTIFICATIONS -> NotificationsBody(state, callbacks)
             }
         }
 
@@ -144,7 +144,6 @@ private fun faceTitle(face: ActiveFace): String = when (face) {
     ActiveFace.SUN -> "Sun event"
     ActiveFace.STEPS -> "Steps"
     ActiveFace.CUSTOM -> "Custom"
-    ActiveFace.NOTIFICATIONS -> "Notifications"
 }
 
 @Composable
@@ -245,49 +244,3 @@ private fun CustomBody(state: HomeState, callbacks: HomeCallbacks) {
     }
 }
 
-@Composable
-private fun NotificationsBody(state: HomeState, callbacks: HomeCallbacks) {
-    if (!state.notificationAccessGranted) {
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text("Notification access needed", style = MaterialTheme.typography.titleSmall)
-                Text(
-                    "Grant notification access so the watch can show how many unread " +
-                        "notifications you have, in the weekday slot of the Clock face.",
-                    style = MaterialTheme.typography.bodySmall,
-                )
-                Button(
-                    onClick = callbacks.onGrantNotificationAccess,
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text("Grant notification access") }
-            }
-        }
-    }
-    Text("${state.notificationCount} unread", style = MaterialTheme.typography.headlineMedium)
-    Text(
-        "Shown in the weekday slot on the Clock face. Persistent notifications are ignored; " +
-            "zero restores the weekday.",
-        style = MaterialTheme.typography.bodySmall,
-    )
-    Button(onClick = callbacks.onUpdateNow, modifier = Modifier.fillMaxWidth()) { Text("Update now") }
-    HorizontalDivider()
-    // Reserved: a watch beep on new notifications, gated on the alarm-chime BLE spike (Phase B).
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Column {
-            Text("Beep on watch", style = MaterialTheme.typography.bodyLarge)
-            Text(
-                "Coming soon — under investigation",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.outline,
-            )
-        }
-        Switch(checked = false, onCheckedChange = null, enabled = false)
-    }
-}

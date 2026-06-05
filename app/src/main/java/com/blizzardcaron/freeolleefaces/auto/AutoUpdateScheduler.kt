@@ -34,8 +34,6 @@ object AutoUpdateScheduler {
 
             ActiveFace.STEPS -> scheduleIntervalFace(ctx, prefs, prefs.updateIntervalMinutes)
 
-            ActiveFace.NOTIFICATIONS -> scheduleIntervalFace(ctx, prefs, prefs.updateIntervalMinutes)
-
             ActiveFace.SUN -> enqueueNext(ctx, 0L, sendAttempt = 0)
         }
     }

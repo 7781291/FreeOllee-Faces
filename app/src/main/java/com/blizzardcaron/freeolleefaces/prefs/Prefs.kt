@@ -32,14 +32,31 @@ class Prefs(context: Context) {
 
     var activeFace: ActiveFace
         get() {
-            sp.getString(KEY_ACTIVE_FACE, null)?.let { stored ->
-                runCatching { ActiveFace.valueOf(stored) }.getOrNull()?.let { return it }
+            val stored = sp.getString(KEY_ACTIVE_FACE, null)
+            // Legacy: NOTIFICATIONS used to be a mutually-exclusive face. It's now an independent
+            // weekday-slot overlay, so migrate it to "the count overlay is on, name-tag face is
+            // the default" — once, in place.
+            if (stored == LEGACY_NOTIFICATIONS_FACE) {
+                notificationsEnabled = true
+                sp.edit { putString(KEY_ACTIVE_FACE, ActiveFace.TEMPERATURE.name) }
+                return ActiveFace.TEMPERATURE
+            }
+            stored?.let {
+                runCatching { ActiveFace.valueOf(it) }.getOrNull()?.let { face -> return face }
             }
             val migrated = ActiveFace.fromLegacyAutoSource(sp.getString(KEY_AUTO_SOURCE, null))
             sp.edit { putString(KEY_ACTIVE_FACE, migrated.name) }
             return migrated
         }
         set(value) = sp.edit { putString(KEY_ACTIVE_FACE, value.name) }
+
+    /**
+     * Whether the notification count rides the watch's weekday slot (`0x34`). Independent of
+     * [activeFace] — the count overlay coexists with whichever name-tag face is active.
+     */
+    var notificationsEnabled: Boolean
+        get() = sp.getBoolean(KEY_NOTIFICATIONS_ENABLED, false)
+        set(value) = sp.edit { putBoolean(KEY_NOTIFICATIONS_ENABLED, value) }
 
     var tempValue: Double?
         get() = if (sp.contains(KEY_TEMP_VALUE)) sp.getFloat(KEY_TEMP_VALUE, 0f).toDouble() else null
@@ -143,6 +160,9 @@ class Prefs(context: Context) {
         private const val KEY_CUSTOM_TEXT = "custom_text"
         private const val KEY_CUSTOM_SENT_MS = "custom_sent_ms"
         private const val KEY_NOTIFICATION_COUNT = "notification_count"
+        private const val KEY_NOTIFICATIONS_ENABLED = "notifications_enabled"
+        /** Legacy `active_face` value from when notifications was a mutually-exclusive face. */
+        private const val LEGACY_NOTIFICATIONS_FACE = "NOTIFICATIONS"
         private const val KEY_UPDATE_INTERVAL = "update_interval_min"
         private const val KEY_STEPS_COUNT = "steps_last_count"
         private const val KEY_STEPS_FETCHED_MS = "steps_fetched_ms"

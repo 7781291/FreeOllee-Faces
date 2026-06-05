@@ -3,7 +3,6 @@ package com.blizzardcaron.freeolleefaces.notifications
 import android.app.Notification
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
-import com.blizzardcaron.freeolleefaces.auto.ActiveFace
 import com.blizzardcaron.freeolleefaces.ble.OlleeBleClient
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
 import kotlinx.coroutines.CoroutineScope
@@ -17,7 +16,8 @@ import kotlinx.coroutines.launch
 /**
  * Counts undismissed, non-persistent notifications and pushes the badge to the watch's
  * weekday slot. Requires the user to grant "Notification access" in system settings. Live
- * pushes are debounced (~2 s) and only happen while [ActiveFace.NOTIFICATIONS] is active;
+ * pushes are debounced (~2 s) and only happen while the notification overlay is enabled
+ * ([Prefs.notificationsEnabled]) — independent of which name-tag face is active;
  * [com.blizzardcaron.freeolleefaces.auto.AutoUpdateWorker] is the periodic backstop.
  */
 class NotificationCountService : NotificationListenerService() {
@@ -66,7 +66,7 @@ class NotificationCountService : NotificationListenerService() {
         pushJob?.cancel()
         pushJob = scope.launch {
             delay(DEBOUNCE_MS)
-            if (prefs.activeFace != ActiveFace.NOTIFICATIONS) return@launch
+            if (!prefs.notificationsEnabled) return@launch
             val addr = prefs.watchAddress ?: return@launch
             OlleeBleClient(applicationContext)
                 .sendPacket(addr, NotificationCount.packetFor(prefs.notificationCount))
