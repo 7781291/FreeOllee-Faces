@@ -1,0 +1,113 @@
+package com.blizzardcaron.freeolleefaces.devtools
+
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.pm.ApplicationInfo
+import android.util.Log
+import com.blizzardcaron.freeolleefaces.ble.OlleeBleClient
+import com.blizzardcaron.freeolleefaces.ble.OlleeProtocol
+import com.blizzardcaron.freeolleefaces.prefs.Prefs
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+
+/**
+ * Developer bench tool: writes one framed packet to the paired watch over the normal
+ * [OlleeBleClient] path (which already connects to the bonded device — the same reason on-watch
+ * faces work from the phone but not from an unbonded host). Kept in the tree as a reusable BLE
+ * probe for reverse-engineering watch targets; **inert unless the build is debuggable**, so it is
+ * a no-op in release.
+ *
+ * Driven from adb (action + extras). The watch address comes from `--es watch <MAC>` if given,
+ * else [Prefs.watchAddress]; results and the exact TX bytes are logged under tag `OLLEE_DEV`.
+ *
+ *   # raw, fully-framed bytes (CRC already correct):
+ *   adb shell am broadcast -a com.blizzardcaron.freeolleefaces.DEV_SEND \
+ *       -f 0x01000000 --es watch 00:80:E1:26:DC:86 \
+ *       --es frame 0013AA55525D02250000000D1E00050501C0FF0FFF
+ *
+ *   # target + payload hex — CRC/LEN computed here via buildRawPacket:
+ *   adb shell am broadcast -a com.blizzardcaron.freeolleefaces.DEV_SEND \
+ *       -f 0x01000000 --es target 25 --es payload 0000000D1E00050501C0FF0FFF
+ *
+ *   # the decoded alarm/chime record (hour/min/chime decimal, play/enabled 0|1):
+ *   adb shell am broadcast -a com.blizzardcaron.freeolleefaces.DEV_SEND \
+ *       -f 0x01000000 --ei hour 13 --ei minute 30 --ei chime 5 --ei play 1
+ */
+class DevToolsReceiver : BroadcastReceiver() {
+
+    override fun onReceive(context: Context, intent: Intent) {
+        val ctx = context.applicationContext
+        if ((ctx.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) == 0) return
+
+        // Prefer an explicit `--es watch <MAC>` so the probe works without configuring the app;
+        // fall back to the app's saved watch.
+        val address = intent.getStringExtra("watch") ?: Prefs(ctx).watchAddress
+        if (address == null) {
+            Log.w(TAG, "no watch address — pass --es watch <MAC> or set the watch in the app first")
+            return
+        }
+
+        val packet = try {
+            buildPacket(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "bad request: ${e.message}")
+            return
+        }
+        if (packet == null) {
+            Log.w(TAG, "nothing to send — provide --es frame, --es payload, or --ei hour/minute")
+            return
+        }
+
+        Log.i(TAG, "TX ${packet.size} ${packet.toHex()} -> $address")
+        val pending = goAsync()
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val result = OlleeBleClient(ctx).sendPacket(address, packet)
+                Log.i(
+                    TAG,
+                    if (result.isSuccess) "result: OK"
+                    else "result: FAIL ${result.exceptionOrNull()?.message}",
+                )
+            } finally {
+                pending.finish()
+            }
+        }
+    }
+
+    /** Returns the framed bytes for whichever extras were supplied, or null if none were. */
+    private fun buildPacket(intent: Intent): ByteArray? = when {
+        intent.hasExtra("frame") ->
+            intent.getStringExtra("frame")!!.hexToBytes()
+
+        intent.hasExtra("payload") -> {
+            val target = (intent.getStringExtra("target") ?: "25").toInt(16)
+            OlleeProtocol.buildRawPacket(target, intent.getStringExtra("payload")!!.hexToBytes())
+        }
+
+        intent.hasExtra("hour") ->
+            OlleeProtocol.buildAlarmPacket(
+                hour = intent.getIntExtra("hour", 0),
+                minute = intent.getIntExtra("minute", 0),
+                chimeIndex = intent.getIntExtra("chime", 0),
+                playNow = intent.getIntExtra("play", 1) != 0,
+                enabled = intent.getIntExtra("enabled", 0) != 0,
+            )
+
+        else -> null
+    }
+
+    private fun String.hexToBytes(): ByteArray {
+        val clean = filterNot { it.isWhitespace() }
+        require(clean.length % 2 == 0) { "hex must have an even length" }
+        return clean.chunked(2).map { it.toInt(16).toByte() }.toByteArray()
+    }
+
+    private fun ByteArray.toHex(): String = joinToString("") { "%02X".format(it) }
+
+    companion object {
+        const val TAG = "OLLEE_DEV"
+        const val ACTION = "com.blizzardcaron.freeolleefaces.DEV_SEND"
+    }
+}

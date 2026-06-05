@@ -64,6 +64,16 @@
             android:name=".notify.RetryReceiver"
             android:exported="false" />
 
+        <!-- Developer BLE bench tool (adb-driven raw-frame sender). Exported so `adb shell am
+             broadcast` can reach it; the receiver itself is inert unless the build is debuggable. -->
+        <receiver
+            android:name=".devtools.DevToolsReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.blizzardcaron.freeolleefaces.DEV_SEND" />
+            </intent-filter>
+        </receiver>
+
         <service
             android:name=".notifications.NotificationCountService"
             android:label="@string/notification_listener_label"
