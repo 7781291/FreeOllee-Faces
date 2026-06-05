@@ -258,4 +258,43 @@ class OlleeProtocolTest {
     fun `buildTimerPacket rejects an out-of-range duration`() {
         OlleeProtocol.buildTimerPacket(listOf(360_000, 0, 0, 0, 0, 0, 0, 0, 0, 0))
     }
+
+    // The decoded 02 25 alarm record. Captured chime preview: 1:30 PM, chime index 5, play-now.
+    // 13-byte payload incl. the FF terminator; CRC-16/CCITT-FALSE over the inner -> 0x525D,
+    // LEN = 0x13. buildAlarmPacket emits the whole 21-byte frame (the BLE layer splits [20][FF]).
+    @Test
+    fun `buildAlarmPacket reproduces the captured 02 25 chime-preview frame`() {
+        val packet = OlleeProtocol.buildAlarmPacket(
+            hour = 13, minute = 30, chimeIndex = 5, playNow = true, enabled = false,
+        )
+        val expected = byteArrayOf(
+            0x00, 0x13, 0xAA.toByte(), 0x55, 0x52, 0x5D,            // frame header + CRC
+            0x02, 0x25,                                            // cmd + target
+            0x00, 0x00, 0x00, 0x0D, 0x1E, 0x00, 0x05, 0x05,        // enable,0,0,hr,min,?,chime,05
+            0x01, 0xC0.toByte(), 0xFF.toByte(), 0x0F, 0xFF.toByte(), // play, C0 FF 0F, FF terminator
+        )
+        assertArrayEquals(expected, packet)
+    }
+
+    @Test
+    fun `buildAlarmPacket sets enable and play-now bytes and round-trips with valid CRC`() {
+        val packet = OlleeProtocol.buildAlarmPacket(
+            hour = 7, minute = 5, chimeIndex = 2, playNow = false, enabled = true,
+        )
+        val f = OlleeProtocol.parseFrame(packet)!!
+        assertEquals(0x25, f.target)
+        assertTrue(f.crcOk)
+        assertEquals(13, f.payload.size)
+        assertEquals(0x01, f.payload[0].toInt() and 0xFF) // enabled
+        assertEquals(7, f.payload[3].toInt() and 0xFF)    // hour
+        assertEquals(5, f.payload[4].toInt() and 0xFF)    // minute
+        assertEquals(2, f.payload[6].toInt() and 0xFF)    // chime index
+        assertEquals(0x00, f.payload[8].toInt() and 0xFF) // play-now off
+        assertEquals(0xFF, f.payload[12].toInt() and 0xFF) // terminator
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `buildAlarmPacket rejects an out-of-range hour`() {
+        OlleeProtocol.buildAlarmPacket(hour = 24, minute = 0, chimeIndex = 0, playNow = false)
+    }
 }

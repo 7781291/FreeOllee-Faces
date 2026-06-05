@@ -22,6 +22,9 @@ object OlleeProtocol {
     /** Timer-face slots (10 countdown durations) — write target. Ack at 0x46. */
     const val TARGET_TIMERS = 0x26
 
+    /** Alarm-face record — write target. Ack at 0x45; the chime preview shares this format. */
+    const val TARGET_ALARM = 0x25
+
     fun crc16(data: ByteArray): Int {
         var crc = 0xFFFF
         for (b in data) {
@@ -130,6 +133,45 @@ object OlleeProtocol {
             payload[off + 3] = ((s shr 24) and 0xFF).toByte()
         }
         return buildRawPacket(TARGET_TIMERS, payload)
+    }
+
+    /**
+     * Builds the alarm record (target 0x25). The watch stores one alarm — [hour] (0..23),
+     * [minute] (0..59), and a [chimeIndex] tone selector (0x00 = Classic, 0x01 = Breeze,
+     * 0x02 = Westminster, …). Set [playNow] to sound the chosen chime immediately ("Try chime"):
+     * that is a transient preview the firmware does NOT persist (the play-now byte is absent from
+     * the alarm read-back at 0x2B), so it never disturbs the stored alarm. [enabled] is the
+     * candidate alarm-on flag (byte 0).
+     *
+     * Layout (13-byte payload, decoded from captures — see docs/reference/ollee-ble-protocol.md
+     * in the ollee-graphene repo):
+     *   [enable, 00, 00, hour, minute, 00, chime, 05, playNow, C0, FF, 0F, FF]
+     * The final FF is a constant terminator (payload byte 12). The watch's 20-byte ATT payload
+     * fragments the resulting 21-byte frame into [20][FF] — exactly how the official app sends it,
+     * and how [OlleeBleClient] chunks it.
+     */
+    fun buildAlarmPacket(
+        hour: Int,
+        minute: Int,
+        chimeIndex: Int,
+        playNow: Boolean,
+        enabled: Boolean = false,
+    ): ByteArray {
+        require(hour in 0..23) { "hour must be 0..23 (got $hour)" }
+        require(minute in 0..59) { "minute must be 0..59 (got $minute)" }
+        require(chimeIndex in 0..0xFF) { "chimeIndex must be a single byte (got $chimeIndex)" }
+        val payload = byteArrayOf(
+            if (enabled) 0x01 else 0x00,
+            0x00, 0x00,
+            hour.toByte(),
+            minute.toByte(),
+            0x00,                       // byte 5: role undecoded; 0x00 observed sounding the chime
+            chimeIndex.toByte(),
+            0x05,                       // byte 7: constant
+            if (playNow) 0x01 else 0x00,
+            0xC0.toByte(), 0xFF.toByte(), 0x0F, 0xFF.toByte(), // trailer + FF terminator
+        )
+        return buildRawPacket(TARGET_ALARM, payload)
     }
 
     /** °F string matching the watch's read format ("  54 F"): right-justified to 6 chars. */
