@@ -98,23 +98,5 @@ fun NotificationsScreen(
             enabled = enabled,
             modifier = Modifier.fillMaxWidth(),
         ) { Text("Update now") }
-
-        HorizontalDivider()
-        // Reserved: a watch beep on new notifications, gated on the alarm-chime BLE spike (Phase B).
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Column {
-                Text("Beep on watch", style = MaterialTheme.typography.bodyLarge)
-                Text(
-                    "Coming soon — under investigation",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline,
-                )
-            }
-            Switch(checked = false, onCheckedChange = null, enabled = false)
-        }
     }
 }
