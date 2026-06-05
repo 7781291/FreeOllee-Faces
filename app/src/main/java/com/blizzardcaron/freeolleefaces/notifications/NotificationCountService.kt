@@ -19,6 +19,12 @@ import kotlinx.coroutines.launch
  * pushes are debounced (~2 s) and only happen while the notification overlay is enabled
  * ([Prefs.notificationsEnabled]) — independent of which name-tag face is active;
  * [com.blizzardcaron.freeolleefaces.auto.AutoUpdateWorker] is the periodic backstop.
+ *
+ * Two inherent limitations of the weekday slot (0x34), both unavoidable on this hardware:
+ * - **Clock-face only:** the count renders only while the watch is on the Clock face; other
+ *   firmware faces (Alarm/Timer/Stopwatch) show their own upper-panel content.
+ * - **Shared register:** the official Ollee app writes the same 0x34 slot, so last-writer-wins —
+ *   it can overwrite the count (and vice-versa). The worker backstop re-asserts on its cycle.
  */
 class NotificationCountService : NotificationListenerService() {
 
