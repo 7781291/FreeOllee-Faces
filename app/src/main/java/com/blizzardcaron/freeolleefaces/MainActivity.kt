@@ -355,6 +355,22 @@ private fun AppRoot(
         }
     }
 
+    /**
+     * Refresh every face's preview for the dashboard. Never pushes to the watch. Cheap: only
+     * temperature can hit the network, and only when its cache has expired (refreshTemp honors
+     * isTempCacheFresh); sun is local, steps is a local read, notifications is read from prefs.
+     */
+    fun refreshAllPreviews() {
+        refreshTemp(force = false, push = false)
+        refreshSun(push = false)
+        refreshSteps(push = false)
+        update { it.copy(
+            notificationCount = prefs.notificationCount,
+            notificationAccessGranted = isNotificationAccessGranted(context),
+            notificationsEnabled = prefs.notificationsEnabled,
+        ) }
+    }
+
     fun activate(face: ActiveFace) {
         prefs.activeFace = face
         update { it.copy(activeFace = face) }
@@ -473,6 +489,17 @@ private fun AppRoot(
 
         refreshActive(force = false, push = false)
         AutoUpdateScheduler.reschedule(context)
+    }
+
+    // Dashboard polling: while Home is visible, refresh all face previews on entry and every 60 s.
+    // Keyed on `screen` so it cancels when you navigate away and restarts on return.
+    LaunchedEffect(screen) {
+        if (screen == Screen.Home) {
+            while (true) {
+                refreshAllPreviews()
+                delay(60_000)
+            }
+        }
     }
 
     val btPermissionLauncher = rememberLauncherForActivityResult(
