@@ -191,4 +191,27 @@ class DisplayFormatterTest {
     fun `steps not stale six digit stays full`() {
         assertEquals("100234", DisplayFormatter.steps(100_234, stale = false))
     }
+
+    @Test
+    fun `sunTime stale single-digit hour drops event char and prefixes E`() {
+        assertEquals("E6:41p", DisplayFormatter.sunTime(SunEventKind.SUNSET, LocalTime.of(18, 41), stale = true))
+        assertEquals("E6:29a", DisplayFormatter.sunTime(SunEventKind.SUNRISE, LocalTime.of(6, 29), stale = true))
+    }
+
+    @Test
+    fun `sunTime stale two-digit hour drops event char`() {
+        assertEquals("E10:30", DisplayFormatter.sunTime(SunEventKind.SUNSET, LocalTime.of(22, 30), stale = true))
+    }
+
+    @Test
+    fun `sunTime stale is always exactly six chars`() {
+        listOf(LocalTime.of(6, 41), LocalTime.of(10, 5), LocalTime.of(0, 0), LocalTime.of(12, 0)).forEach {
+            assertEquals("len for $it", 6, DisplayFormatter.sunTime(SunEventKind.SUNSET, it, stale = true).length)
+        }
+    }
+
+    @Test
+    fun `sunTime not stale is unchanged`() {
+        assertEquals("8:15ps", DisplayFormatter.sunTime(SunEventKind.SUNSET, LocalTime.of(20, 15), stale = false))
+    }
 }

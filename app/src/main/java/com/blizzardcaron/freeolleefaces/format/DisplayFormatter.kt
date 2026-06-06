@@ -17,7 +17,7 @@ object DisplayFormatter {
         return markStale("%4d#${unit.symbol}".format(rounded), stale)
     }
 
-    fun sunTime(kind: SunEventKind, time: LocalTime): String {
+    fun sunTime(kind: SunEventKind, time: LocalTime, stale: Boolean = false): String {
         val hour24 = time.hour
         val minute = time.minute
         val isAm = hour24 < 12
@@ -28,7 +28,7 @@ object DisplayFormatter {
         }
         val eventChar = if (kind == SunEventKind.SUNRISE) 'r' else 's'
 
-        return if (hour12 < 10) {
+        val fresh = if (hour12 < 10) {
             // single-digit hour: include am/pm marker -> "H:MMar" or "H:MMps"
             val ampm = if (isAm) 'a' else 'p'
             "%d:%02d%c%c".format(hour12, minute, ampm, eventChar)
@@ -36,6 +36,8 @@ object DisplayFormatter {
             // two-digit hour (10, 11, 12): drop am/pm -> "HH:MMr" or "HH:MMs"
             "%d:%02d%c".format(hour12, minute, eventChar)
         }
+        // Sun fills all 6 chars (no pad) — to mark stale, drop the trailing r/s and prefix 'E'.
+        return if (stale) "E" + fresh.dropLast(1) else fresh
     }
 
     fun custom(text: String): String =
