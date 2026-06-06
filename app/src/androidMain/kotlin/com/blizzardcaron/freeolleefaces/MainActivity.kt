@@ -66,6 +66,7 @@ import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format.DateTimeFormat
+import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
 import kotlinx.datetime.toLocalDateTime
 import java.util.Locale
@@ -88,7 +89,7 @@ class MainActivity : ComponentActivity() {
 }
 
 private val CLOCK: DateTimeFormat<LocalTime> = LocalTime.Format {
-    amPmHour(); char(':'); minute(); char(' '); amPmMarker("AM", "PM")
+    amPmHour(Padding.NONE); char(':'); minute(); char(' '); amPmMarker("AM", "PM")
 }
 
 private fun clockTime(ms: Long): String =
