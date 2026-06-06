@@ -523,8 +523,10 @@ private fun AppRoot(
         }
     }
 
+    // The Notifications detail screen refreshes its count on entry. Home is covered by the
+    // dashboard-polling effect above, so this only needs to handle the Notifications screen.
     LaunchedEffect(screen) {
-        if (screen == Screen.Home || screen == Screen.Notifications) {
+        if (screen == Screen.Notifications) {
             update { it.copy(
                 notificationCount = prefs.notificationCount,
                 notificationAccessGranted = isNotificationAccessGranted(context),
