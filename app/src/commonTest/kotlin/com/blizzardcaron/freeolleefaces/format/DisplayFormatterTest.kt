@@ -1,8 +1,8 @@
 package com.blizzardcaron.freeolleefaces.format
 
-import org.junit.Assert.assertEquals
-import org.junit.Test
-import java.time.LocalTime
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlinx.datetime.LocalTime
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 
 class DisplayFormatterTest {
@@ -62,7 +62,7 @@ class DisplayFormatterTest {
     @Test
     fun `temperature stale is still six chars`() {
         listOf(0.0, 67.0, 100.0, -12.0).forEach {
-            assertEquals("len for $it", 6, DisplayFormatter.temperature(it, stale = true).length)
+            assertEquals(6, DisplayFormatter.temperature(it, stale = true).length, "len for $it")
         }
     }
 
@@ -80,35 +80,35 @@ class DisplayFormatterTest {
     @Test
     fun `sunTime sunrise single-digit hour shows am marker`() {
         // 6:29 AM sunrise -> "6:29ar"
-        assertEquals("6:29ar", DisplayFormatter.sunTime(SunEventKind.SUNRISE, LocalTime.of(6, 29)))
+        assertEquals("6:29ar", DisplayFormatter.sunTime(SunEventKind.SUNRISE, LocalTime(6, 29)))
     }
 
     @Test
     fun `sunTime sunset single-digit PM hour shows pm marker`() {
         // 8:15 PM sunset -> "8:15ps"
-        assertEquals("8:15ps", DisplayFormatter.sunTime(SunEventKind.SUNSET, LocalTime.of(20, 15)))
+        assertEquals("8:15ps", DisplayFormatter.sunTime(SunEventKind.SUNSET, LocalTime(20, 15)))
     }
 
     @Test
     fun `sunTime drops am-pm marker for two-digit hours`() {
         // 10:05 AM sunrise -> "10:05r"
-        assertEquals("10:05r", DisplayFormatter.sunTime(SunEventKind.SUNRISE, LocalTime.of(10, 5)))
+        assertEquals("10:05r", DisplayFormatter.sunTime(SunEventKind.SUNRISE, LocalTime(10, 5)))
         // 12:30 PM sunset -> "12:30s"
-        assertEquals("12:30s", DisplayFormatter.sunTime(SunEventKind.SUNSET, LocalTime.of(12, 30)))
+        assertEquals("12:30s", DisplayFormatter.sunTime(SunEventKind.SUNSET, LocalTime(12, 30)))
         // 11:25 PM sunset -> "11:25s"
-        assertEquals("11:25s", DisplayFormatter.sunTime(SunEventKind.SUNSET, LocalTime.of(23, 25)))
+        assertEquals("11:25s", DisplayFormatter.sunTime(SunEventKind.SUNSET, LocalTime(23, 25)))
     }
 
     @Test
     fun `sunTime midnight is rendered as 12 AM`() {
         // 00:00 sunrise -> 12:00 AM -> "12:00r"
-        assertEquals("12:00r", DisplayFormatter.sunTime(SunEventKind.SUNRISE, LocalTime.of(0, 0)))
+        assertEquals("12:00r", DisplayFormatter.sunTime(SunEventKind.SUNRISE, LocalTime(0, 0)))
     }
 
     @Test
     fun `sunTime noon is rendered as 12 PM`() {
         // 12:00 sunset -> "12:00s"
-        assertEquals("12:00s", DisplayFormatter.sunTime(SunEventKind.SUNSET, LocalTime.of(12, 0)))
+        assertEquals("12:00s", DisplayFormatter.sunTime(SunEventKind.SUNSET, LocalTime(12, 0)))
     }
 
     @Test
@@ -158,7 +158,7 @@ class DisplayFormatterTest {
     @Test
     fun `steps output is always exactly six chars`() {
         listOf(0L, 9L, 99L, 12_345L, 999_999L, 1_000_000L, -5L).forEach {
-            assertEquals("len for $it", 6, DisplayFormatter.steps(it).length)
+            assertEquals(6, DisplayFormatter.steps(it).length, "len for $it")
         }
     }
 
@@ -189,7 +189,7 @@ class DisplayFormatterTest {
     @Test
     fun `steps stale is always exactly six chars`() {
         listOf(0L, 5L, 8432L, 12_345L, 99_999L, 100_000L, 999_999L, 1_000_000L, -5L).forEach {
-            assertEquals("len for $it", 6, DisplayFormatter.steps(it, stale = true).length)
+            assertEquals(6, DisplayFormatter.steps(it, stale = true).length, "len for $it")
         }
     }
 
@@ -200,26 +200,26 @@ class DisplayFormatterTest {
 
     @Test
     fun `sunTime stale single-digit hour drops event char and prefixes E`() {
-        assertEquals("E6:41p", DisplayFormatter.sunTime(SunEventKind.SUNSET, LocalTime.of(18, 41), stale = true))
-        assertEquals("E6:29a", DisplayFormatter.sunTime(SunEventKind.SUNRISE, LocalTime.of(6, 29), stale = true))
+        assertEquals("E6:41p", DisplayFormatter.sunTime(SunEventKind.SUNSET, LocalTime(18, 41), stale = true))
+        assertEquals("E6:29a", DisplayFormatter.sunTime(SunEventKind.SUNRISE, LocalTime(6, 29), stale = true))
     }
 
     @Test
     fun `sunTime stale two-digit hour drops event char`() {
-        assertEquals("E10:30", DisplayFormatter.sunTime(SunEventKind.SUNSET, LocalTime.of(22, 30), stale = true))
+        assertEquals("E10:30", DisplayFormatter.sunTime(SunEventKind.SUNSET, LocalTime(22, 30), stale = true))
     }
 
     @Test
     fun `sunTime stale is always exactly six chars`() {
-        listOf(LocalTime.of(6, 41), LocalTime.of(10, 5), LocalTime.of(0, 0), LocalTime.of(12, 0)).forEach {
-            assertEquals("len for $it", 6, DisplayFormatter.sunTime(SunEventKind.SUNSET, it, stale = true).length)
+        listOf(LocalTime(6, 41), LocalTime(10, 5), LocalTime(0, 0), LocalTime(12, 0)).forEach {
+            assertEquals(6, DisplayFormatter.sunTime(SunEventKind.SUNSET, it, stale = true).length, "len for $it")
         }
         // Exercise SUNRISE too so both event chars are covered by the length invariant.
-        assertEquals(6, DisplayFormatter.sunTime(SunEventKind.SUNRISE, LocalTime.of(6, 5), stale = true).length)
+        assertEquals(6, DisplayFormatter.sunTime(SunEventKind.SUNRISE, LocalTime(6, 5), stale = true).length)
     }
 
     @Test
     fun `sunTime not stale is unchanged`() {
-        assertEquals("8:15ps", DisplayFormatter.sunTime(SunEventKind.SUNSET, LocalTime.of(20, 15), stale = false))
+        assertEquals("8:15ps", DisplayFormatter.sunTime(SunEventKind.SUNSET, LocalTime(20, 15), stale = false))
     }
 }

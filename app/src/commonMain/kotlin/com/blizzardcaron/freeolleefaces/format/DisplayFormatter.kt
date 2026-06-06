@@ -1,6 +1,6 @@
 package com.blizzardcaron.freeolleefaces.format
 
-import java.time.LocalTime
+import kotlinx.datetime.LocalTime
 import kotlin.math.roundToInt
 
 enum class SunEventKind { SUNRISE, SUNSET }
@@ -18,7 +18,7 @@ object DisplayFormatter {
         // all 6 cells with no pad, and the only spare cell is the '-' — overwriting it would misreport
         // the sign. So such a value renders unmarked (value integrity beats the stale flag); markStale
         // is a no-op when there's no leading space.
-        return markStale("%4d#${unit.symbol}".format(rounded), stale)
+        return markStale("${rounded.toString().padStart(4)}#${unit.symbol}", stale)
     }
 
     fun sunTime(kind: SunEventKind, time: LocalTime, stale: Boolean = false): String {
@@ -32,13 +32,14 @@ object DisplayFormatter {
         }
         val eventChar = if (kind == SunEventKind.SUNRISE) 'r' else 's'
 
+        val mm = minute.toString().padStart(2, '0')
         val fresh = if (hour12 < 10) {
             // single-digit hour: include am/pm marker -> "H:MMar" or "H:MMps"
             val ampm = if (isAm) 'a' else 'p'
-            "%d:%02d%c%c".format(hour12, minute, ampm, eventChar)
+            "$hour12:$mm$ampm$eventChar"
         } else {
             // two-digit hour (10, 11, 12): drop am/pm -> "HH:MMr" or "HH:MMs"
-            "%d:%02d%c".format(hour12, minute, eventChar)
+            "$hour12:$mm$eventChar"
         }
         // Sun fills all 6 chars (no pad) — to mark stale, drop the trailing r/s and prefix 'E'.
         return if (stale) "E" + fresh.dropLast(1) else fresh
@@ -54,7 +55,7 @@ object DisplayFormatter {
      */
     fun steps(count: Long, stale: Boolean = false): String {
         val clamped = count.coerceIn(0L, 999_999L)
-        val plain = "%${LENGTH}d".format(clamped)
+        val plain = clamped.toString().padStart(LENGTH)
         if (!stale) return plain
         // 6-digit counts fill the row, leaving no pad for 'E' — abbreviate to thousands first so
         // "E " + a 4-char "Nk" value fits in 6. Smaller counts keep their pad for markStale.
