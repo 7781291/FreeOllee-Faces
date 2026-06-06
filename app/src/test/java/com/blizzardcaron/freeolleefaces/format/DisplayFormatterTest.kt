@@ -67,6 +67,12 @@ class DisplayFormatterTest {
     }
 
     @Test
+    fun `temperature stale three-digit negative renders unmarked - documented limitation`() {
+        // No spare cell for 'E' without clobbering the '-' sign; value integrity wins. See temperature().
+        assertEquals("-100#F", DisplayFormatter.temperature(-100.0, stale = true))
+    }
+
+    @Test
     fun `temperature not stale is unchanged`() {
         assertEquals("  72#F", DisplayFormatter.temperature(72.0, stale = false))
     }
@@ -208,6 +214,8 @@ class DisplayFormatterTest {
         listOf(LocalTime.of(6, 41), LocalTime.of(10, 5), LocalTime.of(0, 0), LocalTime.of(12, 0)).forEach {
             assertEquals("len for $it", 6, DisplayFormatter.sunTime(SunEventKind.SUNSET, it, stale = true).length)
         }
+        // Exercise SUNRISE too so both event chars are covered by the length invariant.
+        assertEquals(6, DisplayFormatter.sunTime(SunEventKind.SUNRISE, LocalTime.of(6, 5), stale = true).length)
     }
 
     @Test

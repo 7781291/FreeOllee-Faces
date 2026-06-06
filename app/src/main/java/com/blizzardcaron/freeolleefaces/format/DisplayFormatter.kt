@@ -14,6 +14,10 @@ object DisplayFormatter {
         // (0x23) to segments a+b+f+g — the top square that reads as a degree '°'. There is no
         // glyph at Latin-1 0xB0, so we send '#' to get the degree ring, e.g. "  66#F" -> 66°F.
         val rounded = value.roundToInt()
+        // Stale marking replaces the leading pad with 'E'. A 3-digit *negative* temp ("-100#F") fills
+        // all 6 cells with no pad, and the only spare cell is the '-' — overwriting it would misreport
+        // the sign. So such a value renders unmarked (value integrity beats the stale flag); markStale
+        // is a no-op when there's no leading space.
         return markStale("%4d#${unit.symbol}".format(rounded), stale)
     }
 
