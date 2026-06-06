@@ -1,10 +1,11 @@
 package com.blizzardcaron.freeolleefaces.ble
 
-import org.junit.Assert.assertArrayEquals
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import kotlin.test.Test
+import kotlin.test.assertContentEquals
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class OlleeProtocolTest {
 
@@ -43,17 +44,21 @@ class OlleeProtocolTest {
             0x02, 0x2f,                   // inner header
             0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20 // "Hello "
         )
-        assertArrayEquals(expected, packet)
+        assertContentEquals(expected, packet)
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test
     fun `buildPacket rejects values longer than 6 characters`() {
-        OlleeProtocol.buildPacket("TooLong")
+        assertFailsWith<IllegalArgumentException> {
+            OlleeProtocol.buildPacket("TooLong")
+        }
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test
     fun `buildPacket rejects non-ASCII characters`() {
-        OlleeProtocol.buildPacket("café  ")
+        assertFailsWith<IllegalArgumentException> {
+            OlleeProtocol.buildPacket("café  ")
+        }
     }
 
     @Test
@@ -87,13 +92,15 @@ class OlleeProtocolTest {
             (crc and 0xFF).toByte()
         ) + inner
 
-        assertArrayEquals(expected, packet)
+        assertContentEquals(expected, packet)
         assertEquals(0x2e.toByte(), packet[7])
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test
     fun `buildPacket rejects a target outside one byte`() {
-        OlleeProtocol.buildPacket(0x123, "Hi")
+        assertFailsWith<IllegalArgumentException> {
+            OlleeProtocol.buildPacket(0x123, "Hi")
+        }
     }
 
     @Test
@@ -145,7 +152,7 @@ class OlleeProtocolTest {
     fun `buildRawPacket reproduces the captured 0x34 weekday write byte-for-byte`() {
         val payload = hex("00007E90") + "MOTUWETHFRSASU".toByteArray(Charsets.US_ASCII)
         val packet = OlleeProtocol.buildRawPacket(0x34, payload)
-        assertArrayEquals(hex("0018AA557EAB023400007E904D4F545557455448465253415355"), packet)
+        assertContentEquals(hex("0018AA557EAB023400007E904D4F545557455448465253415355"), packet)
     }
 
     @Test
@@ -153,7 +160,7 @@ class OlleeProtocolTest {
         val packet = OlleeProtocol.buildWeekdayPacket(
             listOf("MO", "TU", "WE", "TH", "FR", "SA", "SU")
         )
-        assertArrayEquals(hex("0018AA557EAB023400007E904D4F545557455448465253415355"), packet)
+        assertContentEquals(hex("0018AA557EAB023400007E904D4F545557455448465253415355"), packet)
     }
 
     @Test
@@ -162,27 +169,35 @@ class OlleeProtocolTest {
         val f = OlleeProtocol.parseFrame(packet)!!
         assertEquals(0x34, f.target)
         assertTrue(f.crcOk)
-        assertArrayEquals(hex("00007E90") + "TETETETETETETE".toByteArray(Charsets.US_ASCII), f.payload)
+        assertContentEquals(hex("00007E90") + "TETETETETETETE".toByteArray(Charsets.US_ASCII), f.payload)
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test
     fun `buildWeekdayPacket rejects a table that is not 7 slots`() {
-        OlleeProtocol.buildWeekdayPacket(listOf("MO", "TU"))
+        assertFailsWith<IllegalArgumentException> {
+            OlleeProtocol.buildWeekdayPacket(listOf("MO", "TU"))
+        }
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test
     fun `buildWeekdayPacket rejects a slot that is not exactly 2 chars`() {
-        OlleeProtocol.buildWeekdayPacket(List(7) { "X" })
+        assertFailsWith<IllegalArgumentException> {
+            OlleeProtocol.buildWeekdayPacket(List(7) { "X" })
+        }
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test
     fun `buildWeekdayPacket rejects a non-ASCII slot`() {
-        OlleeProtocol.buildWeekdayPacket(List(7) { "é2" }) // length 2 but non-ASCII
+        assertFailsWith<IllegalArgumentException> {
+            OlleeProtocol.buildWeekdayPacket(List(7) { "é2" }) // length 2 but non-ASCII
+        }
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test
     fun `buildRawPacket rejects a target outside one byte`() {
-        OlleeProtocol.buildRawPacket(0x123, byteArrayOf(0x00))
+        assertFailsWith<IllegalArgumentException> {
+            OlleeProtocol.buildRawPacket(0x123, byteArrayOf(0x00))
+        }
     }
 
     // --- Timer slots (0x26) ---
@@ -192,7 +207,7 @@ class OlleeProtocolTest {
         val packet = OlleeProtocol.buildTimerPacket(List(10) { 0 })
         // 4-byte zero header + 10 * 4-byte zero words = 44 zero payload bytes.
         val expected = OlleeProtocol.buildRawPacket(OlleeProtocol.TARGET_TIMERS, ByteArray(44))
-        assertArrayEquals(expected, packet)
+        assertContentEquals(expected, packet)
     }
 
     @Test
@@ -249,14 +264,18 @@ class OlleeProtocolTest {
         assertEquals(100_000, slot8)
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test
     fun `buildTimerPacket rejects a list that is not exactly 10 slots`() {
-        OlleeProtocol.buildTimerPacket(listOf(1, 2, 3))
+        assertFailsWith<IllegalArgumentException> {
+            OlleeProtocol.buildTimerPacket(listOf(1, 2, 3))
+        }
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test
     fun `buildTimerPacket rejects an out-of-range duration`() {
-        OlleeProtocol.buildTimerPacket(listOf(360_000, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+        assertFailsWith<IllegalArgumentException> {
+            OlleeProtocol.buildTimerPacket(listOf(360_000, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+        }
     }
 
     // The decoded 02 25 alarm record. Captured chime preview: 1:30 PM, chime index 5, play-now.
@@ -273,7 +292,7 @@ class OlleeProtocolTest {
             0x00, 0x00, 0x00, 0x0D, 0x1E, 0x00, 0x05, 0x05,        // enable,0,0,hr,min,?,chime,05
             0x01, 0xC0.toByte(), 0xFF.toByte(), 0x0F, 0xFF.toByte(), // play, C0 FF 0F, FF terminator
         )
-        assertArrayEquals(expected, packet)
+        assertContentEquals(expected, packet)
     }
 
     @Test
@@ -293,8 +312,10 @@ class OlleeProtocolTest {
         assertEquals(0xFF, f.payload[12].toInt() and 0xFF) // terminator
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test
     fun `buildAlarmPacket rejects an out-of-range hour`() {
-        OlleeProtocol.buildAlarmPacket(hour = 24, minute = 0, chimeIndex = 0, playNow = false)
+        assertFailsWith<IllegalArgumentException> {
+            OlleeProtocol.buildAlarmPacket(hour = 24, minute = 0, chimeIndex = 0, playNow = false)
+        }
     }
 }

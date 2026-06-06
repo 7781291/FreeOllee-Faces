@@ -1,7 +1,7 @@
 package com.blizzardcaron.freeolleefaces.notify
 
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class NotifyDecisionTest {
 
