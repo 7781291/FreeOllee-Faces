@@ -266,7 +266,20 @@ private fun AppRoot(
                     if (push) pushIfWatch(payload)
                 }
                 .onFailure { err ->
-                    update { it.copy(tempPreview = PreviewState.Error(WeatherErrorCopy.describe(err))) }
+                    // Fetch failed: fall back to the last cached temp (only if it's in the unit we'd
+                    // display) and mark it stale with a leading 'E'. No usable cache -> show the error.
+                    val cached = prefs.tempValue
+                    if (cached != null && prefs.tempCacheUnit == state.tempUnit) {
+                        val payload = DisplayFormatter.temperature(cached, state.tempUnit, stale = true)
+                        val human = "Currently: %.1f°%s (stale)".format(Locale.US, cached, state.tempUnit.symbol)
+                        update { it.copy(
+                            tempPreview = PreviewState.Ready(payload, human),
+                            tempUpdated = prefs.tempFetchedMs?.let { ms -> "Updated ${clockTime(ms)}" },
+                        ) }
+                        if (push) pushIfWatch(payload)
+                    } else {
+                        update { it.copy(tempPreview = PreviewState.Error(WeatherErrorCopy.describe(err))) }
+                    }
                 }
         }
     }
@@ -315,9 +328,20 @@ private fun AppRoot(
                     if (push) pushIfWatch(payload)
                 }
                 .onFailure {
-                    update { it.copy(
-                        stepsPreview = PreviewState.Error("Couldn't read steps from Health Connect"),
-                    ) }
+                    // Read failed: fall back to the last cached step count, marked stale with 'E'.
+                    val cached = prefs.lastStepCount
+                    if (cached != null) {
+                        val payload = DisplayFormatter.steps(cached, stale = true)
+                        update { it.copy(
+                            stepsPreview = PreviewState.Ready(payload, stepsHuman(cached) + " (stale)"),
+                            stepsUpdated = prefs.stepsFetchedMs?.let { ms -> "Updated ${clockTime(ms)}" },
+                        ) }
+                        if (push) pushIfWatch(payload)
+                    } else {
+                        update { it.copy(
+                            stepsPreview = PreviewState.Error("Couldn't read steps from Health Connect"),
+                        ) }
+                    }
                 }
         }
     }
