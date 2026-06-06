@@ -9,15 +9,13 @@ object DisplayFormatter {
 
     private const val LENGTH = 6
 
-    fun temperature(value: Double, unit: TempUnit): String {
+    fun temperature(value: Double, unit: TempUnit = TempUnit.FAHRENHEIT, stale: Boolean = false): String {
         // The watch's segment font (firmware OW-FW-APP, font table indexed by ASCII) maps '#'
         // (0x23) to segments a+b+f+g — the top square that reads as a degree '°'. There is no
         // glyph at Latin-1 0xB0, so we send '#' to get the degree ring, e.g. "  66#F" -> 66°F.
         val rounded = value.roundToInt()
-        return "%4d#${unit.symbol}".format(rounded)
+        return markStale("%4d#${unit.symbol}".format(rounded), stale)
     }
-
-    fun temperature(value: Double): String = temperature(value, TempUnit.FAHRENHEIT)
 
     fun sunTime(kind: SunEventKind, time: LocalTime): String {
         val hour24 = time.hour
@@ -52,4 +50,12 @@ object DisplayFormatter {
         val clamped = count.coerceIn(0L, 999_999L)
         return "%${LENGTH}d".format(clamped)
     }
+
+    /**
+     * Mark an already-formatted 6-char payload as stale by replacing its leading pad space with 'E'.
+     * Caller guarantees there is a leading space to consume (temperatures and ≤5-digit steps always
+     * have one). No-op when [stale] is false.
+     */
+    private fun markStale(formatted: String, stale: Boolean): String =
+        if (stale && formatted.startsWith(' ')) "E" + formatted.drop(1) else formatted
 }

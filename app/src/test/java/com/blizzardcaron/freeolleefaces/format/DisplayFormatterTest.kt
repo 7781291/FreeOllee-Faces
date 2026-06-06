@@ -48,6 +48,30 @@ class DisplayFormatterTest {
     }
 
     @Test
+    fun `temperature stale replaces leading pad with E - two digit`() {
+        assertEquals("E 67#F", DisplayFormatter.temperature(67.0, stale = true))
+        assertEquals("E 72#F", DisplayFormatter.temperature(72.0, TempUnit.FAHRENHEIT, stale = true))
+    }
+
+    @Test
+    fun `temperature stale three digit consumes the single pad`() {
+        assertEquals("E100#F", DisplayFormatter.temperature(100.0, stale = true))
+        assertEquals("E102#C", DisplayFormatter.temperature(102.0, TempUnit.CELSIUS, stale = true))
+    }
+
+    @Test
+    fun `temperature stale is still six chars`() {
+        listOf(0.0, 67.0, 100.0, -12.0).forEach {
+            assertEquals("len for $it", 6, DisplayFormatter.temperature(it, stale = true).length)
+        }
+    }
+
+    @Test
+    fun `temperature not stale is unchanged`() {
+        assertEquals("  72#F", DisplayFormatter.temperature(72.0, stale = false))
+    }
+
+    @Test
     fun `sunTime sunrise single-digit hour shows am marker`() {
         // 6:29 AM sunrise -> "6:29ar"
         assertEquals("6:29ar", DisplayFormatter.sunTime(SunEventKind.SUNRISE, LocalTime.of(6, 29)))
