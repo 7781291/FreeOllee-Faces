@@ -737,7 +737,7 @@ private fun AppRoot(
                 TimerSetEditScreen(
                     set = editing,
                     onSave = { s -> timerRepo.save(s); refreshTimers(); screen = Screen.TimerSets },
-                    onSend = { s -> timerRepo.save(s); refreshTimers(); sendTimerSet(s) },
+                    onSend = { s -> timerRepo.save(s); refreshTimers(); sendTimerSet(s); screen = Screen.TimerSets },
                     onBack = { screen = Screen.TimerSets },
                     modifier = modifier,
                 )
