@@ -124,7 +124,7 @@ fun HomeScreen(
             modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            if (!state.watchSelected) {
+            if (!state.watchSelected && state.activeFace != ActiveFace.CUSTOM) {
                 SettingsHint("No watch selected — open Settings (⚙)")
             }
 
@@ -223,7 +223,12 @@ fun HomeScreen(
             )
         }
 
-        Button(onClick = callbacks.onUpdateNow, modifier = Modifier.fillMaxWidth()) {
+        Button(
+            onClick = callbacks.onUpdateNow,
+            // No-op for CUSTOM (its card has its own send button); also needs a watch and no send in flight.
+            enabled = state.activeFace != ActiveFace.CUSTOM && state.watchSelected && !state.sending,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
             Text("Update active now")
         }
 
