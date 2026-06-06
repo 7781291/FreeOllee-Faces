@@ -155,4 +155,40 @@ class DisplayFormatterTest {
             assertEquals("len for $it", 6, DisplayFormatter.steps(it).length)
         }
     }
+
+    @Test
+    fun `steps stale small count replaces leading pad with E`() {
+        assertEquals("E    0", DisplayFormatter.steps(0, stale = true))
+        assertEquals("E 8432", DisplayFormatter.steps(8432, stale = true))
+    }
+
+    @Test
+    fun `steps stale five digit count consumes the single pad`() {
+        assertEquals("E12345", DisplayFormatter.steps(12345, stale = true))
+        assertEquals("E99999", DisplayFormatter.steps(99999, stale = true))
+    }
+
+    @Test
+    fun `steps stale six digit count abbreviates to thousands`() {
+        assertEquals("E 100k", DisplayFormatter.steps(100_000, stale = true))
+        assertEquals("E 100k", DisplayFormatter.steps(100_234, stale = true)) // floors to nearest k
+        assertEquals("E 999k", DisplayFormatter.steps(999_999, stale = true))
+    }
+
+    @Test
+    fun `steps stale clamps impossible counts before abbreviating`() {
+        assertEquals("E 999k", DisplayFormatter.steps(1_000_000, stale = true))
+    }
+
+    @Test
+    fun `steps stale is always exactly six chars`() {
+        listOf(0L, 5L, 8432L, 12_345L, 99_999L, 100_000L, 999_999L, 1_000_000L, -5L).forEach {
+            assertEquals("len for $it", 6, DisplayFormatter.steps(it, stale = true).length)
+        }
+    }
+
+    @Test
+    fun `steps not stale six digit stays full`() {
+        assertEquals("100234", DisplayFormatter.steps(100_234, stale = false))
+    }
 }

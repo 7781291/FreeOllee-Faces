@@ -46,9 +46,14 @@ object DisplayFormatter {
      * clamp to 0; counts that would exceed 6 digits clamp to `"999999"` (no real day of
      * walking comes close, so this only guards against bogus aggregates).
      */
-    fun steps(count: Long): String {
+    fun steps(count: Long, stale: Boolean = false): String {
         val clamped = count.coerceIn(0L, 999_999L)
-        return "%${LENGTH}d".format(clamped)
+        val plain = "%${LENGTH}d".format(clamped)
+        if (!stale) return plain
+        // 6-digit counts fill the row, leaving no pad for 'E' — abbreviate to thousands first so
+        // "E " + a 4-char "Nk" value fits in 6. Smaller counts keep their pad for markStale.
+        return if (plain.startsWith(' ')) markStale(plain, stale = true)
+        else "E " + abbreviateThousands(clamped)
     }
 
     /**
@@ -58,4 +63,8 @@ object DisplayFormatter {
      */
     private fun markStale(formatted: String, stale: Boolean): String =
         if (stale && formatted.startsWith(' ')) "E" + formatted.drop(1) else formatted
+
+    /** Floor [count] to whole thousands and render as "Nk" (e.g. 100_234 -> "100k"). For the
+     *  6-digit range 100_000..999_999 this is always 4 chars ("100k".."999k"). */
+    private fun abbreviateThousands(count: Long): String = "${count / 1000}k"
 }
