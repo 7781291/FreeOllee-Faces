@@ -651,6 +651,7 @@ private fun AppRoot(
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             )
         },
+        onToggleNotifications = { setNotificationsEnabled(it) },
     )
 
     val settingsCallbacks = SettingsCallbacks(
