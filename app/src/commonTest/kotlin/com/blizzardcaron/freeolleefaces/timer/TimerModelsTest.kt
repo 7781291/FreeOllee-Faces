@@ -1,7 +1,8 @@
 package com.blizzardcaron.freeolleefaces.timer
 
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class TimerModelsTest {
 
@@ -20,8 +21,10 @@ class TimerModelsTest {
         assertEquals((1..10).map { it * 10 }, set.durations())
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test
     fun `constructing a set with the wrong slot count throws`() {
-        TimerSet("id", "name", listOf(TimerSlot()))
+        assertFailsWith<IllegalArgumentException> {
+            TimerSet("id", "name", listOf(TimerSlot()))
+        }
     }
 }

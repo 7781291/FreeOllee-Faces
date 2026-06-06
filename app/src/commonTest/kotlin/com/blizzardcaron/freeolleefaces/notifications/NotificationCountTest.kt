@@ -1,11 +1,11 @@
 package com.blizzardcaron.freeolleefaces.notifications
 
 import com.blizzardcaron.freeolleefaces.ble.OlleeProtocol
-import org.junit.Assert.assertArrayEquals
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import kotlin.test.Test
+import kotlin.test.assertContentEquals
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class NotificationCountTest {
 
@@ -76,20 +76,20 @@ class NotificationCountTest {
         val legibleRight = setOf(' ', '0', '1')
         for (count in 1..500) {
             val s = NotificationCount.format(count)!!
-            assertEquals("count $count -> '$s' is not 2 chars", 2, s.length)
-            assertTrue("count $count -> '$s' has an illegible right cell", s[1] in legibleRight)
+            assertEquals(2, s.length, "count $count -> '$s' is not 2 chars")
+            assertTrue(s[1] in legibleRight, "count $count -> '$s' has an illegible right cell")
         }
     }
 
     @Test fun packetForCountFillsAllSevenSlots() {
         // 3 notifications -> left-aligned "3 " in every weekday slot.
         val expected = OlleeProtocol.buildWeekdayPacket(List(7) { "3 " })
-        assertArrayEquals(expected, NotificationCount.packetFor(3))
+        assertContentEquals(expected, NotificationCount.packetFor(3))
     }
 
     @Test fun packetForZeroRestoresRealWeekdays() {
         val expected = OlleeProtocol.buildWeekdayPacket(NotificationCount.REAL_WEEKDAYS)
-        assertArrayEquals(expected, NotificationCount.packetFor(0))
+        assertContentEquals(expected, NotificationCount.packetFor(0))
     }
 
     @Test fun realWeekdaysAreTheCapturedDefault() {
