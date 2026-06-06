@@ -126,17 +126,24 @@ class AutoUpdateWorker(
                         }
                 }
                 .onFailure { error ->
-                    when (val kind = StepsFailureClassifier.kindFor(error)) {
-                        // Transient read glitch with access intact — don't alarm the user; the
-                        // chain re-arms below and retries next cycle.
-                        null -> prefs.recordAutoSend("Skipped: steps read failed (will retry)")
-                        // Genuine access gap (HC unavailable, or steps/background read not
-                        // granted) — actionable, so notify with "grant Health access".
-                        else -> {
-                            prefs.recordAutoSend("Skipped: grant Health access")
-                            applyHealth(ctx, prefs, kind, inSleep)
-                        }
+                    val kind = StepsFailureClassifier.kindFor(error)
+                    val cached = prefs.lastStepCount
+                    if (cached != null) {
+                        // Read failed but we have a cached count — push it marked stale ('E').
+                        val payload = DisplayFormatter.steps(cached, stale = true)
+                        OlleeBleClient(ctx).send(address, payload)
+                            .onSuccess { prefs.recordAutoSend("Sent stale '$payload'") }
+                            .onFailure {
+                                backstopped = handleSendFailure(
+                                    ctx, prefs, FailureKind.WATCH_UNREACHABLE, inSleep,
+                                )
+                            }
+                    } else {
+                        prefs.recordAutoSend("Skipped: steps read failed (will retry)")
                     }
+                    // A genuine access gap is still actionable — surface it regardless of the
+                    // stale push above. Transient glitches (kind == null) stay quiet.
+                    if (kind != null) applyHealth(ctx, prefs, kind, inSleep)
                 }
         } else {
             prefs.recordAutoSend("Asleep (power saving)")
@@ -188,8 +195,24 @@ class AutoUpdateWorker(
                 }
                 .onFailure { err ->
                     val suffix = (err as? WeatherFetchError)?.statusCode?.let { " (HTTP $it)" } ?: ""
-                    prefs.recordAutoSend("Skipped: weather fetch failed$suffix")
-                    applyHealth(ctx, prefs, FailureKind.WEATHER_FETCH_FAILED, inSleep)
+                    val cached = prefs.tempValue
+                    if (cached != null && prefs.tempCacheUnit == prefs.tempUnit) {
+                        // Fetch failed but we have a cached temp — push it marked stale ('E').
+                        val payload = DisplayFormatter.temperature(cached, prefs.tempUnit, stale = true)
+                        OlleeBleClient(ctx).send(address, payload)
+                            .onSuccess {
+                                prefs.recordAutoSend("Sent stale '$payload'$suffix")
+                                applyHealth(ctx, prefs, null, inSleep)
+                            }
+                            .onFailure {
+                                backstopped = handleSendFailure(
+                                    ctx, prefs, FailureKind.WATCH_UNREACHABLE, inSleep,
+                                )
+                            }
+                    } else {
+                        prefs.recordAutoSend("Skipped: weather fetch failed$suffix")
+                        applyHealth(ctx, prefs, FailureKind.WEATHER_FETCH_FAILED, inSleep)
+                    }
                 }
         } else {
             prefs.recordAutoSend("Asleep (power saving)")
