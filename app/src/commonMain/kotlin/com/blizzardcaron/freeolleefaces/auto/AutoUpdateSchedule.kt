@@ -1,12 +1,23 @@
 package com.blizzardcaron.freeolleefaces.auto
 
-import java.time.ZonedDateTime
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
 
 /** Sleep window bounds as minute-of-day; `endMin` may be < `startMin` (wraps midnight). */
 data class SleepWindow(val startMin: Int, val endMin: Int)
 
 /** Pure scheduling math — no Android dependencies, fully unit-testable. */
 object AutoUpdateSchedule {
+
+    // Wall-clock arithmetic is done by round-tripping through a fixed UTC instant: the inputs are
+    // already localized LocalDateTimes, so this just adds/subtracts wall-clock minutes/seconds with
+    // correct day rollover (no DST surprises, matching the previous ZonedDateTime field math).
+    private val ARITHMETIC_ZONE = TimeZone.UTC
 
     /** Start inclusive, end exclusive. `startMin == endMin` means never in window. */
     fun isInSleepWindow(minuteOfDay: Int, startMin: Int, endMin: Int): Boolean {
@@ -23,10 +34,10 @@ object AutoUpdateSchedule {
      * snap forward to the next occurrence of `sleep.endMin`.
      */
     fun nextTemperatureFire(
-        now: ZonedDateTime,
+        now: LocalDateTime,
         intervalMinutes: Int,
         sleep: SleepWindow?,
-    ): ZonedDateTime {
+    ): LocalDateTime {
         val base = now.plusMinutes(intervalMinutes.toLong())
         if (sleep == null) return base
         val baseMinOfDay = base.hour * 60 + base.minute
@@ -35,7 +46,7 @@ object AutoUpdateSchedule {
     }
 
     /** Wake right after the event goes stale. */
-    fun nextSunWake(eventTime: ZonedDateTime, bufferSeconds: Long = 60): ZonedDateTime =
+    fun nextSunWake(eventTime: LocalDateTime, bufferSeconds: Long = 60): LocalDateTime =
         eventTime.plusSeconds(bufferSeconds)
 
     /** Backstop retry budget: up to this many re-tries after the first failed send. */
@@ -57,13 +68,19 @@ object AutoUpdateSchedule {
         return minutes * 60_000L
     }
 
-    private fun snapToEnd(from: ZonedDateTime, endMin: Int): ZonedDateTime {
-        var candidate = from
-            .withHour(endMin / 60)
-            .withMinute(endMin % 60)
-            .withSecond(0)
-            .withNano(0)
-        if (!candidate.isAfter(from)) candidate = candidate.plusDays(1)
+    private fun snapToEnd(from: LocalDateTime, endMin: Int): LocalDateTime {
+        var candidate = LocalDateTime(from.date, LocalTime(endMin / 60, endMin % 60, 0, 0))
+        if (candidate <= from) candidate = candidate.plusMinutes(24L * 60L)
         return candidate
     }
+
+    private fun LocalDateTime.plusMinutes(minutes: Long): LocalDateTime =
+        toInstant(ARITHMETIC_ZONE)
+            .plus(minutes, DateTimeUnit.MINUTE)
+            .toLocalDateTime(ARITHMETIC_ZONE)
+
+    private fun LocalDateTime.plusSeconds(seconds: Long): LocalDateTime =
+        toInstant(ARITHMETIC_ZONE)
+            .plus(seconds, DateTimeUnit.SECOND)
+            .toLocalDateTime(ARITHMETIC_ZONE)
 }

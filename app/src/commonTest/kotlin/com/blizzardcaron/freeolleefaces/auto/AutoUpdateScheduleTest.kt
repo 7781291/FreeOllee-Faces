@@ -1,11 +1,10 @@
 package com.blizzardcaron.freeolleefaces.auto
 
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Test
-import java.time.ZoneOffset
-import java.time.ZonedDateTime
+import kotlinx.datetime.LocalDateTime
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class AutoUpdateScheduleTest {
 
@@ -65,8 +64,8 @@ class AutoUpdateScheduleTest {
 
     // ----- nextTemperatureFire -----
 
-    private fun at(hour: Int, minute: Int): ZonedDateTime =
-        ZonedDateTime.of(2026, 5, 25, hour, minute, 0, 0, ZoneOffset.UTC)
+    private fun at(hour: Int, minute: Int): LocalDateTime =
+        LocalDateTime(2026, 5, 25, hour, minute, 0)
 
     @Test
     fun `no sleep window returns now plus interval`() {
@@ -85,7 +84,7 @@ class AutoUpdateScheduleTest {
     fun `fire landing inside window in the evening snaps to next-day end`() {
         // now 21:30, +60 = 22:30 inside window -> snap to 06:00 the NEXT day.
         val result = AutoUpdateSchedule.nextTemperatureFire(at(21, 30), 60, SleepWindow(1320, 360))
-        assertEquals(at(6, 0).plusDays(1), result)
+        assertEquals(LocalDateTime(2026, 5, 26, 6, 0, 0), result)
     }
 
     @Test
@@ -100,7 +99,7 @@ class AutoUpdateScheduleTest {
     @Test
     fun `sun wake adds the buffer to the event time`() {
         val event = at(6, 29)
-        assertEquals(event.plusSeconds(60), AutoUpdateSchedule.nextSunWake(event))
+        assertEquals(LocalDateTime(2026, 5, 25, 6, 30, 0), AutoUpdateSchedule.nextSunWake(event))
     }
 
     // ----- backstop backoff + budget (Layer 2) -----

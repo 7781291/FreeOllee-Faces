@@ -8,9 +8,10 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
-import java.time.Duration
-import java.time.ZoneId
-import java.time.ZonedDateTime
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
 import java.util.concurrent.TimeUnit
 
 /** Single re-arm entry point for the auto-update chain. */
@@ -43,7 +44,8 @@ object AutoUpdateScheduler {
      * awake, otherwise at the next sleep-aware interval boundary.
      */
     private fun scheduleIntervalFace(ctx: Context, prefs: Prefs, intervalMinutes: Int) {
-        val now = ZonedDateTime.now(ZoneId.systemDefault())
+        val zone = TimeZone.currentSystemDefault()
+        val now = Clock.System.now().toLocalDateTime(zone)
         val sleep = if (prefs.sleepEnabled) {
             SleepWindow(prefs.sleepStartMin, prefs.sleepEndMin)
         } else null
@@ -56,7 +58,8 @@ object AutoUpdateScheduler {
             0L
         } else {
             val fire = AutoUpdateSchedule.nextTemperatureFire(now, intervalMinutes, sleep)
-            Duration.between(now, fire).toMillis().coerceAtLeast(0)
+            (fire.toInstant(zone).toEpochMilliseconds() - now.toInstant(zone).toEpochMilliseconds())
+                .coerceAtLeast(0)
         }
         enqueueNext(ctx, delayMs, sendAttempt = 0)
     }
