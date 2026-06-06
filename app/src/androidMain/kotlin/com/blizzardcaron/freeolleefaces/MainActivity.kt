@@ -61,10 +61,13 @@ import com.blizzardcaron.freeolleefaces.weather.RetryPolicy
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.time.Instant
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.format.DateTimeFormat
+import kotlinx.datetime.format.char
+import kotlinx.datetime.toLocalDateTime
 import java.util.Locale
 import java.util.UUID
 
@@ -84,10 +87,16 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private val CLOCK: DateTimeFormatter = DateTimeFormatter.ofPattern("h:mm a")
+private val CLOCK: DateTimeFormat<LocalTime> = LocalTime.Format {
+    amPmHour(); char(':'); minute(); char(' '); amPmMarker("AM", "PM")
+}
 
 private fun clockTime(ms: Long): String =
-    Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefault()).format(CLOCK)
+    CLOCK.format(
+        Instant.fromEpochMilliseconds(ms)
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .time
+    )
 
 private fun locLabel(lat: Double?, lng: Double?): String =
     if (lat != null && lng != null) "Location: %.4f, %.4f".format(lat, lng) else "Location: not set"
@@ -223,9 +232,10 @@ private fun AppRoot(
     fun tempNextText(): String {
         val sleep = if (prefs.sleepEnabled) SleepWindow(prefs.sleepStartMin, prefs.sleepEndMin) else null
         val fire = AutoUpdateSchedule.nextTemperatureFire(
-            ZonedDateTime.now(ZoneId.systemDefault()), prefs.updateIntervalMinutes, sleep,
+            Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()),
+            prefs.updateIntervalMinutes, sleep,
         )
-        return "Next update ${fire.format(CLOCK)}"
+        return "Next update ${CLOCK.format(fire.time)}"
     }
 
     fun refreshTemp(force: Boolean, push: Boolean) {
@@ -291,13 +301,13 @@ private fun AppRoot(
             return
         }
         val (lat, lng) = c
-        val event = SunCalc.nextEvent(Instant.now(), lat, lng, ZoneId.systemDefault())
+        val event = SunCalc.nextEvent(Clock.System.now(), lat, lng, TimeZone.currentSystemDefault())
         if (event == null) {
             update { it.copy(sunPreview = PreviewState.NoEvent, sunNext = null) }
             return
         }
-        val payload = DisplayFormatter.sunTime(event.kind, event.time.toLocalTime())
-        val pretty = event.time.format(CLOCK)
+        val payload = DisplayFormatter.sunTime(event.kind, event.time.time)
+        val pretty = CLOCK.format(event.time.time)
         val kindLabel = event.kind.name.lowercase().replaceFirstChar { it.uppercase() }
         update { it.copy(
             sunPreview = PreviewState.Ready(payload, "$kindLabel at $pretty"),

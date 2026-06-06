@@ -18,9 +18,11 @@ import com.blizzardcaron.freeolleefaces.sun.SunCalc
 import com.blizzardcaron.freeolleefaces.weather.OpenMeteoClient
 import com.blizzardcaron.freeolleefaces.weather.RetryPolicy
 import com.blizzardcaron.freeolleefaces.weather.WeatherFetchError
-import java.time.Duration
-import java.time.ZoneId
-import java.time.ZonedDateTime
+import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
 
 /**
  * Performs one due send for the selected source, then enqueues the next chain run.
@@ -58,7 +60,7 @@ class AutoUpdateWorker(
                 applyHealth(ctx, prefs, FailureKind.SETUP_INCOMPLETE, inSleepNow(prefs))
                 return Result.success()
             }
-            return runSteps(ctx, prefs, address, ZonedDateTime.now(ZoneId.systemDefault()))
+            return runSteps(ctx, prefs, address, nowLocal())
         }
 
         if (lat == null || lng == null || address == null) {
@@ -67,7 +69,7 @@ class AutoUpdateWorker(
             return Result.success()
         }
 
-        val now = ZonedDateTime.now(ZoneId.systemDefault())
+        val now = nowLocal()
         return when (face) {
             ActiveFace.TEMPERATURE -> runTemperature(ctx, prefs, lat, lng, address, now)
             ActiveFace.SUN -> runSun(ctx, prefs, lat, lng, address, now)
@@ -96,7 +98,7 @@ class AutoUpdateWorker(
         ctx: Context,
         prefs: Prefs,
         address: String,
-        now: ZonedDateTime,
+        now: LocalDateTime,
     ): Result {
         val sleep = if (prefs.sleepEnabled) {
             SleepWindow(prefs.sleepStartMin, prefs.sleepEndMin)
@@ -151,7 +153,7 @@ class AutoUpdateWorker(
 
         if (!backstopped) {
             val fire = AutoUpdateSchedule.nextTemperatureFire(now, prefs.updateIntervalMinutes, sleep)
-            val delayMs = Duration.between(now, fire).toMillis().coerceAtLeast(0)
+            val delayMs = millisBetween(now, fire)
             AutoUpdateScheduler.enqueueNext(ctx, delayMs, sendAttempt = 0)
         }
         return Result.success()
@@ -163,7 +165,7 @@ class AutoUpdateWorker(
         lat: Double,
         lng: Double,
         address: String,
-        now: ZonedDateTime,
+        now: LocalDateTime,
     ): Result {
         val sleep = if (prefs.sleepEnabled) {
             SleepWindow(prefs.sleepStartMin, prefs.sleepEndMin)
@@ -220,7 +222,7 @@ class AutoUpdateWorker(
 
         if (!backstopped) {
             val fire = AutoUpdateSchedule.nextTemperatureFire(now, prefs.updateIntervalMinutes, sleep)
-            val delayMs = Duration.between(now, fire).toMillis().coerceAtLeast(0)
+            val delayMs = millisBetween(now, fire)
             AutoUpdateScheduler.enqueueNext(ctx, delayMs, sendAttempt = 0)
         }
         return Result.success()
@@ -232,17 +234,19 @@ class AutoUpdateWorker(
         lat: Double,
         lng: Double,
         address: String,
-        now: ZonedDateTime,
+        now: LocalDateTime,
     ): Result {
         val inSleep = inSleepNow(prefs)
-        val event = SunCalc.nextEvent(now.toInstant(), lat, lng, ZoneId.systemDefault())
+        val event = SunCalc.nextEvent(
+            now.toInstant(TimeZone.currentSystemDefault()), lat, lng, TimeZone.currentSystemDefault(),
+        )
         if (event == null) {
             prefs.recordAutoSend("Skipped: no sun event (polar)")
-            AutoUpdateScheduler.enqueueNext(ctx, Duration.ofHours(12).toMillis(), sendAttempt = 0)
+            AutoUpdateScheduler.enqueueNext(ctx, 12L * 60L * 60L * 1000L, sendAttempt = 0)
             return Result.success()
         }
 
-        val payload = DisplayFormatter.sunTime(event.kind, event.time.toLocalTime())
+        val payload = DisplayFormatter.sunTime(event.kind, event.time.time)
         val sendResult = OlleeBleClient(ctx).send(address, payload)
 
         if (sendResult.isSuccess) {
@@ -256,9 +260,9 @@ class AutoUpdateWorker(
         return Result.success()
     }
 
-    private fun scheduleAfterEvent(ctx: Context, now: ZonedDateTime, eventTime: ZonedDateTime) {
+    private fun scheduleAfterEvent(ctx: Context, now: LocalDateTime, eventTime: LocalDateTime) {
         val wake = AutoUpdateSchedule.nextSunWake(eventTime)
-        val delayMs = Duration.between(now, wake).toMillis().coerceAtLeast(0)
+        val delayMs = millisBetween(now, wake)
         AutoUpdateScheduler.enqueueNext(ctx, delayMs, sendAttempt = 0)
     }
 
@@ -307,9 +311,19 @@ class AutoUpdateWorker(
 
     private fun inSleepNow(prefs: Prefs): Boolean {
         if (!prefs.sleepEnabled) return false
-        val now = ZonedDateTime.now(ZoneId.systemDefault())
+        val now = nowLocal()
         val m = now.hour * 60 + now.minute
         return AutoUpdateSchedule.isInSleepWindow(m, prefs.sleepStartMin, prefs.sleepEndMin)
+    }
+
+    private fun nowLocal(): LocalDateTime =
+        Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+
+    /** Wall-clock millis from [from] to [to], localized to the system zone, clamped at 0. */
+    private fun millisBetween(from: LocalDateTime, to: LocalDateTime): Long {
+        val zone = TimeZone.currentSystemDefault()
+        val diff = to.toInstant(zone).toEpochMilliseconds() - from.toInstant(zone).toEpochMilliseconds()
+        return diff.coerceAtLeast(0)
     }
 
     companion object {

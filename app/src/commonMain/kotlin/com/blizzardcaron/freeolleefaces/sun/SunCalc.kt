@@ -1,18 +1,22 @@
 package com.blizzardcaron.freeolleefaces.sun
 
 import com.blizzardcaron.freeolleefaces.format.SunEventKind
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.ZoneOffset
-import java.time.ZonedDateTime
-import kotlin.math.abs
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
+import kotlin.math.PI
 import kotlin.math.acos
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.tan
 
-data class NextEvent(val kind: SunEventKind, val time: ZonedDateTime)
+data class NextEvent(val kind: SunEventKind, val time: LocalDateTime)
 
 object SunCalc {
 
@@ -24,24 +28,28 @@ object SunCalc {
      * requested [zone], or `null` if neither event occurs within the next 24 hours
      * (polar day/night).
      */
-    fun nextEvent(now: Instant, lat: Double, lng: Double, zone: ZoneId): NextEvent? {
-        val today = now.atZone(ZoneOffset.UTC).toLocalDate()
-        // Compute today's events and tomorrow's events in UTC.
+    fun nextEvent(now: Instant, lat: Double, lng: Double, zone: TimeZone): NextEvent? {
+        val today = now.toLocalDateTime(TimeZone.UTC).date
+        // Compute today's events and tomorrow's events in UTC, carrying each event's UTC instant
+        // alongside its localized LocalDateTime so we can compare against [now] / the 24h horizon.
         val candidates = buildList {
-            for (offset in 0..1L) {
-                val date = today.plusDays(offset)
+            for (offset in 0..1) {
+                val date = today.plus(offset, DateTimeUnit.DAY)
                 val rise = computeEventUtc(date, lat, lng, isSunrise = true)
                 val set = computeEventUtc(date, lat, lng, isSunrise = false)
-                if (rise != null) add(NextEvent(SunEventKind.SUNRISE, rise.atZone(zone)))
-                if (set != null) add(NextEvent(SunEventKind.SUNSET, set.atZone(zone)))
+                if (rise != null) add(Candidate(SunEventKind.SUNRISE, rise, rise.toLocalDateTime(zone)))
+                if (set != null) add(Candidate(SunEventKind.SUNSET, set, set.toLocalDateTime(zone)))
             }
         }
 
-        val horizon = now.plusSeconds(24 * 60 * 60)
+        val horizon = now.plus(24 * 60 * 60, DateTimeUnit.SECOND)
         return candidates
-            .filter { it.time.toInstant().isAfter(now) && it.time.toInstant().isBefore(horizon) || it.time.toInstant() == horizon }
-            .minByOrNull { it.time.toInstant() }
+            .filter { it.instant > now && it.instant < horizon || it.instant == horizon }
+            .minByOrNull { it.instant }
+            ?.let { NextEvent(it.kind, it.time) }
     }
+
+    private data class Candidate(val kind: SunEventKind, val instant: Instant, val time: LocalDateTime)
 
     /**
      * Compute one event (sunrise or sunset) on [date] for ([lat], [lng]) and return its UTC
@@ -103,16 +111,18 @@ object SunCalc {
         val hours = (totalSeconds / 3600).toInt()
         val minutes = ((totalSeconds % 3600) / 60).toInt()
         val seconds = (totalSeconds % 60).toInt()
-        return date.atTime(hours, minutes, seconds).toInstant(ZoneOffset.UTC)
+        return LocalDateTime(date, LocalTime(hours, minutes, seconds)).toInstant(TimeZone.UTC)
     }
 
     // ===== Degree-based trig helpers =====
-    private fun sinDeg(d: Double) = sin(Math.toRadians(d))
-    private fun cosDeg(d: Double) = cos(Math.toRadians(d))
-    private fun tanDeg(d: Double) = tan(Math.toRadians(d))
-    private fun asinDeg(x: Double) = Math.toDegrees(kotlin.math.asin(x))
-    private fun acosDeg(x: Double) = Math.toDegrees(acos(x))
-    private fun atanDeg(x: Double) = Math.toDegrees(kotlin.math.atan(x))
+    private fun toRadians(d: Double) = d * PI / 180.0
+    private fun toDegrees(r: Double) = r * 180.0 / PI
+    private fun sinDeg(d: Double) = sin(toRadians(d))
+    private fun cosDeg(d: Double) = cos(toRadians(d))
+    private fun tanDeg(d: Double) = tan(toRadians(d))
+    private fun asinDeg(x: Double) = toDegrees(kotlin.math.asin(x))
+    private fun acosDeg(x: Double) = toDegrees(acos(x))
+    private fun atanDeg(x: Double) = toDegrees(kotlin.math.atan(x))
 
     private fun mod(x: Double, m: Double): Double {
         val r = x % m
