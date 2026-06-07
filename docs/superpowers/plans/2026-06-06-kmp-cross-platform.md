@@ -1200,10 +1200,140 @@ Change the composable signature to `devices: List<BondedDevice>, onPick: (Bonded
 - [ ] **Step 2:** `./gradlew :app:installDebug` — complete manual regression on device: every face activates and pushes to the watch; auto-update worker fires (trigger via `devtools/DevToolsReceiver` if it exposes a hook); boot persistence; notification count; steps; location; timers; sleep window. Behavior must match v0.11.0.
 - [ ] **Step 3:** Merge per the finishing-a-development-branch skill.
 
+## Phase 8 — Rebrand, complications rename, active-complication UX fix
+
+> Spec: `docs/superpowers/specs/2026-06-06-rebrand-complications-addendum.md`. **Runs after Phase 6** so the UI files are settled in `commonMain` and the rename is a clean pass, not entangled with source-set moves. The rename tasks are mechanical (rename by identifier, verify by compile + tests); because a half-renamed type does not compile, **each rename touches all references in one task and ends green**. File locations below assume the post-Phase-6 layout (screens + `HomeState`/`ActiveFace` in `commonMain`; orchestration in `AppViewModel`); use the `grep` enumerations rather than line numbers, since prior phases moved these files.
+
+> **Invariant for Phase 8 (release + saved-data continuity):** the `applicationId`/package `com.blizzardcaron.freeolleefaces` and the **persisted preference-key strings never change**. Rename the Kotlin constants but keep their string *values* exactly: `KEY_ACTIVE_FACE = "active_face"`, `LEGACY_NOTIFICATIONS_FACE = "NOTIFICATIONS"`, `KEY_AUTO_SOURCE = "auto_source"`. Enum constant names stay `TEMPERATURE/SUN/STEPS/CUSTOM` (their `.name` is persisted).
+
+### Task 8.1: Rename the `ActiveFace` enum to `ActiveComplication`
+
+**Files:**
+- Rename: `app/src/commonMain/kotlin/com/blizzardcaron/freeolleefaces/auto/ActiveFace.kt` → `auto/ActiveComplication.kt`
+- Rename: `app/src/commonTest/kotlin/com/blizzardcaron/freeolleefaces/auto/ActiveFaceTest.kt` → `auto/ActiveComplicationTest.kt`
+- Modify: every file referencing the type (enumerate, do not trust this list): `grep -rln "ActiveFace" app/src`
+
+- [ ] **Step 1:** `git mv` both files to their new names (enum + test).
+- [ ] **Step 2:** In `ActiveComplication.kt`, rename `enum class ActiveFace` → `enum class ActiveComplication`. Keep the four constants (`TEMPERATURE/SUN/STEPS/CUSTOM`) and `fromLegacyAutoSource` unchanged. Update the KDoc wording "face" → "complication" (the `0x2F` nameplate description stays).
+- [ ] **Step 3:** In `ActiveComplicationTest.kt`, rename `class ActiveFaceTest` → `class ActiveComplicationTest`; update all `ActiveFace.` references to `ActiveComplication.`. Assertions (legacy-source mapping) are unchanged.
+- [ ] **Step 4:** Replace the type name everywhere else: for each file in `grep -rln "ActiveFace" app/src`, change `ActiveFace` → `ActiveComplication` (type usages, imports `...auto.ActiveFace` → `...auto.ActiveComplication`). Do **not** touch the package segment `freeolleefaces`.
+- [ ] **Step 5:** Verify none remain: `grep -rn "ActiveFace" app/src` → **no hits**.
+- [ ] **Step 6:** `./gradlew :app:assembleDebug :app:testDebugUnitTest` → both pass (the `ActiveComplicationTest` legacy-migration assertions still green).
+- [ ] **Step 7:** Commit: `git commit -am "refactor: rename ActiveFace enum to ActiveComplication"`.
+
+### Task 8.2: Rename the `activeFace` property/field and pref constants
+
+**Files:**
+- Modify: `prefs/Prefs.kt` (now in `commonMain` after Phase 4.1), `ui/HomeScreen.kt` (`HomeState`, now in `commonMain`), `AppViewModel`, workers/scheduler in `androidMain`, and any other hit from `grep -rln "activeFace\|KEY_ACTIVE_FACE\|LEGACY_NOTIFICATIONS_FACE" app/src`.
+
+- [ ] **Step 1:** Rename the Kotlin property `var activeFace` → `var activeComplication` in `Prefs` and the data-class field `HomeState.activeFace` → `activeComplication`. Update every read/write site (`prefs.activeFace`, `state.activeFace`, `it.copy(activeFace = …)`, the `update { it.copy(activeFace = face) }` in `AppViewModel.activate`, worker `prefs.activeFace`, scheduler `prefs.activeFace`, HomeScreen `state.activeFace`).
+- [ ] **Step 2:** Rename the constant `KEY_ACTIVE_FACE` → `KEY_ACTIVE_COMPLICATION` **keeping its value `"active_face"`**, and `LEGACY_NOTIFICATIONS_FACE` → `LEGACY_NOTIFICATIONS_COMPLICATION` **keeping its value `"NOTIFICATIONS"`**. Leave `KEY_AUTO_SOURCE` (name and value) alone.
+- [ ] **Step 3:** Confirm the persisted values are intact: `grep -rn '"active_face"\|"NOTIFICATIONS"\|"auto_source"' app/src` → still present (string values unchanged).
+- [ ] **Step 4:** Confirm no stale identifiers: `grep -rn "activeFace\|KEY_ACTIVE_FACE\|LEGACY_NOTIFICATIONS_FACE" app/src` → **no hits**.
+- [ ] **Step 5:** `./gradlew :app:assembleDebug :app:testDebugUnitTest` → both pass.
+- [ ] **Step 6:** Commit: `git commit -am "refactor: rename activeFace to activeComplication (persisted keys unchanged)"`.
+
+### Task 8.3: Rename the complications UI (screen, composables, route, labels)
+
+**Files:**
+- Rename: `ui/FacesListScreen.kt` → `ui/ComplicationsListScreen.kt` (in `commonMain` after Phase 6.4)
+- Modify: `ui/Screen.kt`, `ui/HomeScreen.kt`, `AppViewModel`/`MainActivity` route wiring — enumerate via `grep -rln "FacesList\|FaceCard\|FaceRow\|onOpenFaces" app/src`
+
+- [ ] **Step 1:** `git mv ui/FacesListScreen.kt ui/ComplicationsListScreen.kt`. Rename `fun FacesListScreen` → `fun ComplicationsListScreen` and the private `fun FaceRow` → `fun ComplicationRow`.
+- [ ] **Step 2:** In `ui/Screen.kt`, rename `data object FacesList` → `data object ComplicationsList`. Update every `Screen.FacesList` reference (route wiring in the host/`AppViewModel`).
+- [ ] **Step 3:** In `ui/HomeScreen.kt`, rename the private `enum class FaceCardId` → `ComplicationCardId`, the private `fun FaceCard` → `ComplicationCard`, the local `fun toggle(id: FaceCardId)`/`expanded` types, and `HomeCallbacks.onOpenFaces` → `onOpenComplications`. Update the host's `onOpenFaces = { … Screen.FacesList }` → `onOpenComplications = { … Screen.ComplicationsList }`.
+- [ ] **Step 4:** Update visible labels: the Home toolbar `Text("Faces")` → `Text("Complications")`; in `ComplicationsListScreen` the header `Text("Faces", …)` → `Text("Complications", …)`. Leave the per-row labels ("Temperature"/"Sun event"/"Steps"/"Custom") as-is.
+- [ ] **Step 5:** Confirm no stale identifiers: `grep -rn "FacesList\|FaceCard\|FaceRow\|onOpenFaces\|>Faces<\|\"Faces\"" app/src` → **no hits**.
+- [ ] **Step 6:** `./gradlew :app:assembleDebug :app:testDebugUnitTest` → both pass.
+- [ ] **Step 7:** Commit: `git commit -am "refactor: rename faces UI to complications"`.
+
+### Task 8.4: Fix the active-complication switching UX
+
+**Files:**
+- Create: `app/src/commonMain/kotlin/com/blizzardcaron/freeolleefaces/auto/ComplicationLabel.kt`
+- Create: `app/src/commonTest/kotlin/com/blizzardcaron/freeolleefaces/auto/ComplicationLabelTest.kt`
+- Modify: `ui/HomeScreen.kt` (active header + card highlight), `ui/ComplicationsListScreen.kt` (no auto-navigate), `AppViewModel` (`activate` no longer navigates)
+
+- [ ] **Step 1: Write the failing test** for a pure label helper (single source of truth for the human label).
+
+```kotlin
+// ComplicationLabelTest.kt
+package com.blizzardcaron.freeolleefaces.auto
+
+import kotlin.test.Test
+import kotlin.test.assertEquals
+
+class ComplicationLabelTest {
+    @Test fun labels_each_complication() {
+        assertEquals("Temperature", ActiveComplication.TEMPERATURE.displayLabel())
+        assertEquals("Sun event", ActiveComplication.SUN.displayLabel())
+        assertEquals("Steps", ActiveComplication.STEPS.displayLabel())
+        assertEquals("Custom", ActiveComplication.CUSTOM.displayLabel())
+    }
+}
+```
+
+- [ ] **Step 2: Run it, verify it fails** — Run: `./gradlew :app:testDebugUnitTest --tests "*ComplicationLabelTest*"`. Expected: FAIL (`displayLabel` unresolved).
+- [ ] **Step 3: Implement the helper.**
+
+```kotlin
+// ComplicationLabel.kt
+package com.blizzardcaron.freeolleefaces.auto
+
+/** The human-readable name shown for each complication, used by both the picker and the Home "Active:" header. */
+fun ActiveComplication.displayLabel(): String = when (this) {
+    ActiveComplication.TEMPERATURE -> "Temperature"
+    ActiveComplication.SUN -> "Sun event"
+    ActiveComplication.STEPS -> "Steps"
+    ActiveComplication.CUSTOM -> "Custom"
+}
+```
+
+- [ ] **Step 4: Run it, verify it passes** — Run the same command. Expected: PASS. Then point the picker rows and Home cards at `displayLabel()` so labels can't drift.
+- [ ] **Step 5: Add a prominent "Active" header on Home.** Just under the Home toolbar (before the cards `Column`), add a clearly-styled line bound to state, e.g.:
+
+```kotlin
+Text(
+    "Active: ${state.activeComplication.displayLabel()}",
+    style = MaterialTheme.typography.titleMedium,
+    color = MaterialTheme.colorScheme.primary,
+    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+)
+```
+
+- [ ] **Step 6: Strengthen the active card.** Replace the faint `badge = "active"` signal with an unmistakable highlight: give the active `ComplicationCard` a `MaterialTheme.colorScheme.primaryContainer` container color (or a 2.dp primary border) in addition to a readable "ACTIVE" chip, so the active card is obvious at a glance. Apply to all four cards via the existing `badge`/`active` plumbing.
+- [ ] **Step 7: Remove the silent bounce.** In `AppViewModel.activate(...)`, delete the `screen = Screen.Home` line so selecting a complication updates the radio **in place** on `ComplicationsListScreen` (the radio already binds to `active = state.activeComplication`) and still performs the pref write + reschedule + push. The user returns via Back. This gives immediate visible confirmation instead of an instant jump.
+- [ ] **Step 8:** `./gradlew :app:assembleDebug :app:testDebugUnitTest` → both pass.
+- [ ] **Step 9:** Commit: `git commit -am "fix: make the active complication obvious and switching reflect in place"`.
+
+### Task 8.5: Rebrand the display name to "Super FreeOllee"
+
+**Files:**
+- Modify: `app/src/androidMain/res/values/strings.xml`, `app/src/androidDebug/res/values/strings.xml` (if it overrides `app_name`)
+- Modify: `app/src/androidMain/res/values/themes.xml`, `app/src/androidMain/AndroidManifest.xml` (theme reference), and any layout/manifest reference to `Theme.FreeOlleeFaces`
+- Modify: `README.md`
+
+- [ ] **Step 1:** In `strings.xml`, set `<string name="app_name">Super FreeOllee</string>`. Check `androidDebug/res/values/strings.xml` — if it overrides `app_name` (debug label), set it to `Super FreeOllee (debug)` to keep debug/release distinguishable; otherwise leave it.
+- [ ] **Step 2:** Rename the style `Theme.FreeOlleeFaces` → `Theme.SuperFreeOllee` in `themes.xml`, and update the `android:theme="@style/Theme.FreeOlleeFaces"` reference in `AndroidManifest.xml`. Verify with `grep -rn "Theme.FreeOlleeFaces" app/src` → **no hits**.
+- [ ] **Step 3:** Update `README.md` title/intro and the `notification_listener_label` string if it should read "Super FreeOllee notification count" (keep it recognizable to users in system settings).
+- [ ] **Step 4:** Do **not** touch `applicationId`, the package path, or `namespace` in `app/build.gradle.kts`. Confirm: `grep -rn "applicationId\|namespace" app/build.gradle.kts` still shows `com.blizzardcaron.freeolleefaces`.
+- [ ] **Step 5:** `./gradlew :app:assembleDebug` → passes.
+- [ ] **Step 6:** Commit: `git commit -am "feat: rebrand display name to Super FreeOllee"`.
+
+### Task 8.6: On-device verification of the rebrand, rename, and switch fix
+
+- [ ] **Step 1:** `./gradlew :app:installDebug`.
+- [ ] **Step 2:** Launcher icon now reads "Super FreeOllee (debug)"; the toolbar/picker read "Complications".
+- [ ] **Step 3:** On Home, the "Active: <name>" header and the highlighted active card make the current complication obvious at a glance.
+- [ ] **Step 4:** Open Complications, pick a different one: the radio updates **in place** (no bounce), the watch nameplate updates, and after returning to Home the header + highlight reflect the new selection.
+- [ ] **Step 5:** Force-stop and relaunch: the new selection persists (proves the unchanged `"active_face"` key still loads). A user upgrading from the prior build keeps their previous selection.
+- [ ] **Step 6:** If the watch nameplate fails to change even though the app reflects the switch, capture logs — that is the separate BLE-push fault noted in the addendum spec, to be triaged on its own.
+
 ## Self-review notes
 
-- **Spec coverage:** module layout (Phase 1), pure logic → common (Phase 2), de-Java/Ktor/serialization (Phase 3), expect/actual-style interfaces + Settings storage (Phase 4), AppViewModel extraction (Phase 5), UI → CMP (Phase 6), cleanup + release continuity (Phase 7). The Hybrid background decision is honored — workers stay in androidMain (Task 5.5).
+- **Spec coverage:** module layout (Phase 1), pure logic → common (Phase 2), de-Java/Ktor/serialization (Phase 3), expect/actual-style interfaces + Settings storage (Phase 4), AppViewModel extraction (Phase 5), UI → CMP (Phase 6), cleanup + release continuity (Phase 7), rebrand + complications rename + switch-UX fix (Phase 8, per the addendum spec). The Hybrid background decision is honored — workers stay in androidMain (Task 5.5).
 - **iOS:** intentionally absent — no `iosMain`, no Kotlin/Native targets, per spec non-goals and the Pi pre-flight.
-- **Verification gates:** every task ends with `assembleDebug` + tests; device smoke after Phases 1, 3, 4, 5, 6, 7.
-- **Known soft spots (verify during execution):** the Compose Multiplatform ↔ Kotlin 2.2.10 ↔ AGP 9.1.1 version matrix (Phase 1 Task 1.4) and the Ktor timeout/exception-type mapping (Phase 3 Task 3.5).
+- **Verification gates:** every task ends with `assembleDebug` + tests; device smoke after Phases 1, 3, 4, 5, 6, 7, 8.
+- **Phase 8 continuity invariants:** `applicationId`/package frozen; persisted key *strings* (`active_face`, `NOTIFICATIONS`, `auto_source`) and enum constant names unchanged so existing users keep their selection. Only Kotlin identifiers and display strings change.
+- **Known soft spots (verify during execution):** the Compose Multiplatform ↔ Kotlin 2.2.10 ↔ AGP 9.1.1 version matrix (Phase 1 Task 1.4); the Ktor timeout/exception-type mapping (Phase 3 Task 3.5); and whether the switch "doesn't work" symptom is fully resolved by the UX fix or masks a separate BLE-push fault (Phase 8 Task 8.6 Step 6).
 
