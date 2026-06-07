@@ -62,9 +62,6 @@ kotlin {
         val androidUnitTest by getting {
             dependencies {
                 implementation(libs.junit)
-                // Android's android.jar ships an org.json that throws "Stub!" under JVM unit
-                // tests; production code uses org.json, so tests need the real implementation.
-                implementation(libs.org.json)
             }
         }
     }
