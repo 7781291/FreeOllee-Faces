@@ -179,6 +179,7 @@ fun HomeScreen(
                 onToggle = { toggle(ComplicationCardId.NOTIFICATIONS) },
                 onToggleEnabled = callbacks.onToggleNotifications,
                 onGrantAccess = callbacks.onGrantNotificationAccess,
+                onUpdateNow = callbacks.onNotificationsUpdateNow,
             )
         }
 
@@ -273,6 +274,7 @@ private fun NotificationsCard(
     onToggle: () -> Unit,
     onToggleEnabled: (Boolean) -> Unit,
     onGrantAccess: () -> Unit,
+    onUpdateNow: () -> Unit,
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -297,7 +299,11 @@ private fun NotificationsCard(
                         Text(if (expanded) "  ▾" else "  ▸", style = MaterialTheme.typography.bodyMedium)
                     }
                 }
-                val human = if (state.notificationsEnabled) "${state.notificationCount} unread" else "Off"
+                val human = when {
+                    !state.notificationsEnabled -> "Off"
+                    !state.notificationAccessGranted -> "Needs notification access"
+                    else -> "${state.notificationCount} unread"
+                }
                 Text(human, style = MaterialTheme.typography.headlineMedium)
                 Text("Weekday slot overlay on the Clock face.", style = MaterialTheme.typography.bodySmall)
             }
@@ -321,6 +327,11 @@ private fun NotificationsCard(
                             Text("Grant notification access")
                         }
                     }
+                    Button(
+                        onClick = onUpdateNow,
+                        enabled = state.watchSelected && state.notificationAccessGranted && state.notificationsEnabled,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text("Update now") }
                 }
             }
         }
