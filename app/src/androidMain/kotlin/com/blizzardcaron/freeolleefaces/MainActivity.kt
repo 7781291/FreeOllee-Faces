@@ -20,9 +20,9 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.core.content.ContextCompat
 import androidx.health.connect.client.PermissionController
 import com.blizzardcaron.freeolleefaces.auto.AndroidScheduler
