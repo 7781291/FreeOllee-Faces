@@ -1337,3 +1337,10 @@ Text(
 - **Phase 8 continuity invariants:** `applicationId`/package frozen; persisted key *strings* (`active_face`, `NOTIFICATIONS`, `auto_source`) and enum constant names unchanged so existing users keep their selection. Only Kotlin identifiers and display strings change.
 - **Known soft spots (verify during execution):** the Compose Multiplatform ↔ Kotlin 2.2.10 ↔ AGP 9.1.1 version matrix (Phase 1 Task 1.4); the Ktor timeout/exception-type mapping (Phase 3 Task 3.5); and whether the switch "doesn't work" symptom is fully resolved by the UX fix or masks a separate BLE-push fault (Phase 8 Task 8.6 Step 6).
 
+
+## Open items (tracked, not blocking)
+
+Flagged by the Phase 5 code-quality review; both are parity-with-old-code, deferred past Phase 8:
+
+- **ViewModel config-change scoping.** `AppViewModel` is created with `remember { ... }` in `MainActivity`, so it does not survive configuration changes (rotation, locale). Same behavior as the pre-extraction code, but now that it's a real `ViewModel`, the proper fix is a `viewModel { ... }` factory (lifecycle-viewmodel-compose) so state survives recreation. Touches the snackbar item below.
+- **Snackbar `Channel` event loss.** Snackbar events go through `Channel<String>(BUFFERED).receiveAsFlow()`. If the VM is recreated (see above) or an event is sent while no collector is attached during recreation, buffered events can be dropped. Theoretical today; revisit together with VM scoping.

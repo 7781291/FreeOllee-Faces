@@ -539,9 +539,6 @@ class AppViewModel(
     /** Convenience: whether the active face is the steps face (Activity uses this when arming reads). */
     fun activeIsSteps(): Boolean = state.activeFace == ActiveFace.STEPS
 
-    /** Convenience: whether the active face is custom (Activity's picker callback branches on it). */
-    fun activeIsCustom(): Boolean = state.activeFace == ActiveFace.CUSTOM
-
     /** Whether a background chain is active at startup — drives the POST_NOTIFICATIONS prompt. */
     fun backgroundActive(): Boolean = prefs.activeFace != ActiveFace.CUSTOM && prefs.watchAddress != null
 
