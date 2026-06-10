@@ -107,6 +107,10 @@ class AppViewModelTest {
         // Pre-condition: log is empty.
         assertTrue(callLog.isEmpty(), "callLog should be empty before activate()")
 
+        // Navigate away first so the Screen.Home assertion below actually exercises
+        // activate()'s screen reset (screen defaults to Home, which would make it vacuous).
+        vm.navigateTo(Screen.FacesList)
+
         vm.activate(ActiveFace.TEMPERATURE)
 
         // --- Synchronous assertions (before draining coroutines) ---
