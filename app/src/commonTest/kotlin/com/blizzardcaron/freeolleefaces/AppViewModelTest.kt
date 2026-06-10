@@ -226,8 +226,8 @@ class AppViewModelTest {
         // First call — launches a coroutine that will suspend at the gate.
         vm.sendTimerSet(set)
 
-        // Advance enough for the coroutine to start and set sending = true before hitting the gate.
-        testScheduler.advanceTimeBy(1L)
+        // Run the already-queued coroutine: it sets sending = true, then suspends at the gate.
+        testScheduler.runCurrent()
 
         // Second call while first is in-flight: state.sending == true, so it must be ignored.
         vm.sendTimerSet(set)
@@ -241,8 +241,10 @@ class AppViewModelTest {
         assertEquals(1, sendPacketCalls.size,
             "exactly one sendPacket should fire; in-flight guard must block the second: $callLog")
 
-        // On success the active timer id should be updated.
+        // On success the active timer id should be updated in state AND persisted via the repo.
         assertEquals(set.id, vm.timerActiveId,
             "timerActiveId should equal the sent set's id after a successful sendTimerSet")
+        assertEquals(set.id, TimerSetsRepository(settings).activeId(),
+            "active id should be persisted through the repo, not just held in VM state")
     }
 }

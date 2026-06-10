@@ -16,6 +16,9 @@ import kotlinx.coroutines.CompletableDeferred
  * Hand-written fake BleClient. All three send variants record into [callLog] and return
  * [sendResult]. The gate deferred, if set, suspends every send until completed — used by
  * the in-flight guard test.
+ *
+ * For cross-fake ordering assertions (e.g. reschedule-before-send), pass the SAME list
+ * instance here and to [FakeScheduler]; separately constructed logs can't be compared.
  */
 class FakeBleClient(
     private val callLog: MutableList<String> = mutableListOf(),
