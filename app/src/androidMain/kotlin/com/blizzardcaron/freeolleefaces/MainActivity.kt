@@ -39,8 +39,6 @@ import com.blizzardcaron.freeolleefaces.ui.BondedDevice
 import com.blizzardcaron.freeolleefaces.ui.BondedDevicesDialog
 import com.blizzardcaron.freeolleefaces.ui.HomeCallbacks
 import com.blizzardcaron.freeolleefaces.ui.HomeScreen
-import com.blizzardcaron.freeolleefaces.ui.ComplicationsListScreen
-import com.blizzardcaron.freeolleefaces.ui.NotificationsScreen
 import com.blizzardcaron.freeolleefaces.ui.Screen
 import com.blizzardcaron.freeolleefaces.ui.SettingsCallbacks
 import com.blizzardcaron.freeolleefaces.ui.SettingsScreen
@@ -178,14 +176,6 @@ private fun AppRoot(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    // The Notifications detail screen refreshes its count on entry. Home is covered by the
-    // dashboard-polling effect above, so this only needs to handle the Notifications screen.
-    LaunchedEffect(screen) {
-        if (screen == Screen.Notifications) {
-            viewModel.onResumeNotifications()
-        }
-    }
-
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { results ->
@@ -279,25 +269,6 @@ private fun AppRoot(
 
     when (screen) {
         Screen.Home -> HomeScreen(state = state, callbacks = homeCallbacks, modifier = modifier)
-        Screen.ComplicationsList -> ComplicationsListScreen(
-            active = state.activeComplication,
-            notificationsEnabled = state.notificationsEnabled,
-            onSelect = { viewModel.activate(it) },
-            onToggleNotifications = { viewModel.setNotificationsEnabled(it) },
-            onOpenNotifications = { viewModel.navigateTo(Screen.Notifications) },
-            onBack = { viewModel.navigateTo(Screen.Home) },
-            modifier = modifier,
-        )
-        Screen.Notifications -> NotificationsScreen(
-            enabled = state.notificationsEnabled,
-            accessGranted = state.notificationAccessGranted,
-            count = state.notificationCount,
-            onToggleEnabled = { viewModel.setNotificationsEnabled(it) },
-            onGrantAccess = { openNotificationAccessSettings(context) },
-            onUpdateNow = { viewModel.pushCountIfWatch() },
-            onBack = { viewModel.navigateTo(Screen.ComplicationsList) },
-            modifier = modifier,
-        )
         Screen.Settings -> SettingsScreen(
             state = state,
             callbacks = settingsCallbacks,

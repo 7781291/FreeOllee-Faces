@@ -373,9 +373,9 @@ class AppViewModel(
     fun activate(complication: ActiveComplication) {
         prefs.activeComplication = complication
         update { it.copy(activeComplication = complication) }
-        // No navigation: selection updates the radio in place on ComplicationsListScreen and the
-        // Home "Active:" header + card highlight reflect it. The old silent bounce back to Home
-        // read as "nothing happened" — it is gone.
+        // No navigation: selection updates the radio in place on the Home screen and the
+        // card highlight reflects it. The old silent bounce back to Home read as "nothing
+        // happened" — it is gone.
         scheduler.reschedule()
         when (complication) {
             ActiveComplication.TEMPERATURE -> refreshTemp(force = false, push = true)
