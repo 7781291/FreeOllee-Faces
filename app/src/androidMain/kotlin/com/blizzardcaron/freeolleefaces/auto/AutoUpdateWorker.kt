@@ -6,7 +6,7 @@ import androidx.work.WorkerParameters
 import com.blizzardcaron.freeolleefaces.ble.AndroidBleClient
 import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
 import com.blizzardcaron.freeolleefaces.health.AndroidStepsProvider
-import com.blizzardcaron.freeolleefaces.notifications.NotificationAccess
+import com.blizzardcaron.freeolleefaces.notifications.AndroidNotificationAccess
 import com.blizzardcaron.freeolleefaces.notifications.NotificationCount
 import com.blizzardcaron.freeolleefaces.notify.ErrorNotifier
 import com.blizzardcaron.freeolleefaces.notify.FailureKind
@@ -89,7 +89,7 @@ class AutoUpdateWorker(
      */
     private suspend fun maybePushNotificationCount(ctx: Context, prefs: Prefs, address: String?) {
         if (!prefs.notificationsEnabled || address == null || inSleepNow(prefs)) return
-        val count = if (NotificationAccess.isGranted(ctx)) prefs.notificationCount else 0
+        val count = if (AndroidNotificationAccess(ctx).isGranted()) prefs.notificationCount else 0
         runCatching {
             AndroidBleClient(ctx).sendPacket(address, NotificationCount.packetFor(count))
         }
