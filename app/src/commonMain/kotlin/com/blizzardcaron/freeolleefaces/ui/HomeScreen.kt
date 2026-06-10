@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -19,10 +18,10 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -64,7 +63,6 @@ fun HomeScreen(
             Text("Complications", style = MaterialTheme.typography.headlineSmall)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 TextButton(onClick = callbacks.onOpenTimerSets) { Text("Timers") }
-                TextButton(onClick = callbacks.onOpenComplications) { Text("Complications") }
                 IconButton(onClick = callbacks.onOpenSettings) {
                     Text("⚙", style = MaterialTheme.typography.titleLarge)
                 }
@@ -72,13 +70,6 @@ fun HomeScreen(
         }
 
         HorizontalDivider()
-
-        Text(
-            "Active: ${state.activeComplication.displayLabel()}",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-        )
 
         Column(
             modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
@@ -88,9 +79,12 @@ fun HomeScreen(
                 SettingsHint("No watch selected — open Settings (⚙)")
             }
 
+            SectionLabel("Name tag")
+
             ComplicationCard(
                 title = ActiveComplication.TEMPERATURE.displayLabel(),
                 active = state.activeComplication == ActiveComplication.TEMPERATURE,
+                onActivate = { callbacks.onActivate(ActiveComplication.TEMPERATURE) },
                 preview = state.tempPreview,
                 updated = state.tempUpdated,
                 next = state.tempNext,
@@ -114,6 +108,7 @@ fun HomeScreen(
             ComplicationCard(
                 title = ActiveComplication.SUN.displayLabel(),
                 active = state.activeComplication == ActiveComplication.SUN,
+                onActivate = { callbacks.onActivate(ActiveComplication.SUN) },
                 preview = state.sunPreview,
                 updated = state.sunUpdated,
                 next = state.sunNext,
@@ -124,6 +119,7 @@ fun HomeScreen(
             ComplicationCard(
                 title = ActiveComplication.STEPS.displayLabel(),
                 active = state.activeComplication == ActiveComplication.STEPS,
+                onActivate = { callbacks.onActivate(ActiveComplication.STEPS) },
                 preview = state.stepsPreview,
                 updated = state.stepsUpdated,
                 next = null,
@@ -151,6 +147,7 @@ fun HomeScreen(
             ComplicationCard(
                 title = ActiveComplication.CUSTOM.displayLabel(),
                 active = state.activeComplication == ActiveComplication.CUSTOM,
+                onActivate = { callbacks.onActivate(ActiveComplication.CUSTOM) },
                 preview = PreviewState.Ready(DisplayFormatter.custom(state.custom), "'${state.custom}'"),
                 updated = null,
                 next = null,
@@ -173,6 +170,8 @@ fun HomeScreen(
                     Text(state.customSent, style = MaterialTheme.typography.bodySmall)
                 }
             }
+
+            SectionLabel("Weekday slot")
 
             NotificationsCard(
                 state = state,
@@ -206,26 +205,21 @@ private fun SettingsHint(text: String) {
     Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
 }
 
-/** Unmistakable "ACTIVE" pill shown on the currently-active complication card. */
 @Composable
-private fun ActiveChip() {
-    Surface(
+private fun SectionLabel(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.primary,
-        contentColor = MaterialTheme.colorScheme.onPrimary,
-        shape = RoundedCornerShape(50),
-    ) {
-        Text(
-            "ACTIVE",
-            style = MaterialTheme.typography.labelMedium,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp),
-        )
-    }
+        modifier = Modifier.padding(top = 8.dp),
+    )
 }
 
 @Composable
 private fun ComplicationCard(
     title: String,
     active: Boolean,
+    onActivate: () -> Unit,
     preview: PreviewState,
     updated: String?,
     next: String?,
@@ -251,14 +245,12 @@ private fun ComplicationCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text(title, style = MaterialTheme.typography.titleMedium)
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (active) {
-                            ActiveChip()
-                        }
-                        if (onToggle != null) {
-                            Text(if (expanded) "  ▾" else "  ▸", style = MaterialTheme.typography.bodyMedium)
-                        }
+                        RadioButton(selected = active, onClick = onActivate)
+                        Text(title, style = MaterialTheme.typography.titleMedium)
+                    }
+                    if (onToggle != null) {
+                        Text(if (expanded) "▾" else "▸", style = MaterialTheme.typography.bodyMedium)
                     }
                 }
                 FaceValue(preview, updated, next)

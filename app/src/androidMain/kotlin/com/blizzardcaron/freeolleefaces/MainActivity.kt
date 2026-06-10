@@ -229,7 +229,7 @@ private fun AppRoot(
     }
 
     val homeCallbacks = HomeCallbacks(
-        onOpenComplications = { viewModel.navigateTo(Screen.ComplicationsList) },
+        onActivate = { viewModel.activate(it) },
         onOpenTimerSets = { viewModel.refreshTimers(); viewModel.navigateTo(Screen.TimerSets) },
         onOpenSettings = { viewModel.navigateTo(Screen.Settings) },
         onUpdateNow = { viewModel.refreshActive(force = true, push = true) },
@@ -248,6 +248,7 @@ private fun AppRoot(
         },
         onGrantNotificationAccess = { openNotificationAccessSettings(context) },
         onToggleNotifications = { viewModel.setNotificationsEnabled(it) },
+        onNotificationsUpdateNow = { viewModel.pushCountIfWatch() },
     )
 
     val settingsCallbacks = SettingsCallbacks(

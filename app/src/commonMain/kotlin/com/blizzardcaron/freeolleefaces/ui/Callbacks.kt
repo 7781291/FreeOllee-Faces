@@ -1,9 +1,10 @@
 package com.blizzardcaron.freeolleefaces.ui
 
+import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 
 data class HomeCallbacks(
-    val onOpenComplications: () -> Unit,
+    val onActivate: (ActiveComplication) -> Unit,
     val onOpenTimerSets: () -> Unit,
     val onOpenSettings: () -> Unit,
     val onUpdateNow: () -> Unit,
@@ -13,6 +14,7 @@ data class HomeCallbacks(
     val onGrantHealth: () -> Unit,
     val onGrantNotificationAccess: () -> Unit,
     val onToggleNotifications: (Boolean) -> Unit,
+    val onNotificationsUpdateNow: () -> Unit,
 )
 
 data class SettingsCallbacks(
