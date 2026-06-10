@@ -21,7 +21,7 @@ import java.util.UUID
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-class OlleeBleClient(private val context: Context) {
+class AndroidBleClient(private val context: Context) : BleClient {
 
     companion object {
         val SERVICE_UUID: UUID = UUID.fromString("6e400001-b5a3-f393-e0a9-e50e24dcca9e")
@@ -32,7 +32,7 @@ class OlleeBleClient(private val context: Context) {
         private const val ATT_PAYLOAD = 20
     }
 
-    suspend fun send(deviceAddress: String, value: String): Result<Unit> =
+    override suspend fun send(deviceAddress: String, value: String): Result<Unit> =
         send(deviceAddress, value, OlleeProtocol.TARGET_NAMEPLATE)
 
     /**
@@ -41,7 +41,7 @@ class OlleeBleClient(private val context: Context) {
      * the Temperature face's field directly.
      */
     @SuppressLint("MissingPermission")
-    suspend fun send(deviceAddress: String, value: String, target: Int): Result<Unit> {
+    override suspend fun send(deviceAddress: String, value: String, target: Int): Result<Unit> {
         val packet = OlleeProtocol.buildPacket(target, value.padEnd(OlleeProtocol.MAX_VALUE_LENGTH, ' '))
         return deliver(deviceAddress, packet)
     }
@@ -50,7 +50,7 @@ class OlleeBleClient(private val context: Context) {
      * Sends a fully-built [packet] (e.g. from [OlleeProtocol.buildWeekdayPacket] /
      * [OlleeProtocol.buildRawPacket]) without the ASCII/6-char nameplate framing path.
      */
-    suspend fun sendPacket(deviceAddress: String, packet: ByteArray): Result<Unit> =
+    override suspend fun sendPacket(deviceAddress: String, packet: ByteArray): Result<Unit> =
         deliver(deviceAddress, packet)
 
     /**

@@ -29,7 +29,8 @@ import com.blizzardcaron.freeolleefaces.auto.AutoUpdateSchedule
 import com.blizzardcaron.freeolleefaces.auto.AutoUpdateScheduler
 import com.blizzardcaron.freeolleefaces.auto.SleepWindow
 import com.blizzardcaron.freeolleefaces.auto.isTempCacheFresh
-import com.blizzardcaron.freeolleefaces.ble.OlleeBleClient
+import com.blizzardcaron.freeolleefaces.ble.AndroidBleClient
+import com.blizzardcaron.freeolleefaces.ble.BleClient
 import com.blizzardcaron.freeolleefaces.ble.OlleeProtocol
 import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
 import com.blizzardcaron.freeolleefaces.format.TempUnit
@@ -113,7 +114,7 @@ private fun AppRoot(
 ) {
     val context = LocalContext.current
     val prefs = remember { Prefs(appSettings(context)) }
-    val ble = remember { OlleeBleClient(context) }
+    val ble: BleClient = remember { AndroidBleClient(context) }
     val timerRepo = remember { TimerSetsRepository(timerSettings(context)) }
     var timerSets by remember { mutableStateOf(timerRepo.getAll()) }
     var timerActiveId by remember { mutableStateOf(timerRepo.activeId()) }
@@ -780,7 +781,7 @@ private fun AppRoot(
 }
 
 private suspend fun sendAndReport(
-    ble: OlleeBleClient,
+    ble: BleClient,
     address: String,
     value: String,
     update: ((HomeState) -> HomeState) -> Unit,

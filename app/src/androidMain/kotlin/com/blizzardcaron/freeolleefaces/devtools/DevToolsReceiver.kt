@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.util.Log
-import com.blizzardcaron.freeolleefaces.ble.OlleeBleClient
+import com.blizzardcaron.freeolleefaces.ble.AndroidBleClient
 import com.blizzardcaron.freeolleefaces.ble.OlleeProtocol
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
 import com.blizzardcaron.freeolleefaces.prefs.appSettings
@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 
 /**
  * Developer bench tool: writes one framed packet to the paired watch over the normal
- * [OlleeBleClient] path (which already connects to the bonded device — the same reason on-watch
+ * [AndroidBleClient] path (which already connects to the bonded device — the same reason on-watch
  * faces work from the phone but not from an unbonded host). Kept in the tree as a reusable BLE
  * probe for reverse-engineering watch targets; **inert unless the build is debuggable**, so it is
  * a no-op in release.
@@ -65,7 +65,7 @@ class DevToolsReceiver : BroadcastReceiver() {
         val pending = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val result = OlleeBleClient(ctx).sendPacket(address, packet)
+                val result = AndroidBleClient(ctx).sendPacket(address, packet)
                 Log.i(
                     TAG,
                     if (result.isSuccess) "result: OK"

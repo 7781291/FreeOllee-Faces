@@ -3,7 +3,7 @@ package com.blizzardcaron.freeolleefaces.auto
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.blizzardcaron.freeolleefaces.ble.OlleeBleClient
+import com.blizzardcaron.freeolleefaces.ble.AndroidBleClient
 import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
 import com.blizzardcaron.freeolleefaces.health.StepsRepository
 import com.blizzardcaron.freeolleefaces.notifications.NotificationAccess
@@ -91,7 +91,7 @@ class AutoUpdateWorker(
         if (!prefs.notificationsEnabled || address == null || inSleepNow(prefs)) return
         val count = if (NotificationAccess.isGranted(ctx)) prefs.notificationCount else 0
         runCatching {
-            OlleeBleClient(ctx).sendPacket(address, NotificationCount.packetFor(count))
+            AndroidBleClient(ctx).sendPacket(address, NotificationCount.packetFor(count))
         }
     }
 
@@ -117,7 +117,7 @@ class AutoUpdateWorker(
                 .onSuccess { count ->
                     prefs.recordStepsFetch(count)
                     val payload = DisplayFormatter.steps(count)
-                    OlleeBleClient(ctx).send(address, payload)
+                    AndroidBleClient(ctx).send(address, payload)
                         .onSuccess {
                             prefs.recordAutoSend("Sent '$payload'")
                             applyHealth(ctx, prefs, null, inSleep)
@@ -134,7 +134,7 @@ class AutoUpdateWorker(
                     if (cached != null) {
                         // Read failed but we have a cached count — push it marked stale ('E').
                         val payload = DisplayFormatter.steps(cached, stale = true)
-                        OlleeBleClient(ctx).send(address, payload)
+                        AndroidBleClient(ctx).send(address, payload)
                             .onSuccess { prefs.recordAutoSend("Sent stale '$payload'") }
                             .onFailure {
                                 backstopped = handleSendFailure(
@@ -185,7 +185,7 @@ class AutoUpdateWorker(
                 .onSuccess { temp ->
                     prefs.recordTempFetch(temp, prefs.tempUnit)
                     val payload = DisplayFormatter.temperature(temp, prefs.tempUnit)
-                    OlleeBleClient(ctx).send(address, payload)
+                    AndroidBleClient(ctx).send(address, payload)
                         .onSuccess {
                             prefs.recordAutoSend("Sent '$payload'")
                             applyHealth(ctx, prefs, null, inSleep)
@@ -202,7 +202,7 @@ class AutoUpdateWorker(
                     if (cached != null && prefs.tempCacheUnit == prefs.tempUnit) {
                         // Fetch failed but we have a cached temp — push it marked stale ('E').
                         val payload = DisplayFormatter.temperature(cached, prefs.tempUnit, stale = true)
-                        OlleeBleClient(ctx).send(address, payload)
+                        AndroidBleClient(ctx).send(address, payload)
                             .onSuccess {
                                 prefs.recordAutoSend("Sent stale '$payload'$suffix")
                                 applyHealth(ctx, prefs, null, inSleep)
@@ -248,7 +248,7 @@ class AutoUpdateWorker(
         }
 
         val payload = DisplayFormatter.sunTime(event.kind, event.time.time)
-        val sendResult = OlleeBleClient(ctx).send(address, payload)
+        val sendResult = AndroidBleClient(ctx).send(address, payload)
 
         if (sendResult.isSuccess) {
             prefs.recordAutoSend("Sent '$payload'")

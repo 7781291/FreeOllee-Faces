@@ -2,7 +2,7 @@ package com.blizzardcaron.freeolleefaces.ble
 
 /**
  * Pure Layer-1 retry policy for a single watch send. A cold connect to a sleeping/slow-advertising
- * watch often times out on the first try but succeeds seconds later, so [OlleeBleClient] reconnects
+ * watch often times out on the first try but succeeds seconds later, so [BleClient] reconnects
  * up to [MAX_ATTEMPTS] times with [backoffForAttempt] waits between tries. The GATT calls are not
  * unit-testable, so this policy is split out and tested on its own.
  */

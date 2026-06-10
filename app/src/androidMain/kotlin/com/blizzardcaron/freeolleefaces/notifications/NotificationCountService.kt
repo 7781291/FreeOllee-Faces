@@ -3,7 +3,7 @@ package com.blizzardcaron.freeolleefaces.notifications
 import android.app.Notification
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
-import com.blizzardcaron.freeolleefaces.ble.OlleeBleClient
+import com.blizzardcaron.freeolleefaces.ble.AndroidBleClient
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
 import com.blizzardcaron.freeolleefaces.prefs.appSettings
 import kotlinx.coroutines.CoroutineScope
@@ -75,7 +75,7 @@ class NotificationCountService : NotificationListenerService() {
             delay(DEBOUNCE_MS)
             if (!prefs.notificationsEnabled) return@launch
             val addr = prefs.watchAddress ?: return@launch
-            OlleeBleClient(applicationContext)
+            AndroidBleClient(applicationContext)
                 .sendPacket(addr, NotificationCount.packetFor(prefs.notificationCount))
         }
     }

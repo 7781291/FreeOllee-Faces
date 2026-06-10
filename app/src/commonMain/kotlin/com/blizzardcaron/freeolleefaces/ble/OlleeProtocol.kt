@@ -148,7 +148,7 @@ object OlleeProtocol {
      *   [enable, 00, 00, hour, minute, 00, chime, 05, playNow, C0, FF, 0F, FF]
      * The final FF is a constant terminator (payload byte 12). The watch's 20-byte ATT payload
      * fragments the resulting 21-byte frame into [20][FF] — exactly how the official app sends it,
-     * and how [OlleeBleClient] chunks it.
+     * and how [BleClient] chunks it.
      */
     fun buildAlarmPacket(
         hour: Int,
