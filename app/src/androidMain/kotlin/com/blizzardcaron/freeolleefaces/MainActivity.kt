@@ -44,6 +44,7 @@ import com.blizzardcaron.freeolleefaces.ui.SettingsScreen
 import com.blizzardcaron.freeolleefaces.ui.TimerSetEditScreen
 import com.blizzardcaron.freeolleefaces.ui.TimerSetsScreen
 import com.blizzardcaron.freeolleefaces.ui.theme.FreeOlleeFacesTheme
+import com.blizzardcaron.freeolleefaces.ui.versionLabel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -70,6 +71,9 @@ private fun AppRoot(
 ) {
     val context = LocalContext.current
     val viewModel = remember {
+        val versionName = runCatching {
+            context.packageManager.getPackageInfo(context.packageName, 0).versionName
+        }.getOrNull()
         AppViewModel(
             prefs = Prefs(appSettings(context)),
             ble = AndroidBleClient(context),
@@ -78,6 +82,7 @@ private fun AppRoot(
             notificationAccess = AndroidNotificationAccess(context),
             timerRepo = TimerSetsRepository(timerSettings(context)),
             scheduler = AndroidScheduler(context),
+            versionLabel = versionLabel(versionName, context.packageName),
         )
     }
     val state = viewModel.state

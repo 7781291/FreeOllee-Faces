@@ -39,4 +39,6 @@ data class HomeState(
 
     val lat: String = "",
     val lng: String = "",
+
+    val versionLabel: String = "",
 )

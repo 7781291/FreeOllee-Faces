@@ -76,6 +76,7 @@ class AppViewModel(
     private val notificationAccess: NotificationAccessChecker,
     private val timerRepo: TimerSetsRepository,
     private val scheduler: Scheduler,
+    private val versionLabel: String = "",
 ) : ViewModel() {
 
     var state by mutableStateOf(initialState())
@@ -119,6 +120,7 @@ class AppViewModel(
         notificationCount = prefs.notificationCount,
         notificationAccessGranted = notificationAccess.isGranted(),
         notificationsEnabled = prefs.notificationsEnabled,
+        versionLabel = versionLabel,
     )
 
     fun navigateTo(s: Screen) { screen = s }

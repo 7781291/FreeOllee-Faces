@@ -29,7 +29,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.blizzardcaron.freeolleefaces.auto.ActiveFace
@@ -181,15 +180,8 @@ fun HomeScreen(
             Text("Update active now")
         }
 
-        val context = LocalContext.current
-        val versionText = remember {
-            val name = runCatching {
-                context.packageManager.getPackageInfo(context.packageName, 0).versionName
-            }.getOrNull()
-            versionLabel(name, context.packageName)
-        }
         Text(
-            versionText,
+            state.versionLabel,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.outline,
             modifier = Modifier.fillMaxWidth(),
