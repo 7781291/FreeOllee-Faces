@@ -5,7 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.blizzardcaron.freeolleefaces.auto.ActiveFace
+import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
 import com.blizzardcaron.freeolleefaces.auto.AutoUpdateSchedule
 import com.blizzardcaron.freeolleefaces.auto.Scheduler
 import com.blizzardcaron.freeolleefaces.auto.SleepWindow
@@ -347,10 +347,10 @@ class AppViewModel(
 
     fun refreshActive(force: Boolean, push: Boolean) {
         when (state.activeFace) {
-            ActiveFace.TEMPERATURE -> refreshTemp(force, push)
-            ActiveFace.SUN -> refreshSun(push)
-            ActiveFace.STEPS -> refreshSteps(push)
-            ActiveFace.CUSTOM -> {}
+            ActiveComplication.TEMPERATURE -> refreshTemp(force, push)
+            ActiveComplication.SUN -> refreshSun(push)
+            ActiveComplication.STEPS -> refreshSteps(push)
+            ActiveComplication.CUSTOM -> {}
         }
     }
 
@@ -370,16 +370,16 @@ class AppViewModel(
         ) }
     }
 
-    fun activate(face: ActiveFace) {
+    fun activate(face: ActiveComplication) {
         prefs.activeFace = face
         update { it.copy(activeFace = face) }
         screen = Screen.Home
         scheduler.reschedule()
         when (face) {
-            ActiveFace.TEMPERATURE -> refreshTemp(force = false, push = true)
-            ActiveFace.SUN -> refreshSun(push = true)
-            ActiveFace.STEPS -> refreshSteps(push = true)
-            ActiveFace.CUSTOM -> {
+            ActiveComplication.TEMPERATURE -> refreshTemp(force = false, push = true)
+            ActiveComplication.SUN -> refreshSun(push = true)
+            ActiveComplication.STEPS -> refreshSteps(push = true)
+            ActiveComplication.CUSTOM -> {
                 val text = prefs.customText
                 if (text.isNotEmpty()) sendCustom(text)
             }
@@ -426,7 +426,7 @@ class AppViewModel(
     fun setTempUnit(unit: com.blizzardcaron.freeolleefaces.format.TempUnit) {
         prefs.tempUnit = unit
         update { it.copy(tempUnit = unit) }
-        refreshTemp(force = false, push = state.activeFace == ActiveFace.TEMPERATURE)
+        refreshTemp(force = false, push = state.activeFace == ActiveComplication.TEMPERATURE)
     }
 
     fun setCustomText(text: String) {
@@ -463,7 +463,7 @@ class AppViewModel(
         prefs.watchAddress = address
         update { it.copy(watchLabel = label, watchSelected = true) }
         when (state.activeFace) {
-            ActiveFace.CUSTOM -> prefs.customText.takeIf { it.isNotEmpty() }?.let { sendCustom(it) }
+            ActiveComplication.CUSTOM -> prefs.customText.takeIf { it.isNotEmpty() }?.let { sendCustom(it) }
             else -> refreshActive(force = false, push = true)
         }
     }
@@ -539,10 +539,10 @@ class AppViewModel(
     }
 
     /** Convenience: whether the active face is the steps face (Activity uses this when arming reads). */
-    fun activeIsSteps(): Boolean = state.activeFace == ActiveFace.STEPS
+    fun activeIsSteps(): Boolean = state.activeFace == ActiveComplication.STEPS
 
     /** Whether a background chain is active at startup — drives the POST_NOTIFICATIONS prompt. */
-    fun backgroundActive(): Boolean = prefs.activeFace != ActiveFace.CUSTOM && prefs.watchAddress != null
+    fun backgroundActive(): Boolean = prefs.activeFace != ActiveComplication.CUSTOM && prefs.watchAddress != null
 
     /** Saved coords present (used by the location bootstrap to decide whether to fetch). */
     fun hasSavedCoords(): Boolean = prefs.lastLat != null && prefs.lastLng != null

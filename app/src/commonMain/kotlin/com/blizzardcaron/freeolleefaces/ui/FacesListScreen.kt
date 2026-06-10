@@ -18,7 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.blizzardcaron.freeolleefaces.auto.ActiveFace
+import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
 
 /**
  * Two groups, mirroring the watch's two independent display registers:
@@ -28,9 +28,9 @@ import com.blizzardcaron.freeolleefaces.auto.ActiveFace
  */
 @Composable
 fun FacesListScreen(
-    active: ActiveFace,
+    active: ActiveComplication,
     notificationsEnabled: Boolean,
-    onSelect: (ActiveFace) -> Unit,
+    onSelect: (ActiveComplication) -> Unit,
     onToggleNotifications: (Boolean) -> Unit,
     onOpenNotifications: () -> Unit,
     onBack: () -> Unit,
@@ -48,10 +48,10 @@ fun FacesListScreen(
         HorizontalDivider()
 
         SectionLabel("Name tag")
-        FaceRow("Temperature", ActiveFace.TEMPERATURE, active, onSelect)
-        FaceRow("Sun event", ActiveFace.SUN, active, onSelect)
-        FaceRow("Steps", ActiveFace.STEPS, active, onSelect)
-        FaceRow("Custom", ActiveFace.CUSTOM, active, onSelect)
+        FaceRow("Temperature", ActiveComplication.TEMPERATURE, active, onSelect)
+        FaceRow("Sun event", ActiveComplication.SUN, active, onSelect)
+        FaceRow("Steps", ActiveComplication.STEPS, active, onSelect)
+        FaceRow("Custom", ActiveComplication.CUSTOM, active, onSelect)
 
         HorizontalDivider()
 
@@ -77,9 +77,9 @@ private fun SectionLabel(text: String) {
 @Composable
 private fun FaceRow(
     label: String,
-    face: ActiveFace,
-    active: ActiveFace,
-    onSelect: (ActiveFace) -> Unit,
+    face: ActiveComplication,
+    active: ActiveComplication,
+    onSelect: (ActiveComplication) -> Unit,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,

@@ -31,7 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import com.blizzardcaron.freeolleefaces.auto.ActiveFace
+import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
 import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 
@@ -72,13 +72,13 @@ fun HomeScreen(
             modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            if (!state.watchSelected && state.activeFace != ActiveFace.CUSTOM) {
+            if (!state.watchSelected && state.activeFace != ActiveComplication.CUSTOM) {
                 SettingsHint("No watch selected — open Settings (⚙)")
             }
 
             FaceCard(
                 title = "Temperature",
-                badge = "active".takeIf { state.activeFace == ActiveFace.TEMPERATURE },
+                badge = "active".takeIf { state.activeFace == ActiveComplication.TEMPERATURE },
                 preview = state.tempPreview,
                 updated = state.tempUpdated,
                 next = state.tempNext,
@@ -101,7 +101,7 @@ fun HomeScreen(
 
             FaceCard(
                 title = "Sun event",
-                badge = "active".takeIf { state.activeFace == ActiveFace.SUN },
+                badge = "active".takeIf { state.activeFace == ActiveComplication.SUN },
                 preview = state.sunPreview,
                 updated = state.sunUpdated,
                 next = state.sunNext,
@@ -111,7 +111,7 @@ fun HomeScreen(
 
             FaceCard(
                 title = "Steps",
-                badge = "active".takeIf { state.activeFace == ActiveFace.STEPS },
+                badge = "active".takeIf { state.activeFace == ActiveComplication.STEPS },
                 preview = state.stepsPreview,
                 updated = state.stepsUpdated,
                 next = null,
@@ -138,7 +138,7 @@ fun HomeScreen(
 
             FaceCard(
                 title = "Custom",
-                badge = "active".takeIf { state.activeFace == ActiveFace.CUSTOM },
+                badge = "active".takeIf { state.activeFace == ActiveComplication.CUSTOM },
                 preview = PreviewState.Ready(DisplayFormatter.custom(state.custom), "'${state.custom}'"),
                 updated = null,
                 next = null,
@@ -174,7 +174,7 @@ fun HomeScreen(
         Button(
             onClick = callbacks.onUpdateNow,
             // No-op for CUSTOM (its card has its own send button); also needs a watch and no send in flight.
-            enabled = state.activeFace != ActiveFace.CUSTOM && state.watchSelected && !state.sending,
+            enabled = state.activeFace != ActiveComplication.CUSTOM && state.watchSelected && !state.sending,
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text("Update active now")

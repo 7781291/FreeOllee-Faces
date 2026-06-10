@@ -1,6 +1,6 @@
 package com.blizzardcaron.freeolleefaces.prefs
 
-import com.blizzardcaron.freeolleefaces.auto.ActiveFace
+import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 import com.russhwolf.settings.MapSettings
 import kotlinx.datetime.Clock
@@ -113,7 +113,7 @@ class PrefsTest {
     @Test fun activeFace_legacyNotificationsMigration_setsEnabledAndFace() {
         val prefs = freshPrefs("active_face" to "NOTIFICATIONS")
         val face = prefs.activeFace
-        assertEquals(ActiveFace.TEMPERATURE, face, "legacy NOTIFICATIONS face should migrate to TEMPERATURE")
+        assertEquals(ActiveComplication.TEMPERATURE, face, "legacy NOTIFICATIONS face should migrate to TEMPERATURE")
         assertTrue(prefs.notificationsEnabled, "migration should enable notificationsEnabled")
     }
 
@@ -123,25 +123,25 @@ class PrefsTest {
         val prefs = Prefs(settings)
         prefs.activeFace           // trigger migration
         val face2 = prefs.activeFace
-        assertEquals(ActiveFace.TEMPERATURE, face2, "second read after migration should still be TEMPERATURE")
+        assertEquals(ActiveComplication.TEMPERATURE, face2, "second read after migration should still be TEMPERATURE")
     }
 
     /** No active_face but auto_source = "SUN" → should migrate via fromLegacyAutoSource → SUN. */
     @Test fun activeFace_legacyAutoSource_sun_migratesCorrectly() {
         val prefs = freshPrefs("auto_source" to "SUN")
-        assertEquals(ActiveFace.SUN, prefs.activeFace, "auto_source=SUN should migrate to ActiveFace.SUN")
+        assertEquals(ActiveComplication.SUN, prefs.activeFace, "auto_source=SUN should migrate to ActiveComplication.SUN")
     }
 
     /** No active_face, no auto_source → fromLegacyAutoSource(null) → TEMPERATURE. */
     @Test fun activeFace_noLegacy_defaultsToTemperature() {
         val prefs = freshPrefs()
-        assertEquals(ActiveFace.TEMPERATURE, prefs.activeFace, "no stored face should default to TEMPERATURE")
+        assertEquals(ActiveComplication.TEMPERATURE, prefs.activeFace, "no stored face should default to TEMPERATURE")
     }
 
     @Test fun activeFace_roundtrip_steps() {
         val prefs = freshPrefs()
-        prefs.activeFace = ActiveFace.STEPS
-        assertEquals(ActiveFace.STEPS, prefs.activeFace, "activeFace STEPS roundtrip")
+        prefs.activeFace = ActiveComplication.STEPS
+        assertEquals(ActiveComplication.STEPS, prefs.activeFace, "activeFace STEPS roundtrip")
     }
 
     // ---------------------------------------------------------------------------

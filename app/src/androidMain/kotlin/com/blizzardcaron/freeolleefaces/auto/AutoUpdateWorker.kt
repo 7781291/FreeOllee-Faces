@@ -49,13 +49,13 @@ class AutoUpdateWorker(
         maybePushNotificationCount(ctx, prefs, address)
 
         // CUSTOM has no schedule; clear any stale error notification and stop the chain.
-        if (face == ActiveFace.CUSTOM) {
+        if (face == ActiveComplication.CUSTOM) {
             applyHealth(ctx, prefs, null, inSleep = false)
             return Result.success()
         }
 
         // STEPS needs only a watch (no coordinates); handle before the location guard.
-        if (face == ActiveFace.STEPS) {
+        if (face == ActiveComplication.STEPS) {
             if (address == null) {
                 prefs.recordAutoSend("Skipped: set watch in app")
                 applyHealth(ctx, prefs, FailureKind.SETUP_INCOMPLETE, inSleepNow(prefs))
@@ -72,9 +72,9 @@ class AutoUpdateWorker(
 
         val now = nowLocal()
         return when (face) {
-            ActiveFace.TEMPERATURE -> runTemperature(ctx, prefs, lat, lng, address, now)
-            ActiveFace.SUN -> runSun(ctx, prefs, lat, lng, address, now)
-            ActiveFace.STEPS, ActiveFace.CUSTOM -> Result.success() // handled above
+            ActiveComplication.TEMPERATURE -> runTemperature(ctx, prefs, lat, lng, address, now)
+            ActiveComplication.SUN -> runSun(ctx, prefs, lat, lng, address, now)
+            ActiveComplication.STEPS, ActiveComplication.CUSTOM -> Result.success() // handled above
         }
     }
 

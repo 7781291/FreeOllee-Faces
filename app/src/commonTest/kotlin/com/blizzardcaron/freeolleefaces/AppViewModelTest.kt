@@ -1,6 +1,6 @@
 package com.blizzardcaron.freeolleefaces
 
-import com.blizzardcaron.freeolleefaces.auto.ActiveFace
+import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
 import com.blizzardcaron.freeolleefaces.fakes.FakeBleClient
 import com.blizzardcaron.freeolleefaces.fakes.FakeLocationProvider
 import com.blizzardcaron.freeolleefaces.fakes.FakeNotificationAccessChecker
@@ -111,17 +111,17 @@ class AppViewModelTest {
         // activate()'s screen reset (screen defaults to Home, which would make it vacuous).
         vm.navigateTo(Screen.FacesList)
 
-        vm.activate(ActiveFace.TEMPERATURE)
+        vm.activate(ActiveComplication.TEMPERATURE)
 
         // --- Synchronous assertions (before draining coroutines) ---
 
         // 1. prefs.activeFace persisted synchronously (read back via same settings).
         val prefsReader = Prefs(settings)
-        assertEquals(ActiveFace.TEMPERATURE, prefsReader.activeFace,
+        assertEquals(ActiveComplication.TEMPERATURE, prefsReader.activeFace,
             "prefs.activeFace should be persisted synchronously by activate()")
 
         // 2. state.activeFace updated synchronously.
-        assertEquals(ActiveFace.TEMPERATURE, vm.state.activeFace,
+        assertEquals(ActiveComplication.TEMPERATURE, vm.state.activeFace,
             "state.activeFace should be set synchronously by activate()")
 
         // 3. screen set synchronously.

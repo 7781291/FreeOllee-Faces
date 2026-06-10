@@ -1,6 +1,6 @@
 package com.blizzardcaron.freeolleefaces.prefs
 
-import com.blizzardcaron.freeolleefaces.auto.ActiveFace
+import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 import com.blizzardcaron.freeolleefaces.notify.FailureKind
 import com.russhwolf.settings.Settings
@@ -29,7 +29,7 @@ class Prefs(
             ?: TempUnit.FAHRENHEIT
         set(value) = settings.putString(KEY_TEMP_UNIT, value.name)
 
-    var activeFace: ActiveFace
+    var activeFace: ActiveComplication
         get() {
             val stored = settings.getStringOrNull(KEY_ACTIVE_FACE)
             // Legacy: NOTIFICATIONS used to be a mutually-exclusive face. It's now an independent
@@ -37,13 +37,13 @@ class Prefs(
             // the default" — once, in place.
             if (stored == LEGACY_NOTIFICATIONS_FACE) {
                 notificationsEnabled = true
-                settings.putString(KEY_ACTIVE_FACE, ActiveFace.TEMPERATURE.name)
-                return ActiveFace.TEMPERATURE
+                settings.putString(KEY_ACTIVE_FACE, ActiveComplication.TEMPERATURE.name)
+                return ActiveComplication.TEMPERATURE
             }
             stored?.let {
-                runCatching { ActiveFace.valueOf(it) }.getOrNull()?.let { face -> return face }
+                runCatching { ActiveComplication.valueOf(it) }.getOrNull()?.let { face -> return face }
             }
-            val migrated = ActiveFace.fromLegacyAutoSource(settings.getStringOrNull(KEY_AUTO_SOURCE))
+            val migrated = ActiveComplication.fromLegacyAutoSource(settings.getStringOrNull(KEY_AUTO_SOURCE))
             settings.putString(KEY_ACTIVE_FACE, migrated.name)
             return migrated
         }

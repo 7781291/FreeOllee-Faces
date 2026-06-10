@@ -30,13 +30,13 @@ object AutoUpdateScheduler {
         ensureWatchdog(wm)
 
         when (prefs.activeFace) {
-            ActiveFace.CUSTOM -> wm.cancelUniqueWork(WORK_NAME)
+            ActiveComplication.CUSTOM -> wm.cancelUniqueWork(WORK_NAME)
 
-            ActiveFace.TEMPERATURE -> scheduleIntervalFace(ctx, prefs, prefs.updateIntervalMinutes)
+            ActiveComplication.TEMPERATURE -> scheduleIntervalFace(ctx, prefs, prefs.updateIntervalMinutes)
 
-            ActiveFace.STEPS -> scheduleIntervalFace(ctx, prefs, prefs.updateIntervalMinutes)
+            ActiveComplication.STEPS -> scheduleIntervalFace(ctx, prefs, prefs.updateIntervalMinutes)
 
-            ActiveFace.SUN -> enqueueNext(ctx, 0L, sendAttempt = 0)
+            ActiveComplication.SUN -> enqueueNext(ctx, 0L, sendAttempt = 0)
         }
     }
 
