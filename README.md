@@ -40,9 +40,9 @@ The debug APK lands in `app/build/outputs/apk/debug/`.
 
 ### Cross-platform status
 
-The app logic and the Compose UI live in `commonMain`, behind `expect`/`actual`
-boundaries for the Android-specific I/O (BLE, Health Connect, location, prefs, the
-background engine). iOS is a future step — there are **no iOS targets in the build
+The app logic and the Compose UI live in `commonMain`; the Android-specific I/O
+(BLE, Health Connect, location, prefs, the background engine) sits behind plain
+interfaces with Android implementations injected at startup. iOS is a future step — there are **no iOS targets in the build
 yet**, so this currently builds and ships as an Android app only.
 
 ## Releases
