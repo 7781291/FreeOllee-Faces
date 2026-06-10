@@ -15,11 +15,9 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.resume
 
-data class Coords(val lat: Double, val lng: Double, val accuracyM: Float?, val provider: String?)
+class AndroidLocationProvider(private val context: Context) : LocationProvider {
 
-class LocationSource(private val context: Context) {
-
-    suspend fun fetch(timeoutMs: Long = 10_000): Result<Coords> = withContext(Dispatchers.IO) {
+    override suspend fun fetch(timeoutMs: Long): Result<Coords> = withContext(Dispatchers.IO) {
         runCatching {
             if (!hasAnyLocationPermission()) {
                 throw SecurityException("ACCESS_FINE_LOCATION or ACCESS_COARSE_LOCATION required")

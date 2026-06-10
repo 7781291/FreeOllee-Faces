@@ -37,7 +37,8 @@ import com.blizzardcaron.freeolleefaces.format.TempUnit
 import com.blizzardcaron.freeolleefaces.format.WeatherErrorCopy
 import com.blizzardcaron.freeolleefaces.health.AndroidStepsProvider
 import com.blizzardcaron.freeolleefaces.health.StepsProvider
-import com.blizzardcaron.freeolleefaces.location.LocationSource
+import com.blizzardcaron.freeolleefaces.location.AndroidLocationProvider
+import com.blizzardcaron.freeolleefaces.location.LocationProvider
 import com.blizzardcaron.freeolleefaces.location.freshnessLabel
 import com.blizzardcaron.freeolleefaces.location.isLocationStale
 import com.blizzardcaron.freeolleefaces.notifications.NotificationCount
@@ -120,7 +121,7 @@ private fun AppRoot(
     var timerSets by remember { mutableStateOf(timerRepo.getAll()) }
     var timerActiveId by remember { mutableStateOf(timerRepo.activeId()) }
     var editingSet by remember { mutableStateOf<TimerSet?>(null) }
-    val locationSource = remember { LocationSource(context) }
+    val locationSource: LocationProvider = remember { AndroidLocationProvider(context) }
     val stepsRepo: StepsProvider = remember { AndroidStepsProvider(context) }
     val scope = rememberCoroutineScope()
 
