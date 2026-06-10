@@ -29,18 +29,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.blizzardcaron.freeolleefaces.prefs.IntervalOptions
 
-data class SettingsCallbacks(
-    val onBack: () -> Unit,
-    val onSelectWatch: () -> Unit,
-    val onIntervalChange: (Int) -> Unit,
-    val onSleepEnabledChange: (Boolean) -> Unit,
-    val onSleepStartChange: (Int) -> Unit,
-    val onSleepEndChange: (Int) -> Unit,
-    val onLatChange: (String) -> Unit,
-    val onLngChange: (String) -> Unit,
-    val onUseMyLocation: () -> Unit,
-)
-
 @Composable
 fun SettingsScreen(
     state: HomeState,
