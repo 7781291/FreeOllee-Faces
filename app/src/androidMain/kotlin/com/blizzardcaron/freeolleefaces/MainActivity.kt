@@ -277,6 +277,7 @@ private fun AppRoot(
         Screen.TimerSets -> TimerSetsScreen(
             sets = viewModel.timerSets,
             activeId = viewModel.timerActiveId,
+            sending = state.sending,
             onOpen = { viewModel.editTimerSet(it); viewModel.navigateTo(Screen.TimerSetEdit) },
             onNew = { viewModel.newTimerSet() },
             onDuplicate = { src -> viewModel.duplicateTimerSet(src) },

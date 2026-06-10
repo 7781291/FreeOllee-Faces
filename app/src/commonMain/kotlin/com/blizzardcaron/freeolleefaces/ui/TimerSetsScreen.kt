@@ -1,6 +1,8 @@
 package com.blizzardcaron.freeolleefaces.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,8 +13,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -27,6 +31,7 @@ import com.blizzardcaron.freeolleefaces.timer.TimerSetsRepository
 fun TimerSetsScreen(
     sets: List<TimerSet>,
     activeId: String?,
+    sending: Boolean,
     onOpen: (TimerSet) -> Unit,
     onNew: () -> Unit,
     onDuplicate: (TimerSet) -> Unit,
@@ -67,6 +72,7 @@ fun TimerSetsScreen(
                 TimerSetRow(
                     set = set,
                     active = set.id == activeId,
+                    sending = sending,
                     onOpen = { onOpen(set) },
                     onDuplicate = { onDuplicate(set) },
                     onDelete = { onDelete(set) },
@@ -81,24 +87,29 @@ fun TimerSetsScreen(
 private fun TimerSetRow(
     set: TimerSet,
     active: Boolean,
+    sending: Boolean,
     onOpen: () -> Unit,
     onDuplicate: () -> Unit,
     onDelete: () -> Unit,
     onSend: () -> Unit,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    val cardColors = if (active) {
+        CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+    } else {
+        CardDefaults.cardColors()
+    }
+    val border = if (active) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
+    Card(modifier = Modifier.fillMaxWidth(), colors = cardColors, border = border) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            modifier = Modifier.fillMaxWidth().clickable { onOpen() }.padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // Radio = send: timerActiveId only updates on a successful send, so the radio
+                // moves when the push lands and stays put on failure (snackbar covers errors).
+                RadioButton(selected = active, onClick = onSend, enabled = !sending)
                 Text(if (set.name.isBlank()) "(unnamed)" else set.name,
                     style = MaterialTheme.typography.titleMedium)
-                if (active) Text("● active", style = MaterialTheme.typography.labelMedium)
             }
             val count = set.slots.count { it.durationSeconds > 0 }
             val first = set.slots.firstOrNull { it.durationSeconds > 0 }?.durationSeconds
@@ -107,8 +118,6 @@ private fun TimerSetRow(
             } else "all blank"
             Text(summary, style = MaterialTheme.typography.bodySmall)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = onOpen) { Text("Edit") }
-                TextButton(onClick = onSend) { Text("Send") }
                 TextButton(onClick = onDuplicate) { Text("Duplicate") }
                 TextButton(onClick = onDelete) { Text("Delete") }
             }
