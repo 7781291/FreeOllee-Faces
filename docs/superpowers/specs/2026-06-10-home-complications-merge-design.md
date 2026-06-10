@@ -1,7 +1,7 @@
 # Home/complications merge — design
 
 **Date:** 2026-06-10
-**Status:** Approved (design)
+**Status:** Implemented
 **Branch:** `feat/kmp-cross-platform`
 
 ## Problem
