@@ -1,17 +1,14 @@
 package com.blizzardcaron.freeolleefaces.timer
 
-import android.content.Context
-import androidx.core.content.edit
+import com.russhwolf.settings.Settings
 
 /**
  * Persists up to [MAX_SETS] timer sets (JSON via [TimerSetsJson]) plus the active set id, in a
- * dedicated SharedPreferences file. Thin glue over the codec; mirrors the app's `Prefs` pattern.
+ * dedicated [Settings] store. Thin glue over the codec; mirrors the app's `Prefs` pattern.
  */
-class TimerSetsRepository(context: Context) {
+class TimerSetsRepository(private val settings: Settings) {
 
-    private val sp = context.applicationContext.getSharedPreferences(FILE, Context.MODE_PRIVATE)
-
-    fun getAll(): List<TimerSet> = TimerSetsJson.decode(sp.getString(KEY_SETS, null))
+    fun getAll(): List<TimerSet> = TimerSetsJson.decode(settings.getStringOrNull(KEY_SETS))
 
     fun get(id: String): TimerSet? = getAll().firstOrNull { it.id == id }
 
@@ -23,24 +20,21 @@ class TimerSetsRepository(context: Context) {
         } else {
             (existing + set).take(MAX_SETS)
         }
-        sp.edit { putString(KEY_SETS, TimerSetsJson.encode(merged)) }
+        settings.putString(KEY_SETS, TimerSetsJson.encode(merged))
     }
 
     fun delete(id: String) {
         val remaining = getAll().filter { it.id != id }
-        sp.edit {
-            putString(KEY_SETS, TimerSetsJson.encode(remaining))
-            if (sp.getString(KEY_ACTIVE, null) == id) remove(KEY_ACTIVE)
-        }
+        settings.putString(KEY_SETS, TimerSetsJson.encode(remaining))
+        if (settings.getStringOrNull(KEY_ACTIVE) == id) settings.remove(KEY_ACTIVE)
     }
 
-    fun setActive(id: String) = sp.edit { putString(KEY_ACTIVE, id) }
+    fun setActive(id: String) = settings.putString(KEY_ACTIVE, id)
 
-    fun activeId(): String? = sp.getString(KEY_ACTIVE, null)
+    fun activeId(): String? = settings.getStringOrNull(KEY_ACTIVE)
 
     companion object {
         const val MAX_SETS = 10
-        private const val FILE = "timer_sets"
         private const val KEY_SETS = "sets"
         private const val KEY_ACTIVE = "active_id"
     }

@@ -12,3 +12,10 @@ fun appSettings(context: Context): Settings {
     val sp = context.applicationContext.getSharedPreferences("freeollee_faces_prefs", Context.MODE_PRIVATE)
     return SharedPreferencesSettings(sp)
 }
+
+/**
+ * [Settings] backed by the dedicated timer-sets SharedPreferences file. The file name must stay
+ * `"timer_sets"` forever — existing users' saved timer sets live there.
+ */
+fun timerSettings(context: Context): Settings =
+    SharedPreferencesSettings(context.applicationContext.getSharedPreferences("timer_sets", Context.MODE_PRIVATE))
