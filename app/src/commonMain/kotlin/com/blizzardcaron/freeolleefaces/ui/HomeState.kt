@@ -4,7 +4,7 @@ import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 
 data class HomeState(
-    val activeFace: ActiveComplication = ActiveComplication.TEMPERATURE,
+    val activeComplication: ActiveComplication = ActiveComplication.TEMPERATURE,
     val watchLabel: String = "Watch: none selected",
     val watchSelected: Boolean = false,
     val sending: Boolean = false,

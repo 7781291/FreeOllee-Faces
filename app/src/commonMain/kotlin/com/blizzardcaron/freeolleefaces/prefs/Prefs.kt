@@ -29,29 +29,29 @@ class Prefs(
             ?: TempUnit.FAHRENHEIT
         set(value) = settings.putString(KEY_TEMP_UNIT, value.name)
 
-    var activeFace: ActiveComplication
+    var activeComplication: ActiveComplication
         get() {
-            val stored = settings.getStringOrNull(KEY_ACTIVE_FACE)
+            val stored = settings.getStringOrNull(KEY_ACTIVE_COMPLICATION)
             // Legacy: NOTIFICATIONS used to be a mutually-exclusive face. It's now an independent
             // weekday-slot overlay, so migrate it to "the count overlay is on, name-tag face is
             // the default" — once, in place.
-            if (stored == LEGACY_NOTIFICATIONS_FACE) {
+            if (stored == LEGACY_NOTIFICATIONS_COMPLICATION) {
                 notificationsEnabled = true
-                settings.putString(KEY_ACTIVE_FACE, ActiveComplication.TEMPERATURE.name)
+                settings.putString(KEY_ACTIVE_COMPLICATION, ActiveComplication.TEMPERATURE.name)
                 return ActiveComplication.TEMPERATURE
             }
             stored?.let {
                 runCatching { ActiveComplication.valueOf(it) }.getOrNull()?.let { face -> return face }
             }
             val migrated = ActiveComplication.fromLegacyAutoSource(settings.getStringOrNull(KEY_AUTO_SOURCE))
-            settings.putString(KEY_ACTIVE_FACE, migrated.name)
+            settings.putString(KEY_ACTIVE_COMPLICATION, migrated.name)
             return migrated
         }
-        set(value) = settings.putString(KEY_ACTIVE_FACE, value.name)
+        set(value) = settings.putString(KEY_ACTIVE_COMPLICATION, value.name)
 
     /**
      * Whether the notification count rides the watch's weekday slot (`0x34`). Independent of
-     * [activeFace] — the count overlay coexists with whichever name-tag face is active.
+     * [activeComplication] — the count overlay coexists with whichever name-tag face is active.
      */
     var notificationsEnabled: Boolean
         get() = settings.getBoolean(KEY_NOTIFICATIONS_ENABLED, false)
@@ -150,7 +150,7 @@ class Prefs(
         private const val KEY_WATCH = "watch_address"
         private const val KEY_TEMP_UNIT = "temp_unit"
         private const val KEY_AUTO_SOURCE = "auto_source"
-        private const val KEY_ACTIVE_FACE = "active_face"
+        private const val KEY_ACTIVE_COMPLICATION = "active_face"
         private const val KEY_TEMP_VALUE = "temp_value"
         private const val KEY_TEMP_CACHE_UNIT = "temp_cache_unit"
         private const val KEY_TEMP_FETCHED_MS = "temp_fetched_ms"
@@ -160,7 +160,7 @@ class Prefs(
         private const val KEY_NOTIFICATION_COUNT = "notification_count"
         private const val KEY_NOTIFICATIONS_ENABLED = "notifications_enabled"
         /** Legacy `active_face` value from when notifications was a mutually-exclusive face. */
-        private const val LEGACY_NOTIFICATIONS_FACE = "NOTIFICATIONS"
+        private const val LEGACY_NOTIFICATIONS_COMPLICATION = "NOTIFICATIONS"
         private const val KEY_UPDATE_INTERVAL = "update_interval_min"
         private const val KEY_STEPS_COUNT = "steps_last_count"
         private const val KEY_STEPS_FETCHED_MS = "steps_fetched_ms"

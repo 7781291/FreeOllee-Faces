@@ -38,7 +38,7 @@ class AutoUpdateWorker(
         val ctx = applicationContext
         val prefs = Prefs(appSettings(ctx))
 
-        val face = prefs.activeFace
+        val face = prefs.activeComplication
         val lat = prefs.lastLat
         val lng = prefs.lastLng
         val address = prefs.watchAddress

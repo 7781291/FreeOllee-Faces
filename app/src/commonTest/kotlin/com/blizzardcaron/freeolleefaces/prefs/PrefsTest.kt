@@ -105,14 +105,14 @@ class PrefsTest {
     }
 
     // ---------------------------------------------------------------------------
-    // activeFace legacy migration
+    // activeComplication legacy migration
     // ---------------------------------------------------------------------------
 
     /** Seed "active_face" = "NOTIFICATIONS" — the migration should set notificationsEnabled=true,
      *  rewrite active_face to TEMPERATURE, and return TEMPERATURE. */
     @Test fun activeFace_legacyNotificationsMigration_setsEnabledAndFace() {
         val prefs = freshPrefs("active_face" to "NOTIFICATIONS")
-        val face = prefs.activeFace
+        val face = prefs.activeComplication
         assertEquals(ActiveComplication.TEMPERATURE, face, "legacy NOTIFICATIONS face should migrate to TEMPERATURE")
         assertTrue(prefs.notificationsEnabled, "migration should enable notificationsEnabled")
     }
@@ -121,27 +121,27 @@ class PrefsTest {
     @Test fun activeFace_legacyNotificationsMigration_persistsNewValue() {
         val settings = MapSettings(mutableMapOf<String, Any>("active_face" to "NOTIFICATIONS"))
         val prefs = Prefs(settings)
-        prefs.activeFace           // trigger migration
-        val face2 = prefs.activeFace
+        prefs.activeComplication           // trigger migration
+        val face2 = prefs.activeComplication
         assertEquals(ActiveComplication.TEMPERATURE, face2, "second read after migration should still be TEMPERATURE")
     }
 
     /** No active_face but auto_source = "SUN" → should migrate via fromLegacyAutoSource → SUN. */
     @Test fun activeFace_legacyAutoSource_sun_migratesCorrectly() {
         val prefs = freshPrefs("auto_source" to "SUN")
-        assertEquals(ActiveComplication.SUN, prefs.activeFace, "auto_source=SUN should migrate to ActiveComplication.SUN")
+        assertEquals(ActiveComplication.SUN, prefs.activeComplication, "auto_source=SUN should migrate to ActiveComplication.SUN")
     }
 
     /** No active_face, no auto_source → fromLegacyAutoSource(null) → TEMPERATURE. */
     @Test fun activeFace_noLegacy_defaultsToTemperature() {
         val prefs = freshPrefs()
-        assertEquals(ActiveComplication.TEMPERATURE, prefs.activeFace, "no stored face should default to TEMPERATURE")
+        assertEquals(ActiveComplication.TEMPERATURE, prefs.activeComplication, "no stored face should default to TEMPERATURE")
     }
 
     @Test fun activeFace_roundtrip_steps() {
         val prefs = freshPrefs()
-        prefs.activeFace = ActiveComplication.STEPS
-        assertEquals(ActiveComplication.STEPS, prefs.activeFace, "activeFace STEPS roundtrip")
+        prefs.activeComplication = ActiveComplication.STEPS
+        assertEquals(ActiveComplication.STEPS, prefs.activeComplication, "activeComplication STEPS roundtrip")
     }
 
     // ---------------------------------------------------------------------------

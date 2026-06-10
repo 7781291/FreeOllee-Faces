@@ -265,7 +265,7 @@ private fun AppRoot(
     when (screen) {
         Screen.Home -> HomeScreen(state = state, callbacks = homeCallbacks, modifier = modifier)
         Screen.FacesList -> FacesListScreen(
-            active = state.activeFace,
+            active = state.activeComplication,
             notificationsEnabled = state.notificationsEnabled,
             onSelect = { viewModel.activate(it) },
             onToggleNotifications = { viewModel.setNotificationsEnabled(it) },

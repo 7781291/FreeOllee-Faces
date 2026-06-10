@@ -29,7 +29,7 @@ object AutoUpdateScheduler {
 
         ensureWatchdog(wm)
 
-        when (prefs.activeFace) {
+        when (prefs.activeComplication) {
             ActiveComplication.CUSTOM -> wm.cancelUniqueWork(WORK_NAME)
 
             ActiveComplication.TEMPERATURE -> scheduleIntervalFace(ctx, prefs, prefs.updateIntervalMinutes)

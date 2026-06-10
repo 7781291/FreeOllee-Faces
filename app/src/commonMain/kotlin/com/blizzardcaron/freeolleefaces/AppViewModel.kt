@@ -99,7 +99,7 @@ class AppViewModel(
     private fun showSnackbar(message: String) { viewModelScope.launch { _events.send(message) } }
 
     private fun initialState(): HomeState = HomeState(
-        activeFace = prefs.activeFace,
+        activeComplication = prefs.activeComplication,
         lat = prefs.lastLat?.toString() ?: "",
         lng = prefs.lastLng?.toString() ?: "",
         watchLabel = prefs.watchAddress?.let { "Watch: $it" } ?: "Watch: none selected",
@@ -346,7 +346,7 @@ class AppViewModel(
     }
 
     fun refreshActive(force: Boolean, push: Boolean) {
-        when (state.activeFace) {
+        when (state.activeComplication) {
             ActiveComplication.TEMPERATURE -> refreshTemp(force, push)
             ActiveComplication.SUN -> refreshSun(push)
             ActiveComplication.STEPS -> refreshSteps(push)
@@ -371,8 +371,8 @@ class AppViewModel(
     }
 
     fun activate(face: ActiveComplication) {
-        prefs.activeFace = face
-        update { it.copy(activeFace = face) }
+        prefs.activeComplication = face
+        update { it.copy(activeComplication = face) }
         screen = Screen.Home
         scheduler.reschedule()
         when (face) {
@@ -426,7 +426,7 @@ class AppViewModel(
     fun setTempUnit(unit: com.blizzardcaron.freeolleefaces.format.TempUnit) {
         prefs.tempUnit = unit
         update { it.copy(tempUnit = unit) }
-        refreshTemp(force = false, push = state.activeFace == ActiveComplication.TEMPERATURE)
+        refreshTemp(force = false, push = state.activeComplication == ActiveComplication.TEMPERATURE)
     }
 
     fun setCustomText(text: String) {
@@ -462,7 +462,7 @@ class AppViewModel(
     fun onWatchPicked(address: String, label: String) {
         prefs.watchAddress = address
         update { it.copy(watchLabel = label, watchSelected = true) }
-        when (state.activeFace) {
+        when (state.activeComplication) {
             ActiveComplication.CUSTOM -> prefs.customText.takeIf { it.isNotEmpty() }?.let { sendCustom(it) }
             else -> refreshActive(force = false, push = true)
         }
@@ -539,10 +539,10 @@ class AppViewModel(
     }
 
     /** Convenience: whether the active face is the steps face (Activity uses this when arming reads). */
-    fun activeIsSteps(): Boolean = state.activeFace == ActiveComplication.STEPS
+    fun activeIsSteps(): Boolean = state.activeComplication == ActiveComplication.STEPS
 
     /** Whether a background chain is active at startup — drives the POST_NOTIFICATIONS prompt. */
-    fun backgroundActive(): Boolean = prefs.activeFace != ActiveComplication.CUSTOM && prefs.watchAddress != null
+    fun backgroundActive(): Boolean = prefs.activeComplication != ActiveComplication.CUSTOM && prefs.watchAddress != null
 
     /** Saved coords present (used by the location bootstrap to decide whether to fetch). */
     fun hasSavedCoords(): Boolean = prefs.lastLat != null && prefs.lastLng != null

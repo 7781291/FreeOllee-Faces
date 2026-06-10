@@ -62,8 +62,8 @@ class AppViewModelTest {
 
     /**
      * Verifies that activate(TEMPERATURE) with a fresh temp cache:
-     *   1. Persists activeFace to prefs (verified via a second Prefs backed by same MapSettings)
-     *   2. Updates vm.state.activeFace
+     *   1. Persists activeComplication to prefs (verified via a second Prefs backed by same MapSettings)
+     *   2. Updates vm.state.activeComplication
      *   3. Sets vm.screen == Screen.Home
      *   4. Calls scheduler.reschedule() BEFORE any BLE send (ordering in shared callLog)
      *   5. Fires the BLE send after coroutines drain
@@ -115,14 +115,14 @@ class AppViewModelTest {
 
         // --- Synchronous assertions (before draining coroutines) ---
 
-        // 1. prefs.activeFace persisted synchronously (read back via same settings).
+        // 1. prefs.activeComplication persisted synchronously (read back via same settings).
         val prefsReader = Prefs(settings)
-        assertEquals(ActiveComplication.TEMPERATURE, prefsReader.activeFace,
-            "prefs.activeFace should be persisted synchronously by activate()")
+        assertEquals(ActiveComplication.TEMPERATURE, prefsReader.activeComplication,
+            "prefs.activeComplication should be persisted synchronously by activate()")
 
-        // 2. state.activeFace updated synchronously.
-        assertEquals(ActiveComplication.TEMPERATURE, vm.state.activeFace,
-            "state.activeFace should be set synchronously by activate()")
+        // 2. state.activeComplication updated synchronously.
+        assertEquals(ActiveComplication.TEMPERATURE, vm.state.activeComplication,
+            "state.activeComplication should be set synchronously by activate()")
 
         // 3. screen set synchronously.
         assertEquals(Screen.Home, vm.screen,

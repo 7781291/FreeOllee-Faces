@@ -72,13 +72,13 @@ fun HomeScreen(
             modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            if (!state.watchSelected && state.activeFace != ActiveComplication.CUSTOM) {
+            if (!state.watchSelected && state.activeComplication != ActiveComplication.CUSTOM) {
                 SettingsHint("No watch selected — open Settings (⚙)")
             }
 
             FaceCard(
                 title = "Temperature",
-                badge = "active".takeIf { state.activeFace == ActiveComplication.TEMPERATURE },
+                badge = "active".takeIf { state.activeComplication == ActiveComplication.TEMPERATURE },
                 preview = state.tempPreview,
                 updated = state.tempUpdated,
                 next = state.tempNext,
@@ -101,7 +101,7 @@ fun HomeScreen(
 
             FaceCard(
                 title = "Sun event",
-                badge = "active".takeIf { state.activeFace == ActiveComplication.SUN },
+                badge = "active".takeIf { state.activeComplication == ActiveComplication.SUN },
                 preview = state.sunPreview,
                 updated = state.sunUpdated,
                 next = state.sunNext,
@@ -111,7 +111,7 @@ fun HomeScreen(
 
             FaceCard(
                 title = "Steps",
-                badge = "active".takeIf { state.activeFace == ActiveComplication.STEPS },
+                badge = "active".takeIf { state.activeComplication == ActiveComplication.STEPS },
                 preview = state.stepsPreview,
                 updated = state.stepsUpdated,
                 next = null,
@@ -138,7 +138,7 @@ fun HomeScreen(
 
             FaceCard(
                 title = "Custom",
-                badge = "active".takeIf { state.activeFace == ActiveComplication.CUSTOM },
+                badge = "active".takeIf { state.activeComplication == ActiveComplication.CUSTOM },
                 preview = PreviewState.Ready(DisplayFormatter.custom(state.custom), "'${state.custom}'"),
                 updated = null,
                 next = null,
@@ -174,7 +174,7 @@ fun HomeScreen(
         Button(
             onClick = callbacks.onUpdateNow,
             // No-op for CUSTOM (its card has its own send button); also needs a watch and no send in flight.
-            enabled = state.activeFace != ActiveComplication.CUSTOM && state.watchSelected && !state.sending,
+            enabled = state.activeComplication != ActiveComplication.CUSTOM && state.watchSelected && !state.sending,
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text("Update active now")
