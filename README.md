@@ -1,6 +1,6 @@
-# FreeOllee Faces
+# Super FreeOllee
 
-A self-contained Android app that pushes one of four values to an Ollee Watch over
+A self-contained Android app that pushes one of four **complications** to an Ollee Watch over
 Bluetooth Low Energy (shown on the watch's 6-character "Name tag", held under ALARM on the
 Clock face):
 
@@ -44,7 +44,7 @@ the APK; APKs are not committed to the repository.
 
 ## License
 
-FreeOllee Faces is free software, licensed under the **GNU General Public License v3.0**
+Super FreeOllee is free software, licensed under the **GNU General Public License v3.0**
 (see [`LICENSE`](LICENSE)). You may redistribute and/or modify it under those terms; any
 distributed derivative must remain GPL-licensed with source available.
 
