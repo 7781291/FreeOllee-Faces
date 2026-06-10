@@ -35,7 +35,7 @@ import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
 import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 
-private enum class FaceCardId { TEMPERATURE, STEPS, CUSTOM, NOTIFICATIONS }
+private enum class ComplicationCardId { TEMPERATURE, STEPS, CUSTOM, NOTIFICATIONS }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,8 +44,8 @@ fun HomeScreen(
     callbacks: HomeCallbacks,
     modifier: Modifier = Modifier,
 ) {
-    var expanded by remember { mutableStateOf<FaceCardId?>(null) }
-    fun toggle(id: FaceCardId) { expanded = if (expanded == id) null else id }
+    var expanded by remember { mutableStateOf<ComplicationCardId?>(null) }
+    fun toggle(id: ComplicationCardId) { expanded = if (expanded == id) null else id }
 
     Column(
         modifier = modifier.fillMaxSize().padding(16.dp),
@@ -56,10 +56,10 @@ fun HomeScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text("Faces", style = MaterialTheme.typography.headlineSmall)
+            Text("Complications", style = MaterialTheme.typography.headlineSmall)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 TextButton(onClick = callbacks.onOpenTimerSets) { Text("Timers") }
-                TextButton(onClick = callbacks.onOpenFaces) { Text("Faces") }
+                TextButton(onClick = callbacks.onOpenComplications) { Text("Complications") }
                 IconButton(onClick = callbacks.onOpenSettings) {
                     Text("⚙", style = MaterialTheme.typography.titleLarge)
                 }
@@ -76,14 +76,14 @@ fun HomeScreen(
                 SettingsHint("No watch selected — open Settings (⚙)")
             }
 
-            FaceCard(
+            ComplicationCard(
                 title = "Temperature",
                 badge = "active".takeIf { state.activeComplication == ActiveComplication.TEMPERATURE },
                 preview = state.tempPreview,
                 updated = state.tempUpdated,
                 next = state.tempNext,
-                expanded = expanded == FaceCardId.TEMPERATURE,
-                onToggle = { toggle(FaceCardId.TEMPERATURE) },
+                expanded = expanded == ComplicationCardId.TEMPERATURE,
+                onToggle = { toggle(ComplicationCardId.TEMPERATURE) },
             ) {
                 SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                     SegmentedButton(
@@ -99,7 +99,7 @@ fun HomeScreen(
                 }
             }
 
-            FaceCard(
+            ComplicationCard(
                 title = "Sun event",
                 badge = "active".takeIf { state.activeComplication == ActiveComplication.SUN },
                 preview = state.sunPreview,
@@ -109,14 +109,14 @@ fun HomeScreen(
                 onToggle = null,
             )
 
-            FaceCard(
+            ComplicationCard(
                 title = "Steps",
                 badge = "active".takeIf { state.activeComplication == ActiveComplication.STEPS },
                 preview = state.stepsPreview,
                 updated = state.stepsUpdated,
                 next = null,
-                expanded = expanded == FaceCardId.STEPS,
-                onToggle = { toggle(FaceCardId.STEPS) },
+                expanded = expanded == ComplicationCardId.STEPS,
+                onToggle = { toggle(ComplicationCardId.STEPS) },
             ) {
                 if (!state.stepsHealthGranted) {
                     Text("Health access needed", style = MaterialTheme.typography.titleSmall)
@@ -136,14 +136,14 @@ fun HomeScreen(
                 }
             }
 
-            FaceCard(
+            ComplicationCard(
                 title = "Custom",
                 badge = "active".takeIf { state.activeComplication == ActiveComplication.CUSTOM },
                 preview = PreviewState.Ready(DisplayFormatter.custom(state.custom), "'${state.custom}'"),
                 updated = null,
                 next = null,
-                expanded = expanded == FaceCardId.CUSTOM,
-                onToggle = { toggle(FaceCardId.CUSTOM) },
+                expanded = expanded == ComplicationCardId.CUSTOM,
+                onToggle = { toggle(ComplicationCardId.CUSTOM) },
             ) {
                 OutlinedTextField(
                     value = state.custom,
@@ -164,8 +164,8 @@ fun HomeScreen(
 
             NotificationsCard(
                 state = state,
-                expanded = expanded == FaceCardId.NOTIFICATIONS,
-                onToggle = { toggle(FaceCardId.NOTIFICATIONS) },
+                expanded = expanded == ComplicationCardId.NOTIFICATIONS,
+                onToggle = { toggle(ComplicationCardId.NOTIFICATIONS) },
                 onToggleEnabled = callbacks.onToggleNotifications,
                 onGrantAccess = callbacks.onGrantNotificationAccess,
             )
@@ -195,7 +195,7 @@ private fun SettingsHint(text: String) {
 }
 
 @Composable
-private fun FaceCard(
+private fun ComplicationCard(
     title: String,
     badge: String?,
     preview: PreviewState,

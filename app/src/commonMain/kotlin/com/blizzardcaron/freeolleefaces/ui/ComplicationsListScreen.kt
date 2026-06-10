@@ -24,10 +24,10 @@ import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
  * Two groups, mirroring the watch's two independent display registers:
  * - **Name tag** (`0x2F`, main digits): mutually exclusive — pick one with a radio.
  * - **Weekday slot** (`0x34`): independent overlays toggled on/off — currently just the
- *   notification count, which coexists with whichever name-tag face is active.
+ *   notification count, which coexists with whichever name-tag complication is active.
  */
 @Composable
-fun FacesListScreen(
+fun ComplicationsListScreen(
     active: ActiveComplication,
     notificationsEnabled: Boolean,
     onSelect: (ActiveComplication) -> Unit,
@@ -43,15 +43,15 @@ fun FacesListScreen(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             TextButton(onClick = onBack) { Text("Back") }
-            Text("Faces", style = MaterialTheme.typography.headlineSmall)
+            Text("Complications", style = MaterialTheme.typography.headlineSmall)
         }
         HorizontalDivider()
 
         SectionLabel("Name tag")
-        FaceRow("Temperature", ActiveComplication.TEMPERATURE, active, onSelect)
-        FaceRow("Sun event", ActiveComplication.SUN, active, onSelect)
-        FaceRow("Steps", ActiveComplication.STEPS, active, onSelect)
-        FaceRow("Custom", ActiveComplication.CUSTOM, active, onSelect)
+        ComplicationRow("Temperature", ActiveComplication.TEMPERATURE, active, onSelect)
+        ComplicationRow("Sun event", ActiveComplication.SUN, active, onSelect)
+        ComplicationRow("Steps", ActiveComplication.STEPS, active, onSelect)
+        ComplicationRow("Custom", ActiveComplication.CUSTOM, active, onSelect)
 
         HorizontalDivider()
 
@@ -75,7 +75,7 @@ private fun SectionLabel(text: String) {
 }
 
 @Composable
-private fun FaceRow(
+private fun ComplicationRow(
     label: String,
     face: ActiveComplication,
     active: ActiveComplication,
@@ -102,8 +102,8 @@ private fun FaceRow(
 
 /**
  * The notification overlay row: a Switch toggles it on/off, and tapping the row opens the detail
- * screen ([NotificationsScreen]) for access-grant and the live count. Unlike a [FaceRow] this is a
- * toggle, not a radio — the count is additive, not mutually exclusive with the name-tag faces.
+ * screen ([NotificationsScreen]) for access-grant and the live count. Unlike a [ComplicationRow] this is a
+ * toggle, not a radio — the count is additive, not mutually exclusive with the name-tag complications.
  */
 @Composable
 private fun NotificationsRow(

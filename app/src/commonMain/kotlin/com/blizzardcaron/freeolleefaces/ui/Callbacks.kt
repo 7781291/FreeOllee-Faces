@@ -3,7 +3,7 @@ package com.blizzardcaron.freeolleefaces.ui
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 
 data class HomeCallbacks(
-    val onOpenFaces: () -> Unit,
+    val onOpenComplications: () -> Unit,
     val onOpenTimerSets: () -> Unit,
     val onOpenSettings: () -> Unit,
     val onUpdateNow: () -> Unit,

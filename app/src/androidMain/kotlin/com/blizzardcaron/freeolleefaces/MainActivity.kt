@@ -36,7 +36,7 @@ import com.blizzardcaron.freeolleefaces.ui.BondedDevice
 import com.blizzardcaron.freeolleefaces.ui.BondedDevicesDialog
 import com.blizzardcaron.freeolleefaces.ui.HomeCallbacks
 import com.blizzardcaron.freeolleefaces.ui.HomeScreen
-import com.blizzardcaron.freeolleefaces.ui.FacesListScreen
+import com.blizzardcaron.freeolleefaces.ui.ComplicationsListScreen
 import com.blizzardcaron.freeolleefaces.ui.NotificationsScreen
 import com.blizzardcaron.freeolleefaces.ui.Screen
 import com.blizzardcaron.freeolleefaces.ui.SettingsCallbacks
@@ -229,7 +229,7 @@ private fun AppRoot(
     }
 
     val homeCallbacks = HomeCallbacks(
-        onOpenFaces = { viewModel.navigateTo(Screen.FacesList) },
+        onOpenComplications = { viewModel.navigateTo(Screen.ComplicationsList) },
         onOpenTimerSets = { viewModel.refreshTimers(); viewModel.navigateTo(Screen.TimerSets) },
         onOpenSettings = { viewModel.navigateTo(Screen.Settings) },
         onUpdateNow = { viewModel.refreshActive(force = true, push = true) },
@@ -264,7 +264,7 @@ private fun AppRoot(
 
     when (screen) {
         Screen.Home -> HomeScreen(state = state, callbacks = homeCallbacks, modifier = modifier)
-        Screen.FacesList -> FacesListScreen(
+        Screen.ComplicationsList -> ComplicationsListScreen(
             active = state.activeComplication,
             notificationsEnabled = state.notificationsEnabled,
             onSelect = { viewModel.activate(it) },
@@ -280,7 +280,7 @@ private fun AppRoot(
             onToggleEnabled = { viewModel.setNotificationsEnabled(it) },
             onGrantAccess = { openNotificationAccessSettings(context) },
             onUpdateNow = { viewModel.pushCountIfWatch() },
-            onBack = { viewModel.navigateTo(Screen.FacesList) },
+            onBack = { viewModel.navigateTo(Screen.ComplicationsList) },
             modifier = modifier,
         )
         Screen.Settings -> SettingsScreen(

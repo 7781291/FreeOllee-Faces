@@ -109,7 +109,7 @@ class AppViewModelTest {
 
         // Navigate away first so the Screen.Home assertion below actually exercises
         // activate()'s screen reset (screen defaults to Home, which would make it vacuous).
-        vm.navigateTo(Screen.FacesList)
+        vm.navigateTo(Screen.ComplicationsList)
 
         vm.activate(ActiveComplication.TEMPERATURE)
 
