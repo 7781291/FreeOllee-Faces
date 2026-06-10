@@ -22,9 +22,12 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.blizzardcaron.freeolleefaces.prefs.IntervalOptions
@@ -135,32 +138,33 @@ private fun SleepSection(state: HomeState, callbacks: SettingsCallbacks) {
         Switch(checked = state.sleepEnabled, onCheckedChange = callbacks.onSleepEnabledChange)
     }
     if (state.sleepEnabled) {
-        val context = LocalContext.current
+        var pickingStart by remember { mutableStateOf(false) }
+        var pickingEnd by remember { mutableStateOf(false) }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             OutlinedButton(
-                onClick = { showTimePicker(context, state.sleepStartMin, callbacks.onSleepStartChange) },
+                onClick = { pickingStart = true },
                 modifier = Modifier.weight(1f),
             ) { Text("From ${minutesToLabel(state.sleepStartMin)}") }
             OutlinedButton(
-                onClick = { showTimePicker(context, state.sleepEndMin, callbacks.onSleepEndChange) },
+                onClick = { pickingEnd = true },
                 modifier = Modifier.weight(1f),
             ) { Text("To ${minutesToLabel(state.sleepEndMin)}") }
+        }
+        if (pickingStart) {
+            TimePickerDialog(
+                initialMinuteOfDay = state.sleepStartMin,
+                onConfirm = { callbacks.onSleepStartChange(it); pickingStart = false },
+                onDismiss = { pickingStart = false },
+            )
+        }
+        if (pickingEnd) {
+            TimePickerDialog(
+                initialMinuteOfDay = state.sleepEndMin,
+                onConfirm = { callbacks.onSleepEndChange(it); pickingEnd = false },
+                onDismiss = { pickingEnd = false },
+            )
         }
     }
 }
 
 private fun minutesToLabel(min: Int): String = "%02d:%02d".format(min / 60, min % 60)
-
-private fun showTimePicker(
-    context: android.content.Context,
-    currentMin: Int,
-    onPicked: (Int) -> Unit,
-) {
-    android.app.TimePickerDialog(
-        context,
-        { _, hour, minute -> onPicked(hour * 60 + minute) },
-        currentMin / 60,
-        currentMin % 60,
-        true,
-    ).show()
-}
