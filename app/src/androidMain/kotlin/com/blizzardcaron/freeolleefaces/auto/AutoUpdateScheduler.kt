@@ -8,6 +8,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
+import com.blizzardcaron.freeolleefaces.prefs.appSettings
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
@@ -23,7 +24,7 @@ object AutoUpdateScheduler {
     /** Re-arm the chain from current Prefs. Safe to call repeatedly (always REPLACEs). */
     fun reschedule(context: Context) {
         val ctx = context.applicationContext
-        val prefs = Prefs(ctx)
+        val prefs = Prefs(appSettings(ctx))
         val wm = WorkManager.getInstance(ctx)
 
         ensureWatchdog(wm)

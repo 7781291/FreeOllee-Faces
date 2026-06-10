@@ -8,6 +8,7 @@ import android.util.Log
 import com.blizzardcaron.freeolleefaces.ble.OlleeBleClient
 import com.blizzardcaron.freeolleefaces.ble.OlleeProtocol
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
+import com.blizzardcaron.freeolleefaces.prefs.appSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -43,7 +44,7 @@ class DevToolsReceiver : BroadcastReceiver() {
 
         // Prefer an explicit `--es watch <MAC>` so the probe works without configuring the app;
         // fall back to the app's saved watch.
-        val address = intent.getStringExtra("watch") ?: Prefs(ctx).watchAddress
+        val address = intent.getStringExtra("watch") ?: Prefs(appSettings(ctx)).watchAddress
         if (address == null) {
             Log.w(TAG, "no watch address — pass --es watch <MAC> or set the watch in the app first")
             return

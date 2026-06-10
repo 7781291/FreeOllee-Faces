@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import com.blizzardcaron.freeolleefaces.auto.AutoUpdateScheduler
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
+import com.blizzardcaron.freeolleefaces.prefs.appSettings
 
 /**
  * Backs the error notification's "Retry" action: clear the notification and fire one immediate
@@ -20,7 +21,7 @@ class RetryReceiver : BroadcastReceiver() {
         // treated as fresh and re-notifies. Without this, NotifyDecision would see the prior
         // kind unchanged and stay silent — the user would tap Retry and get no feedback that it
         // failed again.
-        Prefs(ctx).lastNotifiedKind = null
+        Prefs(appSettings(ctx)).lastNotifiedKind = null
         AutoUpdateScheduler.enqueueNext(ctx, 0L, sendAttempt = 0)
     }
 

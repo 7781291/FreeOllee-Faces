@@ -40,6 +40,7 @@ import com.blizzardcaron.freeolleefaces.location.freshnessLabel
 import com.blizzardcaron.freeolleefaces.location.isLocationStale
 import com.blizzardcaron.freeolleefaces.notifications.NotificationCount
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
+import com.blizzardcaron.freeolleefaces.prefs.appSettings
 import com.blizzardcaron.freeolleefaces.sun.SunCalc
 import com.blizzardcaron.freeolleefaces.timer.TimerSet
 import com.blizzardcaron.freeolleefaces.timer.TimerSetsRepository
@@ -110,7 +111,7 @@ private fun AppRoot(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val prefs = remember { Prefs(context) }
+    val prefs = remember { Prefs(appSettings(context)) }
     val ble = remember { OlleeBleClient(context) }
     val timerRepo = remember { TimerSetsRepository(context) }
     var timerSets by remember { mutableStateOf(timerRepo.getAll()) }

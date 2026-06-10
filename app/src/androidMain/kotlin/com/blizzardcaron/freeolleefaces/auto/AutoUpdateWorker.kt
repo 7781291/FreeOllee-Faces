@@ -14,6 +14,7 @@ import com.blizzardcaron.freeolleefaces.notify.NotifyAction
 import com.blizzardcaron.freeolleefaces.notify.NotifyDecision
 import com.blizzardcaron.freeolleefaces.notify.StepsFailureClassifier
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
+import com.blizzardcaron.freeolleefaces.prefs.appSettings
 import com.blizzardcaron.freeolleefaces.sun.SunCalc
 import com.blizzardcaron.freeolleefaces.weather.OpenMeteoClient
 import com.blizzardcaron.freeolleefaces.weather.RetryPolicy
@@ -35,7 +36,7 @@ class AutoUpdateWorker(
 
     override suspend fun doWork(): Result {
         val ctx = applicationContext
-        val prefs = Prefs(ctx)
+        val prefs = Prefs(appSettings(ctx))
 
         val face = prefs.activeFace
         val lat = prefs.lastLat

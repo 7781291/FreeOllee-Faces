@@ -5,6 +5,7 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import com.blizzardcaron.freeolleefaces.ble.OlleeBleClient
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
+import com.blizzardcaron.freeolleefaces.prefs.appSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -30,7 +31,7 @@ class NotificationCountService : NotificationListenerService() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var pushJob: Job? = null
-    private val prefs by lazy { Prefs(applicationContext) }
+    private val prefs by lazy { Prefs(appSettings(applicationContext)) }
 
     override fun onListenerConnected() {
         // Seed and sync on (re)bind, even if the count is unchanged.
