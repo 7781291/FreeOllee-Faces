@@ -29,11 +29,21 @@ protocol in-tree rather than depending on the FreeOllee APK.
 
 ## Building
 
+Super FreeOllee is now a **Kotlin Multiplatform** app with a single Android target,
+built with Compose Multiplatform. The debug build command is unchanged:
+
 ```
 ./gradlew :app:assembleDebug
 ```
 
 The debug APK lands in `app/build/outputs/apk/debug/`.
+
+### Cross-platform status
+
+The app logic and the Compose UI live in `commonMain`, behind `expect`/`actual`
+boundaries for the Android-specific I/O (BLE, Health Connect, location, prefs, the
+background engine). iOS is a future step — there are **no iOS targets in the build
+yet**, so this currently builds and ships as an Android app only.
 
 ## Releases
 

@@ -1,7 +1,7 @@
 # Cross-platform migration to Kotlin Multiplatform + Compose Multiplatform
 
 **Date:** 2026-06-06
-**Status:** Approved (design)
+**Status:** Implemented
 **Branch:** `feat/kmp-cross-platform`
 
 ## Summary
@@ -178,5 +178,10 @@ Each phase ends green: builds, unit tests pass, and the debug APK installs and r
 - Pin the exact Compose Multiplatform and Ktor/kotlinx-datetime/kotlinx.serialization/
   multiplatform-settings versions compatible with Kotlin 2.2.10 + AGP 9.1.1.
 - Confirm `androidx.lifecycle` ViewModel artifact coordinates for Compose Multiplatform.
-- Decide whether orchestration lives directly on `AppViewModel` or a separate common
-  `UpdateEngine` shared between the ViewModel and the background workers.
+- ~~Decide whether orchestration lives directly on `AppViewModel` or a separate common
+  `UpdateEngine` shared between the ViewModel and the background workers.~~
+  **Resolved (Task 5.5):** orchestration lives directly on `AppViewModel`; no separate
+  `UpdateEngine` was extracted. The duplication in `AutoUpdateWorker` is small (it builds
+  its own `Prefs`/BLE client and computes the payload) and the worker must run headless
+  without a ViewModel, so it stays **native Kotlin in `androidMain`** — consistent with the
+  Hybrid background decision and the frozen WorkManager engine.
