@@ -18,7 +18,8 @@ fun TimePickerDialog(
     val st = rememberTimePickerState(
         initialHour = initialMinuteOfDay / 60,
         initialMinute = initialMinuteOfDay % 60,
-        is24Hour = false,
+        // 24h matches both the old Android TimePickerDialog and the HH:mm button labels.
+        is24Hour = true,
     )
     AlertDialog(
         onDismissRequest = onDismiss,
