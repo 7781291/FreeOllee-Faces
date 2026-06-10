@@ -1,7 +1,5 @@
 package com.blizzardcaron.freeolleefaces.ui
 
-import android.annotation.SuppressLint
-import android.bluetooth.BluetoothDevice
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.AlertDialog
@@ -11,11 +9,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-@SuppressLint("MissingPermission") // caller guarantees BLUETOOTH_CONNECT
+data class BondedDevice(val name: String?, val address: String)
+
 @Composable
 fun BondedDevicesDialog(
-    devices: List<BluetoothDevice>,
-    onPick: (BluetoothDevice) -> Unit,
+    devices: List<BondedDevice>,
+    onPick: (BondedDevice) -> Unit,
     onDismiss: () -> Unit,
 ) {
     AlertDialog(

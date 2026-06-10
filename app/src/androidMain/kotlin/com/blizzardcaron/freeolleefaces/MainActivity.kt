@@ -2,7 +2,6 @@ package com.blizzardcaron.freeolleefaces
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
@@ -33,6 +32,7 @@ import com.blizzardcaron.freeolleefaces.prefs.Prefs
 import com.blizzardcaron.freeolleefaces.prefs.appSettings
 import com.blizzardcaron.freeolleefaces.prefs.timerSettings
 import com.blizzardcaron.freeolleefaces.timer.TimerSetsRepository
+import com.blizzardcaron.freeolleefaces.ui.BondedDevice
 import com.blizzardcaron.freeolleefaces.ui.BondedDevicesDialog
 import com.blizzardcaron.freeolleefaces.ui.HomeCallbacks
 import com.blizzardcaron.freeolleefaces.ui.HomeScreen
@@ -336,9 +336,9 @@ private fun openNotificationAccessSettings(context: Context) {
 }
 
 @SuppressLint("MissingPermission")
-private fun bondedDevices(context: Context): List<BluetoothDevice> {
+private fun bondedDevices(context: Context): List<BondedDevice> {
     val mgr = context.getSystemService(BluetoothManager::class.java) ?: return emptyList()
     val adapter = mgr.adapter ?: return emptyList()
     if (!adapter.isEnabled) return emptyList()
-    return adapter.bondedDevices?.toList().orEmpty()
+    return adapter.bondedDevices?.map { BondedDevice(it.name, it.address) }.orEmpty()
 }
