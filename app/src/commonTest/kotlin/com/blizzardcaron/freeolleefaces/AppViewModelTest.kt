@@ -64,7 +64,7 @@ class AppViewModelTest {
      * Verifies that activate(TEMPERATURE) with a fresh temp cache:
      *   1. Persists activeComplication to prefs (verified via a second Prefs backed by same MapSettings)
      *   2. Updates vm.state.activeComplication
-     *   3. Does NOT navigate — the screen STAYS where it was (ComplicationsList). Selecting a
+     *   3. Does NOT navigate — the screen STAYS where it was (Settings). Selecting a
      *      complication updates the radio in place; the old silent bounce to Home is gone (Phase 8.4).
      *   4. Calls scheduler.reschedule() BEFORE any BLE send (ordering in shared callLog)
      *   5. Fires the BLE send after coroutines drain
@@ -108,9 +108,9 @@ class AppViewModelTest {
         // Pre-condition: log is empty.
         assertTrue(callLog.isEmpty(), "callLog should be empty before activate()")
 
-        // Navigate to the picker first; activate() must NOT move us off it. (screen defaults to
-        // Home, so without this the "stays put" assertion below would be vacuous.)
-        vm.navigateTo(Screen.ComplicationsList)
+        // Navigate away from Home first; activate() must NOT move us. (screen defaults to Home,
+        // so without this the "stays put" assertion below would be vacuous.)
+        vm.navigateTo(Screen.Settings)
 
         vm.activate(ActiveComplication.TEMPERATURE)
 
@@ -126,8 +126,8 @@ class AppViewModelTest {
             "state.activeComplication should be set synchronously by activate()")
 
         // 3. screen UNCHANGED — activate() no longer navigates; the selection reflects in place.
-        assertEquals(Screen.ComplicationsList, vm.screen,
-            "screen should STAY on ComplicationsList after activate() (no silent bounce to Home)")
+        assertEquals(Screen.Settings, vm.screen,
+            "screen should STAY on Settings after activate() (no silent bounce to Home)")
 
         // scheduler.reschedule() is synchronous — already in the log.
         assertTrue(callLog.contains("scheduler.reschedule"),
