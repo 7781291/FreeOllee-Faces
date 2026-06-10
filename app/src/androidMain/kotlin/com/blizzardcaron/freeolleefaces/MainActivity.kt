@@ -35,7 +35,8 @@ import com.blizzardcaron.freeolleefaces.ble.OlleeProtocol
 import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 import com.blizzardcaron.freeolleefaces.format.WeatherErrorCopy
-import com.blizzardcaron.freeolleefaces.health.StepsRepository
+import com.blizzardcaron.freeolleefaces.health.AndroidStepsProvider
+import com.blizzardcaron.freeolleefaces.health.StepsProvider
 import com.blizzardcaron.freeolleefaces.location.LocationSource
 import com.blizzardcaron.freeolleefaces.location.freshnessLabel
 import com.blizzardcaron.freeolleefaces.location.isLocationStale
@@ -120,7 +121,7 @@ private fun AppRoot(
     var timerActiveId by remember { mutableStateOf(timerRepo.activeId()) }
     var editingSet by remember { mutableStateOf<TimerSet?>(null) }
     val locationSource = remember { LocationSource(context) }
-    val stepsRepo = remember { StepsRepository(context) }
+    val stepsRepo: StepsProvider = remember { AndroidStepsProvider(context) }
     val scope = rememberCoroutineScope()
 
     fun showSnackbar(message: String) {
@@ -584,7 +585,7 @@ private fun AppRoot(
         // The read permission alone is enough to show steps; background read just lets the
         // worker keep updating while the app is closed.
         refreshSteps(push = state.activeFace == ActiveFace.STEPS)
-        if (!granted.containsAll(StepsRepository.PERMISSIONS)) {
+        if (!granted.containsAll(AndroidStepsProvider.PERMISSIONS)) {
             showSnackbar("Allow background read too, so steps keep syncing when the app is closed.")
         }
     }
@@ -651,11 +652,11 @@ private fun AppRoot(
         onSendCustom = { sendCustom(state.custom) },
         onGrantHealth = {
             when (stepsRepo.availability()) {
-                StepsRepository.Availability.AVAILABLE ->
-                    healthPermissionLauncher.launch(StepsRepository.PERMISSIONS)
-                StepsRepository.Availability.UPDATE_REQUIRED ->
+                StepsProvider.Availability.AVAILABLE ->
+                    healthPermissionLauncher.launch(AndroidStepsProvider.PERMISSIONS)
+                StepsProvider.Availability.UPDATE_REQUIRED ->
                     showSnackbar("Update Health Connect (in system settings) to read steps.")
-                StepsRepository.Availability.UNAVAILABLE ->
+                StepsProvider.Availability.UNAVAILABLE ->
                     showSnackbar("Health Connect isn't available on this device.")
             }
         },

@@ -15,42 +15,42 @@ import java.time.ZoneId
  * app (a fitness ring, phone pedometer, etc.) publishes `StepsRecord` entries. No watch or
  * BLE concerns live here — this is purely the data source for the Steps face.
  *
- * Nothing thrown escapes: availability and permission gaps surface as [Availability] /
- * [hasReadPermission], and aggregate failures come back as [Result.failure].
+ * Nothing thrown escapes: availability and permission gaps surface as
+ * [StepsProvider.Availability] / [hasReadPermission], and aggregate failures come back as
+ * [Result.failure].
  */
-class StepsRepository(context: Context) {
+class AndroidStepsProvider(context: Context) : StepsProvider {
 
     private val appContext = context.applicationContext
 
-    enum class Availability { UNAVAILABLE, UPDATE_REQUIRED, AVAILABLE }
-
     /** Whether Health Connect is usable on this device right now. */
-    fun availability(): Availability = when (HealthConnectClient.getSdkStatus(appContext)) {
-        HealthConnectClient.SDK_AVAILABLE -> Availability.AVAILABLE
-        HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED -> Availability.UPDATE_REQUIRED
-        else -> Availability.UNAVAILABLE
+    override fun availability(): StepsProvider.Availability = when (HealthConnectClient.getSdkStatus(appContext)) {
+        HealthConnectClient.SDK_AVAILABLE -> StepsProvider.Availability.AVAILABLE
+        HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED -> StepsProvider.Availability.UPDATE_REQUIRED
+        else -> StepsProvider.Availability.UNAVAILABLE
     }
 
     /** True once the user has granted read access to steps. */
-    suspend fun hasReadPermission(): Boolean {
-        if (availability() != Availability.AVAILABLE) return false
+    override suspend fun hasReadPermission(): Boolean {
+        if (availability() != StepsProvider.Availability.AVAILABLE) return false
         val granted = client().permissionController.getGrantedPermissions()
         return granted.contains(READ_STEPS)
     }
 
     /**
-     * Sum of steps from local midnight to now, as written by any source. Returns 0 when there
-     * are no records yet today; [Result.failure] when Health
+     * Sum of steps from local midnight to now (system zone), as written by any source. Returns 0
+     * when there are no records yet today; [Result.failure] when Health
      * Connect is unavailable, read access is missing, or the aggregate call fails (e.g. a
      * background read without `READ_HEALTH_DATA_IN_BACKGROUND`).
      */
-    suspend fun todaySteps(zone: ZoneId = ZoneId.systemDefault()): Result<Long> {
-        if (availability() != Availability.AVAILABLE) {
+    override suspend fun todaySteps(): Result<Long> {
+        if (availability() != StepsProvider.Availability.AVAILABLE) {
             return Result.failure(IllegalStateException("Health Connect unavailable"))
         }
         if (!hasReadPermission()) {
             return Result.failure(SecurityException("Steps read permission not granted"))
         }
+        val zone = ZoneId.systemDefault()
         val start = LocalDate.now(zone).atStartOfDay(zone).toInstant()
         val end = java.time.Instant.now()
         return runCatching {

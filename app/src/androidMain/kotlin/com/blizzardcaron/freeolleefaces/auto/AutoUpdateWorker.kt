@@ -5,7 +5,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.blizzardcaron.freeolleefaces.ble.AndroidBleClient
 import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
-import com.blizzardcaron.freeolleefaces.health.StepsRepository
+import com.blizzardcaron.freeolleefaces.health.AndroidStepsProvider
 import com.blizzardcaron.freeolleefaces.notifications.NotificationAccess
 import com.blizzardcaron.freeolleefaces.notifications.NotificationCount
 import com.blizzardcaron.freeolleefaces.notify.ErrorNotifier
@@ -113,7 +113,7 @@ class AutoUpdateWorker(
         // run enqueues either a backstop or the normal next run, never both.
         var backstopped = false
         if (!inSleep) {
-            StepsRepository(ctx).todaySteps()
+            AndroidStepsProvider(ctx).todaySteps()
                 .onSuccess { count ->
                     prefs.recordStepsFetch(count)
                     val payload = DisplayFormatter.steps(count)

@@ -1,7 +1,7 @@
 package com.blizzardcaron.freeolleefaces.notify
 
 /**
- * Maps a `StepsRepository.todaySteps()` failure to the notification kind it should drive — or
+ * Maps a `StepsProvider.todaySteps()` failure to the notification kind it should drive — or
  * `null` when the failure is a transient read glitch that the user can't act on and the chain
  * will simply retry next cycle.
  *
