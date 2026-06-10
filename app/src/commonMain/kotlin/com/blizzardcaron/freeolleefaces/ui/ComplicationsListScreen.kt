@@ -77,24 +77,24 @@ private fun SectionLabel(text: String) {
 
 @Composable
 private fun ComplicationRow(
-    face: ActiveComplication,
+    complication: ActiveComplication,
     active: ActiveComplication,
     onSelect: (ActiveComplication) -> Unit,
 ) {
-    val label = face.displayLabel()
+    val label = complication.displayLabel()
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onSelect(face) }
+            .clickable { onSelect(complication) }
             .padding(vertical = 12.dp),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            RadioButton(selected = face == active, onClick = { onSelect(face) })
+            RadioButton(selected = complication == active, onClick = { onSelect(complication) })
             Text(label, style = MaterialTheme.typography.bodyLarge)
         }
         Text("›", style = MaterialTheme.typography.bodyLarge)
