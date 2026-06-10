@@ -1,5 +1,6 @@
 package com.blizzardcaron.freeolleefaces.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -8,9 +9,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
@@ -19,6 +22,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -32,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
+import com.blizzardcaron.freeolleefaces.auto.displayLabel
 import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 
@@ -68,6 +73,13 @@ fun HomeScreen(
 
         HorizontalDivider()
 
+        Text(
+            "Active: ${state.activeComplication.displayLabel()}",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        )
+
         Column(
             modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -77,8 +89,8 @@ fun HomeScreen(
             }
 
             ComplicationCard(
-                title = "Temperature",
-                badge = "active".takeIf { state.activeComplication == ActiveComplication.TEMPERATURE },
+                title = ActiveComplication.TEMPERATURE.displayLabel(),
+                active = state.activeComplication == ActiveComplication.TEMPERATURE,
                 preview = state.tempPreview,
                 updated = state.tempUpdated,
                 next = state.tempNext,
@@ -100,8 +112,8 @@ fun HomeScreen(
             }
 
             ComplicationCard(
-                title = "Sun event",
-                badge = "active".takeIf { state.activeComplication == ActiveComplication.SUN },
+                title = ActiveComplication.SUN.displayLabel(),
+                active = state.activeComplication == ActiveComplication.SUN,
                 preview = state.sunPreview,
                 updated = state.sunUpdated,
                 next = state.sunNext,
@@ -110,8 +122,8 @@ fun HomeScreen(
             )
 
             ComplicationCard(
-                title = "Steps",
-                badge = "active".takeIf { state.activeComplication == ActiveComplication.STEPS },
+                title = ActiveComplication.STEPS.displayLabel(),
+                active = state.activeComplication == ActiveComplication.STEPS,
                 preview = state.stepsPreview,
                 updated = state.stepsUpdated,
                 next = null,
@@ -137,8 +149,8 @@ fun HomeScreen(
             }
 
             ComplicationCard(
-                title = "Custom",
-                badge = "active".takeIf { state.activeComplication == ActiveComplication.CUSTOM },
+                title = ActiveComplication.CUSTOM.displayLabel(),
+                active = state.activeComplication == ActiveComplication.CUSTOM,
                 preview = PreviewState.Ready(DisplayFormatter.custom(state.custom), "'${state.custom}'"),
                 updated = null,
                 next = null,
@@ -194,10 +206,26 @@ private fun SettingsHint(text: String) {
     Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
 }
 
+/** Unmistakable "ACTIVE" pill shown on the currently-active complication card. */
+@Composable
+private fun ActiveChip() {
+    Surface(
+        color = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
+        shape = RoundedCornerShape(50),
+    ) {
+        Text(
+            "ACTIVE",
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp),
+        )
+    }
+}
+
 @Composable
 private fun ComplicationCard(
     title: String,
-    badge: String?,
+    active: Boolean,
     preview: PreviewState,
     updated: String?,
     next: String?,
@@ -205,7 +233,13 @@ private fun ComplicationCard(
     onToggle: (() -> Unit)?,
     expandedContent: (@Composable () -> Unit)? = null,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    val cardColors = if (active) {
+        CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+    } else {
+        CardDefaults.cardColors()
+    }
+    val border = if (active) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
+    Card(modifier = Modifier.fillMaxWidth(), colors = cardColors, border = border) {
         Column(modifier = Modifier.fillMaxWidth()) {
             val headerModifier = Modifier
                 .fillMaxWidth()
@@ -219,12 +253,8 @@ private fun ComplicationCard(
                 ) {
                     Text(title, style = MaterialTheme.typography.titleMedium)
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (badge != null) {
-                            Text(
-                                "● $badge",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary,
-                            )
+                        if (active) {
+                            ActiveChip()
                         }
                         if (onToggle != null) {
                             Text(if (expanded) "  ▾" else "  ▸", style = MaterialTheme.typography.bodyMedium)

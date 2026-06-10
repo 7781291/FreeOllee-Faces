@@ -64,7 +64,8 @@ class AppViewModelTest {
      * Verifies that activate(TEMPERATURE) with a fresh temp cache:
      *   1. Persists activeComplication to prefs (verified via a second Prefs backed by same MapSettings)
      *   2. Updates vm.state.activeComplication
-     *   3. Sets vm.screen == Screen.Home
+     *   3. Does NOT navigate — the screen STAYS where it was (ComplicationsList). Selecting a
+     *      complication updates the radio in place; the old silent bounce to Home is gone (Phase 8.4).
      *   4. Calls scheduler.reschedule() BEFORE any BLE send (ordering in shared callLog)
      *   5. Fires the BLE send after coroutines drain
      *
@@ -107,8 +108,8 @@ class AppViewModelTest {
         // Pre-condition: log is empty.
         assertTrue(callLog.isEmpty(), "callLog should be empty before activate()")
 
-        // Navigate away first so the Screen.Home assertion below actually exercises
-        // activate()'s screen reset (screen defaults to Home, which would make it vacuous).
+        // Navigate to the picker first; activate() must NOT move us off it. (screen defaults to
+        // Home, so without this the "stays put" assertion below would be vacuous.)
         vm.navigateTo(Screen.ComplicationsList)
 
         vm.activate(ActiveComplication.TEMPERATURE)
@@ -124,9 +125,9 @@ class AppViewModelTest {
         assertEquals(ActiveComplication.TEMPERATURE, vm.state.activeComplication,
             "state.activeComplication should be set synchronously by activate()")
 
-        // 3. screen set synchronously.
-        assertEquals(Screen.Home, vm.screen,
-            "screen should be Screen.Home synchronously after activate()")
+        // 3. screen UNCHANGED — activate() no longer navigates; the selection reflects in place.
+        assertEquals(Screen.ComplicationsList, vm.screen,
+            "screen should STAY on ComplicationsList after activate() (no silent bounce to Home)")
 
         // scheduler.reschedule() is synchronous — already in the log.
         assertTrue(callLog.contains("scheduler.reschedule"),

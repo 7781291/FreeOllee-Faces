@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
+import com.blizzardcaron.freeolleefaces.auto.displayLabel
 
 /**
  * Two groups, mirroring the watch's two independent display registers:
@@ -48,10 +49,10 @@ fun ComplicationsListScreen(
         HorizontalDivider()
 
         SectionLabel("Name tag")
-        ComplicationRow("Temperature", ActiveComplication.TEMPERATURE, active, onSelect)
-        ComplicationRow("Sun event", ActiveComplication.SUN, active, onSelect)
-        ComplicationRow("Steps", ActiveComplication.STEPS, active, onSelect)
-        ComplicationRow("Custom", ActiveComplication.CUSTOM, active, onSelect)
+        ComplicationRow(ActiveComplication.TEMPERATURE, active, onSelect)
+        ComplicationRow(ActiveComplication.SUN, active, onSelect)
+        ComplicationRow(ActiveComplication.STEPS, active, onSelect)
+        ComplicationRow(ActiveComplication.CUSTOM, active, onSelect)
 
         HorizontalDivider()
 
@@ -76,11 +77,11 @@ private fun SectionLabel(text: String) {
 
 @Composable
 private fun ComplicationRow(
-    label: String,
     face: ActiveComplication,
     active: ActiveComplication,
     onSelect: (ActiveComplication) -> Unit,
 ) {
+    val label = face.displayLabel()
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
