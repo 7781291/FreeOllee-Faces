@@ -1,5 +1,6 @@
 package com.blizzardcaron.freeolleefaces.fakes
 
+import com.blizzardcaron.freeolleefaces.auto.AlarmScheduler
 import com.blizzardcaron.freeolleefaces.auto.Scheduler
 import com.blizzardcaron.freeolleefaces.ble.BleClient
 import com.blizzardcaron.freeolleefaces.health.StepsProvider
@@ -103,5 +104,19 @@ class FakeScheduler(
 
     override fun reschedule() {
         callLog += "scheduler.reschedule"
+    }
+}
+
+// ---------------------------------------------------------------------------
+// FakeAlarmScheduler
+// ---------------------------------------------------------------------------
+
+/** Records "alarmScheduler.rearm" into the shared [callLog]. */
+class FakeAlarmScheduler(
+    private val callLog: MutableList<String> = mutableListOf(),
+) : AlarmScheduler {
+
+    override fun rearm() {
+        callLog += "alarmScheduler.rearm"
     }
 }
