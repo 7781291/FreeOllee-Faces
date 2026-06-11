@@ -25,6 +25,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.core.content.ContextCompat
 import androidx.health.connect.client.PermissionController
+import com.blizzardcaron.freeolleefaces.alarm.AlarmsRepository
+import com.blizzardcaron.freeolleefaces.auto.AndroidAlarmScheduler
 import com.blizzardcaron.freeolleefaces.auto.AndroidScheduler
 import com.blizzardcaron.freeolleefaces.ble.AndroidBleClient
 import com.blizzardcaron.freeolleefaces.health.AndroidStepsProvider
@@ -32,6 +34,7 @@ import com.blizzardcaron.freeolleefaces.health.StepsProvider
 import com.blizzardcaron.freeolleefaces.location.AndroidLocationProvider
 import com.blizzardcaron.freeolleefaces.notifications.AndroidNotificationAccess
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
+import com.blizzardcaron.freeolleefaces.prefs.alarmSettings
 import com.blizzardcaron.freeolleefaces.prefs.appSettings
 import com.blizzardcaron.freeolleefaces.prefs.timerSettings
 import com.blizzardcaron.freeolleefaces.timer.TimerSetsRepository
@@ -83,6 +86,8 @@ private fun AppRoot(
             notificationAccess = AndroidNotificationAccess(context),
             timerRepo = TimerSetsRepository(timerSettings(context)),
             scheduler = AndroidScheduler(context),
+            alarmRepo = AlarmsRepository(alarmSettings(context)),
+            alarmScheduler = AndroidAlarmScheduler(context),
             versionLabel = versionLabel(versionName, context.packageName),
         )
     }
