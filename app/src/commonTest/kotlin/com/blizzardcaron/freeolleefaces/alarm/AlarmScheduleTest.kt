@@ -1,8 +1,10 @@
 package com.blizzardcaron.freeolleefaces.alarm
 
+import com.blizzardcaron.freeolleefaces.ble.OlleeProtocol
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDateTime
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
@@ -53,5 +55,44 @@ class AlarmScheduleTest {
         val inert = Alarm(id = "b", hour = 11, minute = 0, daysMask = 0)
         assertNull(AlarmSchedule.nextFire(listOf(disabled, inert), now))
         assertNull(AlarmSchedule.nextFire(emptyList(), now))
+    }
+
+    // Frame layout: [0]=00 [1]=LEN [2..3]=AA55 [4..5]=CRC [6]=CMD 02 [7]=TARGET 25 [8..]=payload.
+    // payload[0]=enable, [3]=hour, [4]=minute, [6]=chime, [8]=playNow.
+
+    @Test fun `packetFor a next fire arms a real alarm frame`() {
+        val next = AlarmSchedule.NextFire(LocalDateTime(2026, 6, 10, 7, 30), hour = 7, minute = 30, chimeIndex = 1)
+        val packet = AlarmSchedule.packetFor(next)
+        assertContentEquals(
+            OlleeProtocol.buildAlarmPacket(hour = 7, minute = 30, chimeIndex = 1, playNow = false, enabled = true),
+            packet,
+        )
+        assertEquals(0x01, packet[8].toInt())            // enabled
+        assertEquals(7, packet[11].toInt())              // hour
+        assertEquals(30, packet[12].toInt())             // minute
+        assertEquals(1, packet[14].toInt())              // chime
+        assertEquals(0x00, packet[16].toInt())           // playNow=false: arm, don't preview
+    }
+
+    @Test fun `packetFor null disarms the watch`() {
+        val packet = AlarmSchedule.packetFor(null)
+        assertContentEquals(
+            OlleeProtocol.buildAlarmPacket(hour = 0, minute = 0, chimeIndex = 0, playNow = false, enabled = false),
+            packet,
+        )
+        assertEquals(0x00, packet[8].toInt())            // enabled=false: verified silent on-device
+    }
+
+    @Test fun `formatNext renders day, 12-hour time, and chime name`() {
+        val breeze = AlarmSchedule.NextFire(LocalDateTime(2026, 6, 16, 7, 0), hour = 7, minute = 0, chimeIndex = 1)
+        assertEquals("Next: Tue 7:00 AM · Breeze", AlarmSchedule.formatNext(breeze))
+
+        val midnight = AlarmSchedule.NextFire(LocalDateTime(2026, 6, 11, 0, 5), hour = 0, minute = 5, chimeIndex = 0)
+        assertEquals("Next: Thu 12:05 AM · Classic", AlarmSchedule.formatNext(midnight))
+
+        val noonHighChime = AlarmSchedule.NextFire(LocalDateTime(2026, 6, 13, 12, 0), hour = 12, minute = 0, chimeIndex = 7)
+        assertEquals("Next: Sat 12:00 PM · Chime 8", AlarmSchedule.formatNext(noonHighChime))
+
+        assertEquals("No alarms", AlarmSchedule.formatNext(null))
     }
 }

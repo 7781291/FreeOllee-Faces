@@ -1,5 +1,6 @@
 package com.blizzardcaron.freeolleefaces.alarm
 
+import com.blizzardcaron.freeolleefaces.ble.OlleeProtocol
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
@@ -36,4 +37,34 @@ object AlarmSchedule {
         }
         return null
     }
+
+    /**
+     * The exact `0x25` frame for [next]: an armed real alarm (`enabled=true, playNow=false` —
+     * verified to ring ~35 s and self-stop), or the disarm frame when nothing is due
+     * (`enabled=false` — verified silent on-device, even over an already-armed alarm).
+     */
+    fun packetFor(next: NextFire?): ByteArray =
+        if (next != null) {
+            OlleeProtocol.buildAlarmPacket(
+                hour = next.hour, minute = next.minute, chimeIndex = next.chimeIndex,
+                playNow = false, enabled = true,
+            )
+        } else {
+            OlleeProtocol.buildAlarmPacket(hour = 0, minute = 0, chimeIndex = 0, playNow = false, enabled = false)
+        }
+
+    /** UI summary, e.g. "Next: Tue 7:00 AM · Breeze" — or "No alarms". */
+    fun formatNext(next: NextFire?): String {
+        if (next == null) return "No alarms"
+        val day = next.dateTime.dayOfWeek.name.take(3).lowercase().replaceFirstChar { it.uppercase() }
+        val h12 = when { next.hour == 0 -> 12; next.hour > 12 -> next.hour - 12; else -> next.hour }
+        val amPm = if (next.hour < 12) "AM" else "PM"
+        val mm = next.minute.toString().padStart(2, '0')
+        return "Next: $day $h12:$mm $amPm · ${chimeName(next.chimeIndex)}"
+    }
+
+    /** Watch chime tone name; only the first few of the 14 are named in the protocol doc. */
+    fun chimeName(index: Int): String = CHIME_NAMES.getOrNull(index) ?: "Chime ${index + 1}"
+
+    private val CHIME_NAMES = listOf("Classic", "Breeze", "Westminster")
 }
