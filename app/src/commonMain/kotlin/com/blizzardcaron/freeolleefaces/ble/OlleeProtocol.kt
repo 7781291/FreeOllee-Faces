@@ -22,6 +22,9 @@ object OlleeProtocol {
     /** Timer-face slots (10 countdown durations) — write target. Ack at 0x46. */
     const val TARGET_TIMERS = 0x26
 
+    /** Header byte 3 of the 0x26 timer write: configure-only, or start now in interval/single mode. */
+    enum class TimerStartMode(val byte3: Int) { SAVE(0x00), START_INTERVAL(0x01), START_SINGLE(0x02) }
+
     /** Alarm-face record — write target. Ack at 0x45; the chime preview shares this format. */
     const val TARGET_ALARM = 0x25
 
@@ -105,26 +108,30 @@ object OlleeProtocol {
      * little-endian uint32 durations, then delegates to [buildRawPacket]. Per-slot labels are
      * phone-side only and never sent.
      *
-     * The header is `[00, MM, SS, 00]` and seeds the Timer face's **default/primary countdown**
-     * (the one shown before you scroll into the ten slots) — verified on-device: a zero header
-     * left that timer at 00:00:00. We seed it from Slot 1's minutes:seconds so the face comes up
-     * showing the first interval, ready to start (matching the official app, which parks the
-     * last-edited timer there). The header carries no slot data — the ten words persist regardless.
-     * It only has a minutes and a seconds byte (no hour), so Slot 1 durations ≥ 1 h are clamped to
-     * MM:SS for the *display* seed only; the stored Slot 1 word stays full-precision.
+     * The header is `[00, MM, SS, byte3]` where MM:SS seeds the Timer face's **Quick-timer**
+     * (the standalone countdown shown before scrolling into the ten slots) from [headerSeconds] —
+     * independent of the ten slot durations. A 2026-06-10 BLE capture confirmed the header MM:SS
+     * is a separate "Quick timer" value, not derived from slot 1. Minutes are clamped to one byte
+     * (0xFF max) when [headerSeconds] ≥ 256 minutes. [startMode] drives byte 3: SAVE (0x00)
+     * persists the table without starting, START_INTERVAL (0x01) starts interval mode immediately,
+     * START_SINGLE (0x02) starts a single countdown immediately.
      */
-    fun buildTimerPacket(durationsSeconds: List<Int>): ByteArray {
+    fun buildTimerPacket(
+        durationsSeconds: List<Int>,
+        headerSeconds: Int,
+        startMode: TimerStartMode = TimerStartMode.SAVE,
+    ): ByteArray {
         require(durationsSeconds.size == 10) {
             "timer table needs exactly 10 slots (got ${durationsSeconds.size})"
         }
         require(durationsSeconds.all { it in 0..359_999 }) {
             "each duration must be 0..359999 s (got $durationsSeconds)"
         }
+        require(headerSeconds >= 0) { "headerSeconds must be >= 0 (got $headerSeconds)" }
         val payload = ByteArray(4 + 10 * 4) // 4-byte header + 10 LE-uint32 words
-        // Seed the face's default countdown from Slot 1 (MM:SS; minutes clamped to one byte).
-        val slot1 = durationsSeconds[0]
-        payload[1] = (slot1 / 60).coerceAtMost(0xFF).toByte() // MM
-        payload[2] = (slot1 % 60).toByte()                    // SS
+        payload[1] = (headerSeconds / 60).coerceAtMost(0xFF).toByte() // MM (Quick-timer primary)
+        payload[2] = (headerSeconds % 60).toByte()                    // SS
+        payload[3] = startMode.byte3.toByte()                         // start/mode selector
         durationsSeconds.forEachIndexed { i, s ->
             val off = 4 + i * 4
             payload[off] = (s and 0xFF).toByte()

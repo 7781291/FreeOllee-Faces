@@ -204,18 +204,14 @@ class OlleeProtocolTest {
 
     @Test
     fun `buildTimerPacket with all-zero durations equals a zero-header raw 0x26 packet`() {
-        val packet = OlleeProtocol.buildTimerPacket(List(10) { 0 })
-        // 4-byte zero header + 10 * 4-byte zero words = 44 zero payload bytes.
+        val packet = OlleeProtocol.buildTimerPacket(List(10) { 0 }, headerSeconds = 0)
         val expected = OlleeProtocol.buildRawPacket(OlleeProtocol.TARGET_TIMERS, ByteArray(44))
         assertContentEquals(expected, packet)
     }
 
     @Test
     fun `buildTimerPacket encodes each slot as a little-endian uint32 of seconds`() {
-        // slot 1 = 83 s (the captured 00:01:23); rest blank.
-        val packet = OlleeProtocol.buildTimerPacket(listOf(83, 0, 0, 0, 0, 0, 0, 0, 0, 0))
-        // Layout: [0..5] frame header, [6..7] = 02 26, [8..11] = 4-byte slot header,
-        // [12..15] = slot-1 little-endian uint32.
+        val packet = OlleeProtocol.buildTimerPacket(listOf(83, 0, 0, 0, 0, 0, 0, 0, 0, 0), headerSeconds = 0)
         assertEquals(0x02.toByte(), packet[6])
         assertEquals(0x26.toByte(), packet[7])
         assertEquals(0x00.toByte(), packet[8])  // header byte 0
@@ -226,36 +222,38 @@ class OlleeProtocolTest {
     }
 
     @Test
-    fun `buildTimerPacket seeds the header with slot 1 minutes and seconds`() {
-        // Slot 1 = 100 s (00:01:40) → header [00, MM=01, SS=40, 00] seeds the face's default timer.
-        val packet = OlleeProtocol.buildTimerPacket(listOf(100, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+    fun `buildTimerPacket derives the header minutes and seconds from headerSeconds not slot 1`() {
+        // headerSeconds = 100 s (00:01:40); slot 1 = 83 s — deliberately different.
+        val packet = OlleeProtocol.buildTimerPacket(listOf(83, 0, 0, 0, 0, 0, 0, 0, 0, 0), headerSeconds = 100)
         assertEquals(0x00.toByte(), packet[8])  // header byte 0
-        assertEquals(1.toByte(), packet[9])     // minutes
-        assertEquals(40.toByte(), packet[10])   // seconds
-        assertEquals(0x00.toByte(), packet[11]) // header byte 3
+        assertEquals(1.toByte(), packet[9])     // minutes from headerSeconds
+        assertEquals(40.toByte(), packet[10])   // seconds from headerSeconds
+        assertEquals(0x00.toByte(), packet[11]) // header byte 3 = SAVE
+        assertEquals(0x53.toByte(), packet[12]) // slot 1 word still 83, untouched by the header
     }
 
     @Test
-    fun `buildTimerPacket clamps the header minutes byte for slot 1 over 255 minutes`() {
-        // Slot 1 = 359_999 s (99:59:59) → 5999 minutes overflows one byte; clamp display to 0xFF.
-        val packet = OlleeProtocol.buildTimerPacket(listOf(359_999, 0, 0, 0, 0, 0, 0, 0, 0, 0))
-        assertEquals(0xFF.toByte(), packet[9])  // minutes clamped for the display seed
+    fun `buildTimerPacket clamps the header minutes byte when headerSeconds over 255 minutes`() {
+        // headerSeconds = 359_999 s -> 5999 minutes overflows one byte; clamp to 0xFF.
+        // Slot 1 = 100_000 s confirms the header clamp does NOT touch the full-precision slot word.
+        val packet = OlleeProtocol.buildTimerPacket(
+            listOf(100_000, 0, 0, 0, 0, 0, 0, 0, 0, 0), headerSeconds = 359_999)
+        assertEquals(0xFF.toByte(), packet[9])  // minutes clamped
         assertEquals(59.toByte(), packet[10])   // 359999 % 60
-        // The stored slot-1 word stays full precision (359999 = 0x00057E3F).
-        assertEquals(0x3F.toByte(), packet[12])
-        assertEquals(0x7E.toByte(), packet[13])
-        assertEquals(0x05.toByte(), packet[14])
+        // Slot-1 word (100_000 = 0x000186A0) stays full precision, independent of the clamped header.
+        assertEquals(0xA0.toByte(), packet[12])
+        assertEquals(0x86.toByte(), packet[13])
+        assertEquals(0x01.toByte(), packet[14])
         assertEquals(0x00.toByte(), packet[15])
     }
 
     @Test
     fun `buildTimerPacket round-trips through parseFrame to target 0x26 with valid CRC`() {
-        // slot 8 = 100_000 (0x000186A0) exercises bytes beyond the low 16 bits.
-        val packet = OlleeProtocol.buildTimerPacket(listOf(83, 100, 100, 100, 100, 100, 0, 100_000, 900, 1800))
+        val packet = OlleeProtocol.buildTimerPacket(
+            listOf(83, 100, 100, 100, 100, 100, 0, 100_000, 900, 1800), headerSeconds = 0)
         val f = OlleeProtocol.parseFrame(packet)!!
         assertEquals(0x26, f.target)
         assertTrue(f.crcOk)
-        // payload = 4-byte header + 10 LE uint32; full 4-byte decode of slot 8 (index 7).
         val base = 4 + 7 * 4
         val slot8 = (f.payload[base].toInt() and 0xFF) or
             ((f.payload[base + 1].toInt() and 0xFF) shl 8) or
@@ -267,15 +265,45 @@ class OlleeProtocolTest {
     @Test
     fun `buildTimerPacket rejects a list that is not exactly 10 slots`() {
         assertFailsWith<IllegalArgumentException> {
-            OlleeProtocol.buildTimerPacket(listOf(1, 2, 3))
+            OlleeProtocol.buildTimerPacket(listOf(1, 2, 3), headerSeconds = 0)
         }
     }
 
     @Test
     fun `buildTimerPacket rejects an out-of-range duration`() {
         assertFailsWith<IllegalArgumentException> {
-            OlleeProtocol.buildTimerPacket(listOf(360_000, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+            OlleeProtocol.buildTimerPacket(listOf(360_000, 0, 0, 0, 0, 0, 0, 0, 0, 0), headerSeconds = 0)
         }
+    }
+
+    @Test
+    fun `buildTimerPacket rejects a negative headerSeconds`() {
+        assertFailsWith<IllegalArgumentException> {
+            OlleeProtocol.buildTimerPacket(List(10) { 0 }, headerSeconds = -1)
+        }
+    }
+
+    @Test
+    fun `buildTimerPacket writes header byte3 per start mode`() {
+        val slots = List(10) { 0 }
+        assertEquals(0x00.toByte(),
+            OlleeProtocol.buildTimerPacket(slots, headerSeconds = 0, startMode = OlleeProtocol.TimerStartMode.SAVE)[11])
+        assertEquals(0x01.toByte(),
+            OlleeProtocol.buildTimerPacket(slots, headerSeconds = 0, startMode = OlleeProtocol.TimerStartMode.START_INTERVAL)[11])
+        assertEquals(0x02.toByte(),
+            OlleeProtocol.buildTimerPacket(slots, headerSeconds = 0, startMode = OlleeProtocol.TimerStartMode.START_SINGLE)[11])
+    }
+
+    @Test
+    fun `buildTimerPacket reproduces the captured save and start-interval frames`() {
+        val slots = listOf(180, 30, 180, 30, 0, 60, 120, 600, 900, 1800)
+        fun hex(b: ByteArray) = b.joinToString("") { "%02X".format(it) }
+        assertEquals(
+            "0032AA5577CA022600030000B40000001E000000B40000001E000000000000003C00000078000000580200008403000008070000",
+            hex(OlleeProtocol.buildTimerPacket(slots, headerSeconds = 180, startMode = OlleeProtocol.TimerStartMode.SAVE)))
+        assertEquals(
+            "0032AA550558022600070701B40000001E000000B40000001E000000000000003C00000078000000580200008403000008070000",
+            hex(OlleeProtocol.buildTimerPacket(slots, headerSeconds = 427, startMode = OlleeProtocol.TimerStartMode.START_INTERVAL)))
     }
 
     // The decoded 02 25 alarm record. Captured chime preview: 1:30 PM, chime index 5, play-now.

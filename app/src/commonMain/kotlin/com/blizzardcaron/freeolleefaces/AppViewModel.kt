@@ -166,7 +166,10 @@ class AppViewModel(
         if (state.sending) return // a push is already in flight; ignore re-taps to avoid overlapping writes
         viewModelScope.launch {
             update { it.copy(sending = true) }
-            val result = ble.sendPacket(addr, OlleeProtocol.buildTimerPacket(set.durations()))
+            val result = ble.sendPacket(
+                addr,
+                OlleeProtocol.buildTimerPacket(set.durations(), headerSeconds = prefs.quickTimerSeconds),
+            )
             update { it.copy(sending = false) }
             result
                 .onSuccess {
