@@ -78,6 +78,10 @@ class Prefs(
         get() = settings.getString(KEY_CUSTOM_TEXT, "")
         set(value) = settings.putString(KEY_CUSTOM_TEXT, value)
 
+    var quickTimerSeconds: Int
+        get() = settings.getInt(KEY_QUICK_TIMER_SECONDS, 180)
+        set(value) = settings.putInt(KEY_QUICK_TIMER_SECONDS, value.coerceAtLeast(0))
+
     var customSentMs: Long?
         get() = if (settings.hasKey(KEY_CUSTOM_SENT_MS)) settings.getLong(KEY_CUSTOM_SENT_MS, 0L) else null
         set(value) = if (value == null) settings.remove(KEY_CUSTOM_SENT_MS) else settings.putLong(KEY_CUSTOM_SENT_MS, value)
@@ -156,6 +160,7 @@ class Prefs(
         private const val KEY_TEMP_FETCHED_MS = "temp_fetched_ms"
         private const val KEY_LOCATION_FETCHED_MS = "location_fetched_ms"
         private const val KEY_CUSTOM_TEXT = "custom_text"
+        private const val KEY_QUICK_TIMER_SECONDS = "quick_timer_seconds"
         private const val KEY_CUSTOM_SENT_MS = "custom_sent_ms"
         private const val KEY_NOTIFICATION_COUNT = "notification_count"
         private const val KEY_NOTIFICATIONS_ENABLED = "notifications_enabled"
