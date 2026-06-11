@@ -326,4 +326,43 @@ class AppViewModelTest {
         assertEquals(7.toByte(), pkt[10], "header SS from quickTimerSeconds")
         assertEquals(0xB4.toByte(), pkt[12]) // slot[0] LE byte0 = 180 s = 0xB4, from the active set
     }
+
+    // ---------------------------------------------------------------------------
+    // Test C3 — startTimerSet success: sends START_INTERVAL frame with the set's own slots
+    // ---------------------------------------------------------------------------
+
+    @Test
+    fun startTimerSet_success_sendsStartIntervalFrame() = runTest(testScheduler) {
+        val callLog = mutableListOf<String>()
+        val ble = FakeBleClient(callLog)
+        val settings = MapSettings()
+        val prefs = Prefs(settings)
+        prefs.watchAddress = "00:11:22:33:44:55"
+        prefs.quickTimerSeconds = 427          // 07:07 -> header MM=7 SS=7
+        val timerRepo = TimerSetsRepository(MapSettings())
+        val baseSet = TimerSet.blank("id1", "Set 1")
+        val set = baseSet.copy(slots = baseSet.slots.mapIndexed { i, s ->
+            if (i == 0) TimerSlot(durationSeconds = 180) else s
+        })
+        val vm = AppViewModel(
+            prefs = prefs,
+            ble = ble,
+            steps = FakeStepsProvider(),
+            location = FakeLocationProvider(),
+            notificationAccess = FakeNotificationAccessChecker(),
+            timerRepo = timerRepo,
+            scheduler = FakeScheduler(callLog),
+        )
+
+        vm.startTimerSet(set)
+        advanceUntilIdle()
+
+        val pkt = ble.sentPackets.single()
+        assertEquals(0x01.toByte(), pkt[11], "header byte3 = START_INTERVAL")
+        assertEquals(7.toByte(), pkt[9], "header MM from quickTimerSeconds")
+        assertEquals(7.toByte(), pkt[10], "header SS from quickTimerSeconds")
+        assertEquals(0xB4.toByte(), pkt[12]) // slot[0] LE byte0 = 180 s = 0xB4, from the started set
+        // A successful start marks the set active.
+        assertEquals("id1", vm.timerActiveId, "startTimerSet should set the active id on success")
+    }
 }
