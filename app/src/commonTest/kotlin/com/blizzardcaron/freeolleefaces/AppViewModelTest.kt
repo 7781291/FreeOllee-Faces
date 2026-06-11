@@ -248,4 +248,82 @@ class AppViewModelTest {
         assertEquals(set.id, TimerSetsRepository(settings).activeId(),
             "active id should be persisted through the repo, not just held in VM state")
     }
+
+    // ---------------------------------------------------------------------------
+    // Test C1 — startQuickTimer with no watch selected: snackbar, no BLE
+    // ---------------------------------------------------------------------------
+
+    @Test
+    fun startQuickTimer_noWatchAddress_showsSnackbarAndNoBleCall() = runTest(testScheduler) {
+        val callLog = mutableListOf<String>()
+        val ble = FakeBleClient(callLog)
+        val settings = MapSettings()
+        // watchAddress intentionally NOT set.
+        val prefs = Prefs(settings)
+        val vm = AppViewModel(
+            prefs = prefs,
+            ble = ble,
+            steps = FakeStepsProvider(),
+            location = FakeLocationProvider(),
+            notificationAccess = FakeNotificationAccessChecker(),
+            timerRepo = TimerSetsRepository(settings),
+            scheduler = FakeScheduler(callLog),
+        )
+
+        // Collect the first snackbar event.
+        val eventDeferred = CompletableDeferred<String>()
+        val collectJob = launch {
+            val msg = vm.events.first()
+            eventDeferred.complete(msg)
+        }
+
+        vm.startQuickTimer()
+        advanceUntilIdle()
+
+        // The snackbar message must match the production string.
+        assertEquals("No watch selected — open Settings (⚙)", eventDeferred.await(),
+            "snackbar message mismatch when no watch selected")
+        assertTrue(callLog.none { it.startsWith("ble.sendPacket") }, "no BLE call without a watch")
+
+        collectJob.cancel()
+    }
+
+    // ---------------------------------------------------------------------------
+    // Test C2 — startQuickTimer success: sends START_SINGLE frame with active set slots
+    // ---------------------------------------------------------------------------
+
+    @Test
+    fun startQuickTimer_success_sendsStartSingleFrameWithActiveSetSlots() = runTest(testScheduler) {
+        val callLog = mutableListOf<String>()
+        val ble = FakeBleClient(callLog)
+        val settings = MapSettings()
+        val prefs = Prefs(settings)
+        prefs.watchAddress = "00:11:22:33:44:55"
+        prefs.quickTimerSeconds = 427          // 07:07 -> header MM=7 SS=7
+        val timerRepo = TimerSetsRepository(MapSettings())
+        val baseSet = TimerSet.blank("id1", "Set 1")
+        val set = baseSet.copy(slots = baseSet.slots.mapIndexed { i, s ->
+            if (i == 0) TimerSlot(durationSeconds = 180) else s
+        })
+        timerRepo.save(set)
+        timerRepo.setActive("id1")
+        val vm = AppViewModel(
+            prefs = prefs,
+            ble = ble,
+            steps = FakeStepsProvider(),
+            location = FakeLocationProvider(),
+            notificationAccess = FakeNotificationAccessChecker(),
+            timerRepo = timerRepo,
+            scheduler = FakeScheduler(callLog),
+        )
+
+        vm.startQuickTimer()
+        advanceUntilIdle()
+
+        val pkt = ble.sentPackets.single()
+        assertEquals(0x02.toByte(), pkt[11], "header byte3 = START_SINGLE")
+        assertEquals(7.toByte(), pkt[9], "header MM from quickTimerSeconds")
+        assertEquals(7.toByte(), pkt[10], "header SS from quickTimerSeconds")
+        assertEquals(0xB4.toByte(), pkt[12]) // slot[0] LE byte0 = 180 s = 0xB4, from the active set
+    }
 }

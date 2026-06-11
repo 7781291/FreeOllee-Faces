@@ -88,6 +88,8 @@ class AppViewModel(
         private set
     var timerActiveId by mutableStateOf(timerRepo.activeId())
         private set
+    var quickTimerSeconds by mutableStateOf(prefs.quickTimerSeconds)
+        private set
 
     private val _events = Channel<String>(Channel.BUFFERED)   // snackbar messages
     val events = _events.receiveAsFlow()
@@ -160,27 +162,47 @@ class AppViewModel(
         refreshTimers()
     }
 
-    fun sendTimerSet(set: TimerSet) {
+    /** Shared path for the three 0x26 sends: addr check, in-flight guard, push, snackbar. */
+    private fun pushTimerFrame(packet: ByteArray, successMsg: String, onSuccess: () -> Unit = {}) {
         val addr = prefs.watchAddress
         if (addr == null) { showSnackbar("No watch selected — open Settings (⚙)"); return }
-        if (state.sending) return // a push is already in flight; ignore re-taps to avoid overlapping writes
+        if (state.sending) return
         viewModelScope.launch {
             update { it.copy(sending = true) }
-            val result = ble.sendPacket(
-                addr,
-                OlleeProtocol.buildTimerPacket(set.durations(), headerSeconds = prefs.quickTimerSeconds),
-            )
+            val result = ble.sendPacket(addr, packet)
             update { it.copy(sending = false) }
             result
-                .onSuccess {
-                    timerRepo.setActive(set.id)
-                    timerActiveId = set.id
-                    showSnackbar("Sent '${set.name}' to watch")
-                }
-                .onFailure {
-                    showSnackbar("Send failed — long-press ALARM to wake the watch, then retry")
-                }
+                .onSuccess { onSuccess(); showSnackbar(successMsg) }
+                .onFailure { showSnackbar("Send failed — long-press ALARM to wake the watch, then retry") }
         }
+    }
+
+    fun saveQuickTimer(seconds: Int) {
+        prefs.quickTimerSeconds = seconds
+        quickTimerSeconds = prefs.quickTimerSeconds   // read back to apply the >=0 coercion
+    }
+
+    fun sendTimerSet(set: TimerSet) {
+        val packet = OlleeProtocol.buildTimerPacket(
+            set.durations(), headerSeconds = quickTimerSeconds, startMode = OlleeProtocol.TimerStartMode.SAVE)
+        pushTimerFrame(packet, "Sent '${set.name}' to watch") {
+            timerRepo.setActive(set.id); timerActiveId = set.id
+        }
+    }
+
+    fun startTimerSet(set: TimerSet) {
+        val packet = OlleeProtocol.buildTimerPacket(
+            set.durations(), headerSeconds = quickTimerSeconds, startMode = OlleeProtocol.TimerStartMode.START_INTERVAL)
+        pushTimerFrame(packet, "Started '${set.name}' on watch") {
+            timerRepo.setActive(set.id); timerActiveId = set.id
+        }
+    }
+
+    fun startQuickTimer() {
+        val slots = timerActiveId?.let { timerRepo.get(it) }?.durations() ?: List(10) { 0 }
+        val packet = OlleeProtocol.buildTimerPacket(
+            slots, headerSeconds = quickTimerSeconds, startMode = OlleeProtocol.TimerStartMode.START_SINGLE)
+        pushTimerFrame(packet, "Started quick timer on watch")
     }
 
     private fun validCoords(): Pair<Double, Double>? {

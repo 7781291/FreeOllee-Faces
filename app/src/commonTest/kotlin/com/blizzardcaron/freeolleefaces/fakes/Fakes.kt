@@ -27,6 +27,9 @@ class FakeBleClient(
     var gate: CompletableDeferred<Unit>? = null,
 ) : BleClient {
 
+    /** Every packet passed to [sendPacket], in order — lets tests assert on the framed bytes. */
+    val sentPackets: MutableList<ByteArray> = mutableListOf()
+
     override suspend fun send(deviceAddress: String, value: String): Result<Unit> {
         gate?.await()
         callLog += "ble.send($deviceAddress,$value)"
@@ -42,6 +45,7 @@ class FakeBleClient(
     override suspend fun sendPacket(deviceAddress: String, packet: ByteArray): Result<Unit> {
         gate?.await()
         callLog += "ble.sendPacket($deviceAddress)"
+        sentPackets += packet
         return sendResult
     }
 }
