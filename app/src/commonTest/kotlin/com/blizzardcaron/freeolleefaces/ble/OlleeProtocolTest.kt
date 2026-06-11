@@ -306,8 +306,9 @@ class OlleeProtocolTest {
             hex(OlleeProtocol.buildTimerPacket(slots, headerSeconds = 427, startMode = OlleeProtocol.TimerStartMode.START_INTERVAL)))
     }
 
-    // The decoded 02 25 alarm record. Captured chime preview: 1:30 PM, chime index 5, play-now.
-    // 13-byte payload incl. the FF terminator; CRC-16/CCITT-FALSE over the inner -> 0x525D,
+    // The decoded 02 25 alarm record: 1:30 PM, chime index 5, play-now. Byte 5 is 0xFE as in
+    // every captured official-app record (0x00 there flips watch settings off — see builder).
+    // 13-byte payload incl. the FF terminator; CRC-16/CCITT-FALSE over the inner -> 0x81C1,
     // LEN = 0x13. buildAlarmPacket emits the whole 21-byte frame (the BLE layer splits [20][FF]).
     @Test
     fun `buildAlarmPacket reproduces the captured 02 25 chime-preview frame`() {
@@ -315,9 +316,9 @@ class OlleeProtocolTest {
             hour = 13, minute = 30, chimeIndex = 5, playNow = true, enabled = false,
         )
         val expected = byteArrayOf(
-            0x00, 0x13, 0xAA.toByte(), 0x55, 0x52, 0x5D,            // frame header + CRC
+            0x00, 0x13, 0xAA.toByte(), 0x55, 0x81.toByte(), 0xC1.toByte(), // frame header + CRC
             0x02, 0x25,                                            // cmd + target
-            0x00, 0x00, 0x00, 0x0D, 0x1E, 0x00, 0x05, 0x05,        // enable,0,0,hr,min,?,chime,05
+            0x00, 0x00, 0x00, 0x0D, 0x1E, 0xFE.toByte(), 0x05, 0x05, // enable,0,0,hr,min,FE,chime,05
             0x01, 0xC0.toByte(), 0xFF.toByte(), 0x0F, 0xFF.toByte(), // play, C0 FF 0F, FF terminator
         )
         assertContentEquals(expected, packet)

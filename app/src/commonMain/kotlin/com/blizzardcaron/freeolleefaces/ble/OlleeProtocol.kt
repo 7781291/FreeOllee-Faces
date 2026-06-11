@@ -152,7 +152,7 @@ object OlleeProtocol {
      *
      * Layout (13-byte payload, decoded from captures — see docs/reference/ollee-ble-protocol.md
      * in the ollee-graphene repo):
-     *   [enable, 00, 00, hour, minute, 00, chime, 05, playNow, C0, FF, 0F, FF]
+     *   [enable, 00, 00, hour, minute, FE, chime, 05, playNow, C0, FF, 0F, FF]
      * The final FF is a constant terminator (payload byte 12). The watch's 20-byte ATT payload
      * fragments the resulting 21-byte frame into [20][FF] — exactly how the official app sends it,
      * and how [BleClient] chunks it.
@@ -172,7 +172,9 @@ object OlleeProtocol {
             0x00, 0x00,
             hour.toByte(),
             minute.toByte(),
-            0x00,                       // byte 5: role undecoded; 0x00 observed sounding the chime
+            0xFE.toByte(),              // byte 5: constant in every official-app record; sending
+                                        // 0x00 flipped the watch's alarm/hourly-chime settings off
+                                        // (observed on hardware 2026-06-11) — keep 0xFE
             chimeIndex.toByte(),
             0x05,                       // byte 7: constant
             if (playNow) 0x01 else 0x00,
