@@ -108,8 +108,13 @@ private fun AlarmCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    NumberField("H", alarm.hour) { onSave(alarm.copy(hour = it.coerceIn(0, 23))) }
+                    val isPm = alarm.hour >= 12
+                    val hour12 = if (alarm.hour % 12 == 0) 12 else alarm.hour % 12
+                    NumberField("H", hour12) { onSave(alarm.copy(hour = hour24(it.coerceIn(1, 12), isPm))) }
                     NumberField("M", alarm.minute) { onSave(alarm.copy(minute = it.coerceIn(0, 59))) }
+                    TextButton(onClick = { onSave(alarm.copy(hour = hour24(hour12, !isPm))) }) {
+                        Text(if (isPm) "PM" else "AM")
+                    }
                 }
                 Switch(checked = alarm.enabled, onCheckedChange = onToggle)
             }
@@ -171,3 +176,6 @@ private fun ChimePicker(index: Int, onChange: (Int) -> Unit) {
         }
     }
 }
+
+/** 12-hour clock + AM/PM back to the 0..23 hour the [Alarm] model stores (12 AM = 0, 12 PM = 12). */
+private fun hour24(hour12: Int, pm: Boolean) = (hour12 % 12) + if (pm) 12 else 0
