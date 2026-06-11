@@ -6,6 +6,7 @@ import com.blizzardcaron.freeolleefaces.format.TempUnit
 data class HomeCallbacks(
     val onActivate: (ActiveComplication) -> Unit,
     val onOpenTimerSets: () -> Unit,
+    val onOpenAlarms: () -> Unit,
     val onOpenSettings: () -> Unit,
     val onUpdateNow: () -> Unit,
     val onTempUnitChange: (TempUnit) -> Unit,

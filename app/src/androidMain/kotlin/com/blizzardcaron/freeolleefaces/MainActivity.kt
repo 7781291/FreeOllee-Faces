@@ -40,6 +40,7 @@ import com.blizzardcaron.freeolleefaces.prefs.timerSettings
 import com.blizzardcaron.freeolleefaces.timer.TimerSetsRepository
 import com.blizzardcaron.freeolleefaces.ui.BondedDevice
 import com.blizzardcaron.freeolleefaces.ui.BondedDevicesDialog
+import com.blizzardcaron.freeolleefaces.ui.AlarmsScreen
 import com.blizzardcaron.freeolleefaces.ui.HomeCallbacks
 import com.blizzardcaron.freeolleefaces.ui.HomeScreen
 import com.blizzardcaron.freeolleefaces.ui.Screen
@@ -240,6 +241,7 @@ private fun AppRoot(
     val homeCallbacks = HomeCallbacks(
         onActivate = { viewModel.activate(it) },
         onOpenTimerSets = { viewModel.refreshTimers(); viewModel.navigateTo(Screen.TimerSets) },
+        onOpenAlarms = { viewModel.refreshAlarms(); viewModel.navigateTo(Screen.Alarms) },
         onOpenSettings = { viewModel.navigateTo(Screen.Settings) },
         onUpdateNow = { viewModel.refreshActive(force = true, push = true) },
         onTempUnitChange = { newUnit -> viewModel.setTempUnit(newUnit) },
@@ -292,6 +294,16 @@ private fun AppRoot(
             onDelete = { viewModel.deleteTimerSet(it) },
             onSend = { viewModel.sendTimerSet(it) },
             onStart = { viewModel.startTimerSet(it) },
+            onBack = { viewModel.navigateTo(Screen.Home) },
+            modifier = modifier,
+        )
+        Screen.Alarms -> AlarmsScreen(
+            alarms = viewModel.alarms,
+            nextSummary = viewModel.nextAlarmSummary,
+            onAdd = { viewModel.addAlarm() },
+            onSave = { viewModel.saveAlarm(it) },
+            onToggle = { id, enabled -> viewModel.toggleAlarm(id, enabled) },
+            onDelete = { viewModel.deleteAlarm(it) },
             onBack = { viewModel.navigateTo(Screen.Home) },
             modifier = modifier,
         )
