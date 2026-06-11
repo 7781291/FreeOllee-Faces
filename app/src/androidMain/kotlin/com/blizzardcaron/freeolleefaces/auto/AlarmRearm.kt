@@ -15,6 +15,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
@@ -42,6 +44,7 @@ object AlarmRearm {
     private const val REQUEST_CODE = 4025   // one slot: each schedule replaces the last
     private const val PUSH_DEBOUNCE_MS = 750L
     private val generation = AtomicInteger()
+    private val pushMutex = Mutex()
 
     /**
      * Runs the full pass. Each call's [onComplete] fires after its own push attempt — or, when
@@ -88,17 +91,23 @@ object AlarmRearm {
             try {
                 delay(PUSH_DEBOUNCE_MS)
                 if (generation.get() != myGen) return@launch   // superseded by a newer rearm
-                // Recompute at push time so a burst of edits sends the final state.
-                val latest = AlarmSchedule.nextFire(
-                    AlarmsRepository(alarmSettings(ctx)).getAll(),
-                    Clock.System.now().toLocalDateTime(zone),
-                )
-                val result = AndroidBleClient(ctx).sendPacket(address, AlarmSchedule.packetFor(latest))
-                Log.i(
-                    TAG,
-                    if (result.isSuccess) "push OK (${if (latest != null) "armed ${latest.dateTime}" else "disarm"})"
-                    else "push FAIL ${result.exceptionOrNull()?.message} (will retry on next trigger/open/boot)",
-                )
+                // Serialize pushes: GATT round-trips run seconds — far longer than the debounce —
+                // so without the lock an older push still in flight can land AFTER a newer one and
+                // leave the watch holding stale state (observed on-device 2026-06-11).
+                pushMutex.withLock {
+                    if (generation.get() != myGen) return@launch   // superseded while waiting
+                    // Recompute at push time so a burst of edits sends the final state.
+                    val latest = AlarmSchedule.nextFire(
+                        AlarmsRepository(alarmSettings(ctx)).getAll(),
+                        Clock.System.now().toLocalDateTime(zone),
+                    )
+                    val result = AndroidBleClient(ctx).sendPacket(address, AlarmSchedule.packetFor(latest))
+                    Log.i(
+                        TAG,
+                        if (result.isSuccess) "push OK (${if (latest != null) "armed ${latest.dateTime}" else "disarm"})"
+                        else "push FAIL ${result.exceptionOrNull()?.message} (will retry on next trigger/open/boot)",
+                    )
+                }
             } finally {
                 onComplete()
             }
