@@ -27,6 +27,11 @@ class AlarmTest {
         assertFailsWith<IllegalArgumentException> { Alarm(id = "1", hour = 24, minute = 0) }
         assertFailsWith<IllegalArgumentException> { Alarm(id = "1", hour = 0, minute = 60) }
         assertFailsWith<IllegalArgumentException> { Alarm(id = "1", hour = 0, minute = 0, daysMask = 0x80) }
-        assertFailsWith<IllegalArgumentException> { Alarm(id = "1", hour = 0, minute = 0, chimeIndex = 14) }
+        assertFailsWith<IllegalArgumentException> { Alarm(id = "1", hour = 0, minute = 0, chimeIndex = 15) }
+    }
+
+    @Test fun `accepts the last chime index, Sand`() {
+        // 15 tones exist (0..14) — the picker offers all of them, so the model must too.
+        assertEquals(14, Alarm(id = "1", hour = 0, minute = 0, chimeIndex = 14).chimeIndex)
     }
 }

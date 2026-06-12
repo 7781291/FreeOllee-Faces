@@ -39,7 +39,8 @@ object AlarmsJson {
                 val obj = el as? JsonObject ?: return@mapNotNull null
                 runCatching {
                     Alarm(
-                        id = obj["id"]?.jsonPrimitive?.contentOrNull ?: "",
+                        // No id -> would collide with other entries in save/delete-by-id; skip it.
+                        id = obj["id"]?.jsonPrimitive?.contentOrNull ?: return@mapNotNull null,
                         hour = obj["hour"]?.jsonPrimitive?.intOrNull ?: return@mapNotNull null,
                         minute = obj["minute"]?.jsonPrimitive?.intOrNull ?: return@mapNotNull null,
                         enabled = obj["enabled"]?.jsonPrimitive?.booleanOrNull ?: true,

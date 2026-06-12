@@ -26,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -80,12 +81,16 @@ fun AlarmsScreen(
                     style = MaterialTheme.typography.bodyMedium)
             }
             for (alarm in alarms) {
-                AlarmCard(
-                    alarm = alarm,
-                    onSave = onSave,
-                    onToggle = { onToggle(alarm.id, it) },
-                    onDelete = { onDelete(alarm.id) },
-                )
+                // Key by id so deleting a card doesn't hand its remembered state (open chime
+                // dropdown, hour text buffer) to the card that slides into its position.
+                key(alarm.id) {
+                    AlarmCard(
+                        alarm = alarm,
+                        onSave = onSave,
+                        onToggle = { onToggle(alarm.id, it) },
+                        onDelete = { onDelete(alarm.id) },
+                    )
+                }
             }
         }
     }

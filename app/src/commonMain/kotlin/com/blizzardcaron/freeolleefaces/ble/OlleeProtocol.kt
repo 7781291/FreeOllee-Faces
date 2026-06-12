@@ -156,7 +156,10 @@ object OlleeProtocol {
      *    hourMaskLo, hourMaskMid, hourMaskHi, FF]
      * - byte 1 [hourlyChime]: hourly-chime on/off. We default it ON — sending 0 here is how an
      *   earlier build kept silently disabling the watch's hourly chime on every push.
-     * - byte 2: snooze enable; byte 7: snooze period in minutes (we keep the stock 5).
+     * - byte 2: snooze enable; byte 7: snooze period in minutes (we keep the stock 5). Every push
+     *   deliberately forces snooze off: it is a property of the one alarm record this app fully
+     *   owns and re-writes (we have no snooze UI), and the captured official-app frames sent 00
+     *   here too.
      * - byte 5: repeat-day mask, bit1=Mon..bit7=Sun, **1 = day active**, bit0 unused. We always
      *   send 0xFE (every day): the phone computes the true next fire and re-arms/disarms after
      *   each one. Sending 0x00 (NO active days) makes the watch show its Alarm setting as off and

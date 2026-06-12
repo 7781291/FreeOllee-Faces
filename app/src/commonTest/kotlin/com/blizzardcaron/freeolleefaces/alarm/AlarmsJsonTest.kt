@@ -29,6 +29,15 @@ class AlarmsJsonTest {
         assertEquals("y", decoded[0].id)
     }
 
+    @Test fun `decode skips entries with no id`() {
+        // An id-less entry would collide with others in get/save-by-id -> drop it like a bad range.
+        val json = """[{"hour":7,"minute":0,"enabled":true,"daysMask":127,"chime":0,"label":""},
+                       {"id":"y","hour":8,"minute":0,"enabled":true,"daysMask":127,"chime":0,"label":""}]"""
+        val decoded = AlarmsJson.decode(json)
+        assertEquals(1, decoded.size)
+        assertEquals("y", decoded[0].id)
+    }
+
     @Test fun `missing enabled key defaults to true`() {
         val json = """[{"id":"x","hour":8,"minute":0,"daysMask":127,"chime":0,"label":""}]"""
         val decoded = AlarmsJson.decode(json)
