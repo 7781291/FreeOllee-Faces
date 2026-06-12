@@ -148,11 +148,21 @@ object OlleeProtocol {
      * 0x02 = Westminster, …). Set [playNow] to sound the chosen chime immediately ("Try chime"):
      * that is a transient preview the firmware does NOT persist (the play-now byte is absent from
      * the alarm read-back at 0x2B), so it never disturbs the stored alarm. [enabled] is the
-     * candidate alarm-on flag (byte 0).
+     * alarm-on flag (byte 0).
      *
-     * Layout (13-byte payload, decoded from captures — see docs/reference/ollee-ble-protocol.md
-     * in the ollee-graphene repo):
-     *   [enable, 00, 00, hour, minute, FE, chime, 05, playNow, C0, FF, 0F, FF]
+     * The record also carries the watch's **settings**, decoded 2026-06-11 by toggle-diffing the
+     * official app's alarm screen (one "Send to watch" writes the whole record):
+     *   [enable, hourlyChime, snoozeEnable, hour, minute, dayMask, chime, snoozeMin, playNow,
+     *    hourMaskLo, hourMaskMid, hourMaskHi, FF]
+     * - byte 1 [hourlyChime]: hourly-chime on/off. We default it ON — sending 0 here is how an
+     *   earlier build kept silently disabling the watch's hourly chime on every push.
+     * - byte 2: snooze enable; byte 7: snooze period in minutes (we keep the stock 5).
+     * - byte 5: inverted repeat-day mask, bit1=Mon..bit7=Sun, 0 = day active. We always send 0x00
+     *   (every day): the phone computes the true next fire and re-arms/disarms after each one, and
+     *   00 is the value the verified 2026-06-10 live fire rang with. 0xFE (no active days) shows
+     *   as "Alarm off" in the official app.
+     * - bytes 9-11: 24-bit little-endian active-hours mask for the hourly chime; C0 FF 0F =
+     *   bits 6-19 = 6:00-19:00, the stock range we preserve.
      * The final FF is a constant terminator (payload byte 12). The watch's 20-byte ATT payload
      * fragments the resulting 21-byte frame into [20][FF] — exactly how the official app sends it,
      * and how [BleClient] chunks it.
@@ -163,22 +173,23 @@ object OlleeProtocol {
         chimeIndex: Int,
         playNow: Boolean,
         enabled: Boolean = false,
+        hourlyChime: Boolean = true,
     ): ByteArray {
         require(hour in 0..23) { "hour must be 0..23 (got $hour)" }
         require(minute in 0..59) { "minute must be 0..59 (got $minute)" }
         require(chimeIndex in 0..0xFF) { "chimeIndex must be a single byte (got $chimeIndex)" }
         val payload = byteArrayOf(
             if (enabled) 0x01 else 0x00,
-            0x00, 0x00,
+            if (hourlyChime) 0x01 else 0x00,
+            0x00,                       // snooze off
             hour.toByte(),
             minute.toByte(),
-            0xFE.toByte(),              // byte 5: constant in every official-app record; sending
-                                        // 0x00 flipped the watch's alarm/hourly-chime settings off
-                                        // (observed on hardware 2026-06-11) — keep 0xFE
+            0x00,                       // repeat every day — see KDoc
             chimeIndex.toByte(),
-            0x05,                       // byte 7: constant
+            0x05,                       // snooze period (minutes), stock value
             if (playNow) 0x01 else 0x00,
-            0xC0.toByte(), 0xFF.toByte(), 0x0F, 0xFF.toByte(), // trailer + FF terminator
+            0xC0.toByte(), 0xFF.toByte(), 0x0F, // hourly-chime hours 6:00-19:00
+            0xFF.toByte(),              // terminator
         )
         return buildRawPacket(TARGET_ALARM, payload)
     }
