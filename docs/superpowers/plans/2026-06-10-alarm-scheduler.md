@@ -1376,3 +1376,35 @@ git commit -m "docs: 0x25 byte-0 enable verified on hardware; PL=00 arms a real 
       `timer-enhancements`' release line; both features ship as **one release** (single `VERSION`
       bump, e.g. 0.12.0 → 0.13.0, when the combined branch merges to `main`). **No push before
       5 PM MT on workdays.**
+
+---
+
+## Verified on-device 2026-06-11
+
+Task 9 surfaced four real bugs before passing; all fixed and re-verified on hardware
+(Pixel @ 192.168.4.95, watch 00:80:E1:26:DC:86):
+
+1. **Stale-push race** (`2b673db`): GATT round-trips (1–9 s) outlive the 750 ms debounce, so an
+   older in-flight push could land after a newer one. Fixed with a push mutex + second generation
+   check; observed serialized ordering in logs (newest state lands last).
+2. **Byte 1 of the 0x25 record is the watch's hourly-chime enable** (`8103dec`): our hardcoded
+   `00` disabled the user's hourly chime on every push. Decoded by toggle-diffing the official
+   app's alarm screen with the ollee-graphene capture build. Now sent as `01` (on) by default.
+3. **Byte 5 is the repeat-day mask, 1 = day active** (`d77431a`): `FE` = every day (rings),
+   `00` = no days — silent at fire time and the watch shows its Alarm setting off. An armed
+   `FE` push flips the watch's Alarm display back on by itself. Armed frames send `FE`; the
+   phone still owns real scheduling via re-arm/disarm.
+4. **Hour field couldn't be typed to 2–9** (`480cef8`): clearing the
+   12-hour field snapped back to "1", so "8" became 18 → clamp 12. `HourField` keeps a local
+   edit buffer and commits only 1..12; verified by typing 8:59 PM and 9:18 PM on-device.
+
+End-to-end evidence (2026-06-11 evening, MDT):
+- UI walk: cap at 5, delete, persistence, 12-hour AM/PM entry — pass.
+- Live fire: alarm set 21:18 via the app; `push OK (armed 2026-06-11T21:18)`; **watch rang
+  Breeze ~35 s and self-stopped — user confirmed audibly**.
+- Auto re-arm: receiver fired 21:19:00.031, advanced to the second alarm (2026-06-12T07:15),
+  `push OK` 21:19:01.954; new exact trigger in dumpsys for 07:16.
+- Watch settings preserved: hourly chime stayed ON through every push; Alarm setting display
+  restored to ON by the armed push — user confirmed both.
+- Disarm path: verified 2026-06-11 afternoon (trigger cancelled in dumpsys, disarm push OK,
+  watch silent at the disabled time).
