@@ -17,6 +17,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -144,20 +145,29 @@ private fun AlarmCard(
     }
 }
 
-/** One toggle chip per weekday, Mon-first: M T W T F S S. */
+/** Sunday-first week, matching the official Ollee app's alarm screen. */
+private val WEEK_SUNDAY_FIRST = listOf(DayOfWeek.SUNDAY) + DayOfWeek.entries.filter { it != DayOfWeek.SUNDAY }
+
+/** One toggle chip per weekday, Sunday-first: S M T W T F S. */
 @Composable
 private fun DayChips(mask: Int, onChange: (Int) -> Unit) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        for (day in DayOfWeek.entries) {
+        for (day in WEEK_SUNDAY_FIRST) {
             val bit = Alarm.bit(day)
             val selected = mask and bit != 0
             FilterChip(
                 selected = selected,
                 onClick = { onChange(if (selected) mask and bit.inv() else mask or bit) },
                 label = { Text(day.name.take(1)) },
+                // Default M3 selected chips (secondaryContainer) read nearly the same as
+                // unselected on this theme — use primary so active days are unmistakable.
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.primary,
+                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                ),
                 modifier = Modifier.weight(1f),
             )
         }
@@ -170,9 +180,9 @@ private fun ChimePicker(index: Int, onChange: (Int) -> Unit) {
     Box {
         TextButton(onClick = { open = true }) { Text("♪ ${AlarmSchedule.chimeName(index)}") }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-            repeat(14) { i ->   // the watch's 14 tones, indices 0x00..0x0D
+            AlarmSchedule.CHIME_NAMES.forEachIndexed { i, name ->
                 DropdownMenuItem(
-                    text = { Text(AlarmSchedule.chimeName(i)) },
+                    text = { Text(name) },
                     onClick = { onChange(i); open = false },
                 )
             }
