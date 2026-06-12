@@ -76,6 +76,7 @@ object ErrorNotifier {
         FailureKind.SETUP_INCOMPLETE -> "Setup incomplete"
         FailureKind.SUN_UNREACHABLE -> "Sun update missed"
         FailureKind.HEALTH_UNAVAILABLE -> "Health access needed"
+        FailureKind.ALARM_UNREACHABLE -> "Alarm unreachable"
     }
 
     private fun textFor(kind: FailureKind): String = when (kind) {
@@ -84,5 +85,6 @@ object ErrorNotifier {
         FailureKind.SETUP_INCOMPLETE -> "Open the app to set your location and watch."
         FailureKind.SUN_UNREACHABLE -> "Couldn't deliver the next sunrise/sunset after several tries. Long-press the ALARM button to wake your watch, then tap Retry."
         FailureKind.HEALTH_UNAVAILABLE -> "Open the app and grant Health access so step counts can sync."
+        FailureKind.ALARM_UNREACHABLE -> "Couldn't reach your watch to re-arm the alarm. Long-press the ALARM button to wake its Bluetooth, then tap Retry."
     }
 }

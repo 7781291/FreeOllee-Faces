@@ -12,6 +12,7 @@ enum class FailureKind(val retryable: Boolean) {
     SETUP_INCOMPLETE(retryable = false),
     SUN_UNREACHABLE(retryable = true),
     HEALTH_UNAVAILABLE(retryable = false),
+    ALARM_UNREACHABLE(retryable = true),
 }
 
 /** What to do with the single error notification after one worker outcome. */
