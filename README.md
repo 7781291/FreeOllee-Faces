@@ -28,7 +28,8 @@ lands). See
 tones by name. The watch itself stores only a single alarm with no day field, so the app
 computes the soonest occurrence and re-arms the watch's one slot after every edit and
 every fire — without disturbing the watch's hourly-chime settings, which live in the same
-BLE record. See
+BLE record. If a re-arm push can't reach the watch it retries at 2/5/15 minutes, then posts a
+notification with a Retry action — a missed push otherwise means a silently skipped alarm. See
 [`docs/superpowers/specs/2026-06-10-alarm-scheduler-design.md`](docs/superpowers/specs/2026-06-10-alarm-scheduler-design.md).
 
 Built as a workaround for GrapheneOS users — the official Ollee app relies on Google Play
