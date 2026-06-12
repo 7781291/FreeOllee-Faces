@@ -308,19 +308,19 @@ class OlleeProtocolTest {
 
     // The 02 25 alarm record: 1:30 PM, chime index 5, play-now. Field meanings decoded by
     // toggle-diffing the official app's alarm screen on 2026-06-11 (see builder KDoc): byte 1
-    // keeps the watch's hourly chime ON, byte 5 = 00 repeats every day (the phone owns real
-    // scheduling). 13-byte payload incl. the FF terminator; CRC-16/CCITT-FALSE over the inner
-    // -> 0x5128, LEN = 0x13. buildAlarmPacket emits the whole 21-byte frame (the BLE layer
-    // splits [20][FF]).
+    // keeps the watch's hourly chime ON, byte 5 = FE repeats every day (1 = day active; 00
+    // showed the watch's Alarm setting off and stayed silent — the phone owns real scheduling).
+    // 13-byte payload incl. the FF terminator; CRC-16/CCITT-FALSE over the inner -> 0x82B4,
+    // LEN = 0x13. buildAlarmPacket emits the whole 21-byte frame (the BLE layer splits [20][FF]).
     @Test
     fun `buildAlarmPacket reproduces the captured 02 25 chime-preview frame`() {
         val packet = OlleeProtocol.buildAlarmPacket(
             hour = 13, minute = 30, chimeIndex = 5, playNow = true, enabled = false,
         )
         val expected = byteArrayOf(
-            0x00, 0x13, 0xAA.toByte(), 0x55, 0x51, 0x28, // frame header + CRC
+            0x00, 0x13, 0xAA.toByte(), 0x55, 0x82.toByte(), 0xB4.toByte(), // frame header + CRC
             0x02, 0x25,                                            // cmd + target
-            0x00, 0x01, 0x00, 0x0D, 0x1E, 0x00, 0x05, 0x05, // enable,chimeOn,snooze,hr,min,days,chime,period
+            0x00, 0x01, 0x00, 0x0D, 0x1E, 0xFE.toByte(), 0x05, 0x05, // enable,chimeOn,snooze,hr,min,days,chime,period
             0x01, 0xC0.toByte(), 0xFF.toByte(), 0x0F, 0xFF.toByte(), // play, hour-mask, FF terminator
         )
         assertContentEquals(expected, packet)
@@ -350,7 +350,7 @@ class OlleeProtocolTest {
         assertEquals(0x01, f.payload[1].toInt() and 0xFF) // hourly chime stays on by default
         assertEquals(7, f.payload[3].toInt() and 0xFF)    // hour
         assertEquals(5, f.payload[4].toInt() and 0xFF)    // minute
-        assertEquals(0x00, f.payload[5].toInt() and 0xFF) // repeat mask: every day
+        assertEquals(0xFE, f.payload[5].toInt() and 0xFF) // repeat mask: every day
         assertEquals(2, f.payload[6].toInt() and 0xFF)    // chime index
         assertEquals(0x00, f.payload[8].toInt() and 0xFF) // play-now off
         assertEquals(0xFF, f.payload[12].toInt() and 0xFF) // terminator

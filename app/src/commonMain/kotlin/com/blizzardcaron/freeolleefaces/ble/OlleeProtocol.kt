@@ -157,10 +157,10 @@ object OlleeProtocol {
      * - byte 1 [hourlyChime]: hourly-chime on/off. We default it ON — sending 0 here is how an
      *   earlier build kept silently disabling the watch's hourly chime on every push.
      * - byte 2: snooze enable; byte 7: snooze period in minutes (we keep the stock 5).
-     * - byte 5: inverted repeat-day mask, bit1=Mon..bit7=Sun, 0 = day active. We always send 0x00
-     *   (every day): the phone computes the true next fire and re-arms/disarms after each one, and
-     *   00 is the value the verified 2026-06-10 live fire rang with. 0xFE (no active days) shows
-     *   as "Alarm off" in the official app.
+     * - byte 5: repeat-day mask, bit1=Mon..bit7=Sun, **1 = day active**, bit0 unused. We always
+     *   send 0xFE (every day): the phone computes the true next fire and re-arms/disarms after
+     *   each one. Sending 0x00 (NO active days) makes the watch show its Alarm setting as off and
+     *   stay silent at the stored time — verified on hardware 2026-06-11, twice.
      * - bytes 9-11: 24-bit little-endian active-hours mask for the hourly chime; C0 FF 0F =
      *   bits 6-19 = 6:00-19:00, the stock range we preserve.
      * The final FF is a constant terminator (payload byte 12). The watch's 20-byte ATT payload
@@ -184,7 +184,7 @@ object OlleeProtocol {
             0x00,                       // snooze off
             hour.toByte(),
             minute.toByte(),
-            0x00,                       // repeat every day — see KDoc
+            0xFE.toByte(),              // repeat every day — see KDoc; 0x00 would disable
             chimeIndex.toByte(),
             0x05,                       // snooze period (minutes), stock value
             if (playNow) 0x01 else 0x00,
