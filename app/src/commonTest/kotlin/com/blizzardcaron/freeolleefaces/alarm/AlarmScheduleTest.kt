@@ -91,7 +91,10 @@ class AlarmScheduleTest {
         assertEquals("Next: Thu 12:05 AM · Classic", AlarmSchedule.formatNext(midnight))
 
         val noonHighChime = AlarmSchedule.NextFire(LocalDateTime(2026, 6, 13, 12, 0), hour = 12, minute = 0, chimeIndex = 7)
-        assertEquals("Next: Sat 12:00 PM · Chime 8", AlarmSchedule.formatNext(noonHighChime))
+        assertEquals("Next: Sat 12:00 PM · Galactic", AlarmSchedule.formatNext(noonHighChime))
+
+        val outOfRange = AlarmSchedule.NextFire(LocalDateTime(2026, 6, 13, 12, 0), hour = 12, minute = 0, chimeIndex = 15)
+        assertEquals("Next: Sat 12:00 PM · Chime 16", AlarmSchedule.formatNext(outOfRange))
 
         assertEquals("No alarms", AlarmSchedule.formatNext(null))
     }

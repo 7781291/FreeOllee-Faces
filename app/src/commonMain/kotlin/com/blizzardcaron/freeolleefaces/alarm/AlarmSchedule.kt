@@ -63,8 +63,16 @@ object AlarmSchedule {
         return "Next: $day $h12:$mm $amPm · ${chimeName(next.chimeIndex)}"
     }
 
-    /** Watch chime tone name; only the first few of the 14 are named in the protocol doc. */
+    /** Watch chime tone name for indices 0x00..0x0E. */
     fun chimeName(index: Int): String = CHIME_NAMES.getOrNull(index) ?: "Chime ${index + 1}"
 
-    private val CHIME_NAMES = listOf("Classic", "Breeze", "Westminster")
+    /**
+     * The watch's 15 tones in index order, read from the official app's chime dropdown
+     * (2026-06-11). Indices 0-2 are hardware-verified against the protocol doc; the dropdown
+     * order matches them, so the rest follow it.
+     */
+    val CHIME_NAMES = listOf(
+        "Classic", "Breeze", "Westminster", "Retro", "Wire", "Plumber", "Indy", "Galactic",
+        "Dinosaur", "Superman", "Tequila", "Beethoven", "Blocks", "Ghosts", "Sand",
+    )
 }
