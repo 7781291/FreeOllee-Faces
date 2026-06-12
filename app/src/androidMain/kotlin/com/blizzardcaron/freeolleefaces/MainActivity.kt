@@ -25,6 +25,9 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.core.content.ContextCompat
 import androidx.health.connect.client.PermissionController
+import com.blizzardcaron.freeolleefaces.alarm.AlarmsRepository
+import com.blizzardcaron.freeolleefaces.auto.AlarmRearm
+import com.blizzardcaron.freeolleefaces.auto.AndroidAlarmScheduler
 import com.blizzardcaron.freeolleefaces.auto.AndroidScheduler
 import com.blizzardcaron.freeolleefaces.ble.AndroidBleClient
 import com.blizzardcaron.freeolleefaces.health.AndroidStepsProvider
@@ -32,11 +35,13 @@ import com.blizzardcaron.freeolleefaces.health.StepsProvider
 import com.blizzardcaron.freeolleefaces.location.AndroidLocationProvider
 import com.blizzardcaron.freeolleefaces.notifications.AndroidNotificationAccess
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
+import com.blizzardcaron.freeolleefaces.prefs.alarmSettings
 import com.blizzardcaron.freeolleefaces.prefs.appSettings
 import com.blizzardcaron.freeolleefaces.prefs.timerSettings
 import com.blizzardcaron.freeolleefaces.timer.TimerSetsRepository
 import com.blizzardcaron.freeolleefaces.ui.BondedDevice
 import com.blizzardcaron.freeolleefaces.ui.BondedDevicesDialog
+import com.blizzardcaron.freeolleefaces.ui.AlarmsScreen
 import com.blizzardcaron.freeolleefaces.ui.HomeCallbacks
 import com.blizzardcaron.freeolleefaces.ui.HomeScreen
 import com.blizzardcaron.freeolleefaces.ui.Screen
@@ -83,6 +88,8 @@ private fun AppRoot(
             notificationAccess = AndroidNotificationAccess(context),
             timerRepo = TimerSetsRepository(timerSettings(context)),
             scheduler = AndroidScheduler(context),
+            alarmRepo = AlarmsRepository(alarmSettings(context)),
+            alarmScheduler = AndroidAlarmScheduler(context),
             versionLabel = versionLabel(versionName, context.packageName),
         )
     }
@@ -94,6 +101,12 @@ private fun AppRoot(
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { snackbarHostState.showSnackbar(it) }
+    }
+
+    // Alarm BLE pushes run detached from the ViewModel (debounced in AlarmRearm, also fired by
+    // receivers) — confirm their outcomes through the same snackbar.
+    LaunchedEffect(Unit) {
+        AlarmRearm.pushResults.collect { snackbarHostState.showSnackbar(it) }
     }
 
     LaunchedEffect(Unit) {
@@ -235,6 +248,7 @@ private fun AppRoot(
     val homeCallbacks = HomeCallbacks(
         onActivate = { viewModel.activate(it) },
         onOpenTimerSets = { viewModel.refreshTimers(); viewModel.navigateTo(Screen.TimerSets) },
+        onOpenAlarms = { viewModel.refreshAlarms(); viewModel.navigateTo(Screen.Alarms) },
         onOpenSettings = { viewModel.navigateTo(Screen.Settings) },
         onUpdateNow = { viewModel.refreshActive(force = true, push = true) },
         onTempUnitChange = { newUnit -> viewModel.setTempUnit(newUnit) },
@@ -278,11 +292,25 @@ private fun AppRoot(
             sets = viewModel.timerSets,
             activeId = viewModel.timerActiveId,
             sending = state.sending,
+            quickTimerSeconds = viewModel.quickTimerSeconds,
+            onSaveQuick = { viewModel.saveQuickTimer(it) },
+            onStartQuick = { viewModel.startQuickTimer() },
             onOpen = { viewModel.editTimerSet(it); viewModel.navigateTo(Screen.TimerSetEdit) },
             onNew = { viewModel.newTimerSet() },
             onDuplicate = { src -> viewModel.duplicateTimerSet(src) },
             onDelete = { viewModel.deleteTimerSet(it) },
             onSend = { viewModel.sendTimerSet(it) },
+            onStart = { viewModel.startTimerSet(it) },
+            onBack = { viewModel.navigateTo(Screen.Home) },
+            modifier = modifier,
+        )
+        Screen.Alarms -> AlarmsScreen(
+            alarms = viewModel.alarms,
+            nextSummary = viewModel.nextAlarmSummary,
+            onAdd = { viewModel.addAlarm() },
+            onSave = { viewModel.saveAlarm(it) },
+            onToggle = { id, enabled -> viewModel.toggleAlarm(id, enabled) },
+            onDelete = { viewModel.deleteAlarm(it) },
             onBack = { viewModel.navigateTo(Screen.Home) },
             modifier = modifier,
         )

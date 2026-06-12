@@ -24,7 +24,12 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.Clock
+import com.blizzardcaron.freeolleefaces.alarm.Alarm
+import com.blizzardcaron.freeolleefaces.alarm.AlarmsRepository
+import com.blizzardcaron.freeolleefaces.fakes.FakeAlarmScheduler
 import kotlin.test.AfterTest
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -103,6 +108,8 @@ class AppViewModelTest {
             notificationAccess = FakeNotificationAccessChecker(),
             timerRepo = TimerSetsRepository(settings),
             scheduler = scheduler,
+            alarmRepo = AlarmsRepository(MapSettings()),
+            alarmScheduler = FakeAlarmScheduler(callLog),
         )
 
         // Pre-condition: log is empty.
@@ -172,6 +179,8 @@ class AppViewModelTest {
             notificationAccess = FakeNotificationAccessChecker(),
             timerRepo = TimerSetsRepository(settings),
             scheduler = FakeScheduler(callLog),
+            alarmRepo = AlarmsRepository(MapSettings()),
+            alarmScheduler = FakeAlarmScheduler(callLog),
         )
 
         val set = makeTimerSet()
@@ -220,6 +229,8 @@ class AppViewModelTest {
             notificationAccess = FakeNotificationAccessChecker(),
             timerRepo = TimerSetsRepository(settings),
             scheduler = FakeScheduler(callLog),
+            alarmRepo = AlarmsRepository(MapSettings()),
+            alarmScheduler = FakeAlarmScheduler(callLog),
         )
 
         val set = makeTimerSet()
@@ -247,5 +258,191 @@ class AppViewModelTest {
             "timerActiveId should equal the sent set's id after a successful sendTimerSet")
         assertEquals(set.id, TimerSetsRepository(settings).activeId(),
             "active id should be persisted through the repo, not just held in VM state")
+    }
+
+    // ---------------------------------------------------------------------------
+    // Test C1 — startQuickTimer with no watch selected: snackbar, no BLE
+    // ---------------------------------------------------------------------------
+
+    @Test
+    fun startQuickTimer_noWatchAddress_showsSnackbarAndNoBleCall() = runTest(testScheduler) {
+        val callLog = mutableListOf<String>()
+        val ble = FakeBleClient(callLog)
+        val settings = MapSettings()
+        // watchAddress intentionally NOT set.
+        val prefs = Prefs(settings)
+        val vm = AppViewModel(
+            prefs = prefs,
+            ble = ble,
+            steps = FakeStepsProvider(),
+            location = FakeLocationProvider(),
+            notificationAccess = FakeNotificationAccessChecker(),
+            timerRepo = TimerSetsRepository(settings),
+            scheduler = FakeScheduler(callLog),
+            alarmRepo = AlarmsRepository(MapSettings()),
+            alarmScheduler = FakeAlarmScheduler(callLog),
+        )
+
+        // Collect the first snackbar event.
+        val eventDeferred = CompletableDeferred<String>()
+        val collectJob = launch {
+            val msg = vm.events.first()
+            eventDeferred.complete(msg)
+        }
+
+        vm.startQuickTimer()
+        advanceUntilIdle()
+
+        // The snackbar message must match the production string.
+        assertEquals("No watch selected — open Settings (⚙)", eventDeferred.await(),
+            "snackbar message mismatch when no watch selected")
+        assertTrue(callLog.none { it.startsWith("ble.sendPacket") }, "no BLE call without a watch")
+
+        collectJob.cancel()
+    }
+
+    // ---------------------------------------------------------------------------
+    // Test C2 — startQuickTimer success: sends START_SINGLE frame with active set slots
+    // ---------------------------------------------------------------------------
+
+    @Test
+    fun startQuickTimer_success_sendsStartSingleFrameWithActiveSetSlots() = runTest(testScheduler) {
+        val callLog = mutableListOf<String>()
+        val ble = FakeBleClient(callLog)
+        val settings = MapSettings()
+        val prefs = Prefs(settings)
+        prefs.watchAddress = "00:11:22:33:44:55"
+        prefs.quickTimerSeconds = 427          // 07:07 -> header MM=7 SS=7
+        val timerRepo = TimerSetsRepository(MapSettings())
+        val baseSet = TimerSet.blank("id1", "Set 1")
+        val set = baseSet.copy(slots = baseSet.slots.mapIndexed { i, s ->
+            if (i == 0) TimerSlot(durationSeconds = 180) else s
+        })
+        timerRepo.save(set)
+        timerRepo.setActive("id1")
+        val vm = AppViewModel(
+            prefs = prefs,
+            ble = ble,
+            steps = FakeStepsProvider(),
+            location = FakeLocationProvider(),
+            notificationAccess = FakeNotificationAccessChecker(),
+            timerRepo = timerRepo,
+            scheduler = FakeScheduler(callLog),
+            alarmRepo = AlarmsRepository(MapSettings()),
+            alarmScheduler = FakeAlarmScheduler(callLog),
+        )
+
+        vm.startQuickTimer()
+        advanceUntilIdle()
+
+        val pkt = ble.sentPackets.single()
+        assertEquals(0x02.toByte(), pkt[11], "header byte3 = START_SINGLE")
+        assertEquals(7.toByte(), pkt[9], "header MM from quickTimerSeconds")
+        assertEquals(7.toByte(), pkt[10], "header SS from quickTimerSeconds")
+        assertEquals(0xB4.toByte(), pkt[12]) // slot[0] LE byte0 = 180 s = 0xB4, from the active set
+    }
+
+    // ---------------------------------------------------------------------------
+    // Test C3 — startTimerSet success: sends START_INTERVAL frame with the set's own slots
+    // ---------------------------------------------------------------------------
+
+    @Test
+    fun startTimerSet_success_sendsStartIntervalFrame() = runTest(testScheduler) {
+        val callLog = mutableListOf<String>()
+        val ble = FakeBleClient(callLog)
+        val settings = MapSettings()
+        val prefs = Prefs(settings)
+        prefs.watchAddress = "00:11:22:33:44:55"
+        prefs.quickTimerSeconds = 427          // 07:07 -> header MM=7 SS=7
+        val timerRepo = TimerSetsRepository(MapSettings())
+        val baseSet = TimerSet.blank("id1", "Set 1")
+        val set = baseSet.copy(slots = baseSet.slots.mapIndexed { i, s ->
+            if (i == 0) TimerSlot(durationSeconds = 180) else s
+        })
+        val vm = AppViewModel(
+            prefs = prefs,
+            ble = ble,
+            steps = FakeStepsProvider(),
+            location = FakeLocationProvider(),
+            notificationAccess = FakeNotificationAccessChecker(),
+            timerRepo = timerRepo,
+            scheduler = FakeScheduler(callLog),
+            alarmRepo = AlarmsRepository(MapSettings()),
+            alarmScheduler = FakeAlarmScheduler(callLog),
+        )
+
+        vm.startTimerSet(set)
+        advanceUntilIdle()
+
+        val pkt = ble.sentPackets.single()
+        assertEquals(0x01.toByte(), pkt[11], "header byte3 = START_INTERVAL")
+        assertEquals(7.toByte(), pkt[9], "header MM from quickTimerSeconds")
+        assertEquals(7.toByte(), pkt[10], "header SS from quickTimerSeconds")
+        assertEquals(0xB4.toByte(), pkt[12]) // slot[0] LE byte0 = 180 s = 0xB4, from the started set
+        // A successful start marks the set active.
+        assertEquals("id1", vm.timerActiveId, "startTimerSet should set the active id on success")
+    }
+
+    // ---------------------------------------------------------------------------
+    // Test D1 — alarm CRUD persists, updates state, and re-arms on every change
+    // ---------------------------------------------------------------------------
+
+    @Test
+    fun `alarm CRUD persists, updates state, and re-arms on every change`() {
+        val callLog = mutableListOf<String>()
+        val settings = MapSettings()
+        val vm = AppViewModel(
+            prefs = Prefs(MapSettings()),
+            ble = FakeBleClient(callLog),
+            steps = FakeStepsProvider(),
+            location = FakeLocationProvider(),
+            notificationAccess = FakeNotificationAccessChecker(),
+            timerRepo = TimerSetsRepository(MapSettings()),
+            scheduler = FakeScheduler(callLog),
+            alarmRepo = AlarmsRepository(settings),
+            alarmScheduler = FakeAlarmScheduler(callLog),
+        )
+
+        vm.addAlarm()
+        assertEquals(1, vm.alarms.size)
+        assertEquals(1, callLog.count { it == "alarmScheduler.rearm" })
+
+        val alarm = vm.alarms[0]
+        vm.saveAlarm(alarm.copy(hour = 6, minute = 45))
+        assertEquals(6, vm.alarms[0].hour)
+
+        // Label-only change persists but does NOT re-arm (the label never reaches the watch).
+        vm.saveAlarm(vm.alarms[0].copy(label = "Work"))
+        assertEquals("Work", vm.alarms[0].label)
+        assertEquals(2, callLog.count { it == "alarmScheduler.rearm" })
+
+        vm.toggleAlarm(alarm.id, enabled = false)
+        assertFalse(vm.alarms[0].enabled)
+
+        vm.deleteAlarm(alarm.id)
+        assertTrue(vm.alarms.isEmpty())
+        assertNull(AlarmsRepository(settings).get(alarm.id))   // really deleted from the store
+        assertEquals(4, callLog.count { it == "alarmScheduler.rearm" })
+    }
+
+    // ---------------------------------------------------------------------------
+    // Test D2 — addAlarm caps at MAX_ALARMS
+    // ---------------------------------------------------------------------------
+
+    @Test
+    fun `addAlarm caps at MAX_ALARMS`() {
+        val vm = AppViewModel(
+            prefs = Prefs(MapSettings()),
+            ble = FakeBleClient(),
+            steps = FakeStepsProvider(),
+            location = FakeLocationProvider(),
+            notificationAccess = FakeNotificationAccessChecker(),
+            timerRepo = TimerSetsRepository(MapSettings()),
+            scheduler = FakeScheduler(),
+            alarmRepo = AlarmsRepository(MapSettings()),
+            alarmScheduler = FakeAlarmScheduler(),
+        )
+        repeat(AlarmsRepository.MAX_ALARMS + 1) { vm.addAlarm() }
+        assertEquals(AlarmsRepository.MAX_ALARMS, vm.alarms.size)
     }
 }

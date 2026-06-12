@@ -63,6 +63,7 @@ fun HomeScreen(
             Text("Complications", style = MaterialTheme.typography.headlineSmall)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 TextButton(onClick = callbacks.onOpenTimerSets) { Text("Timers") }
+                TextButton(onClick = callbacks.onOpenAlarms) { Text("Alarms") }
                 IconButton(onClick = callbacks.onOpenSettings) {
                     Text("⚙", style = MaterialTheme.typography.titleLarge)
                 }

@@ -5,7 +5,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.blizzardcaron.freeolleefaces.alarm.Alarm
+import com.blizzardcaron.freeolleefaces.alarm.AlarmSchedule
+import com.blizzardcaron.freeolleefaces.alarm.AlarmsRepository
 import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
+import com.blizzardcaron.freeolleefaces.auto.AlarmScheduler
 import com.blizzardcaron.freeolleefaces.auto.AutoUpdateSchedule
 import com.blizzardcaron.freeolleefaces.auto.Scheduler
 import com.blizzardcaron.freeolleefaces.auto.SleepWindow
@@ -47,7 +51,7 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalUuidApi::class)
-private fun randomTimerSetId(): String = Uuid.random().toString()
+private fun randomId(): String = Uuid.random().toString()
 
 private val CLOCK: DateTimeFormat<LocalTime> = LocalTime.Format {
     amPmHour(Padding.NONE); char(':'); minute(); char(' '); amPmMarker("AM", "PM")
@@ -76,6 +80,8 @@ class AppViewModel(
     private val notificationAccess: NotificationAccessChecker,
     private val timerRepo: TimerSetsRepository,
     private val scheduler: Scheduler,
+    private val alarmRepo: AlarmsRepository,
+    private val alarmScheduler: AlarmScheduler,
     private val versionLabel: String = "",
 ) : ViewModel() {
 
@@ -88,6 +94,17 @@ class AppViewModel(
         private set
     var timerActiveId by mutableStateOf(timerRepo.activeId())
         private set
+    var quickTimerSeconds by mutableStateOf(prefs.quickTimerSeconds)
+        private set
+
+    var alarms by mutableStateOf(alarmRepo.getAll())
+        private set
+
+    /** e.g. "Next: Tue 7:00 AM · Breeze" — or "No alarms". */
+    val nextAlarmSummary: String
+        get() = AlarmSchedule.formatNext(
+            AlarmSchedule.nextFire(alarms, Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())),
+        )
 
     private val _events = Channel<String>(Channel.BUFFERED)   // snackbar messages
     val events = _events.receiveAsFlow()
@@ -130,8 +147,36 @@ class AppViewModel(
         timerActiveId = timerRepo.activeId()
     }
 
+    fun refreshAlarms() { alarms = alarmRepo.getAll() }
+
+    fun addAlarm() {
+        if (alarms.size >= AlarmsRepository.MAX_ALARMS) return
+        alarmRepo.save(Alarm(id = randomId(), hour = 7, minute = 0))
+        alarms = alarmRepo.getAll()
+        alarmScheduler.rearm()
+    }
+
+    fun saveAlarm(alarm: Alarm) {
+        val before = alarmRepo.get(alarm.id)
+        alarmRepo.save(alarm)
+        alarms = alarmRepo.getAll()
+        // The label is phone-side only — a label-only edit (every keystroke lands here) must not
+        // re-push the watch. Anything schedule-affecting re-arms.
+        if (before == null || before.copy(label = alarm.label) != alarm) alarmScheduler.rearm()
+    }
+
+    fun toggleAlarm(id: String, enabled: Boolean) {
+        alarmRepo.get(id)?.let { saveAlarm(it.copy(enabled = enabled)) }
+    }
+
+    fun deleteAlarm(id: String) {
+        alarmRepo.delete(id)
+        alarms = alarmRepo.getAll()
+        alarmScheduler.rearm()
+    }
+
     fun newTimerSet() {
-        val set = TimerSet.blank(randomTimerSetId(), "Set ${timerSets.size + 1}")
+        val set = TimerSet.blank(randomId(), "Set ${timerSets.size + 1}")
         timerRepo.save(set)
         refreshTimers()
         editingSet = set
@@ -150,7 +195,7 @@ class AppViewModel(
 
     fun duplicateTimerSet(src: TimerSet) {
         if (timerSets.size < TimerSetsRepository.MAX_SETS) {
-            timerRepo.save(src.copy(id = randomTimerSetId(), name = src.name + " copy"))
+            timerRepo.save(src.copy(id = randomId(), name = src.name + " copy"))
             refreshTimers()
         }
     }
@@ -160,24 +205,47 @@ class AppViewModel(
         refreshTimers()
     }
 
-    fun sendTimerSet(set: TimerSet) {
+    /** Shared path for the three 0x26 sends: addr check, in-flight guard, push, snackbar. */
+    private fun pushTimerFrame(packet: ByteArray, successMsg: String, onSuccess: () -> Unit = {}) {
         val addr = prefs.watchAddress
         if (addr == null) { showSnackbar("No watch selected — open Settings (⚙)"); return }
-        if (state.sending) return // a push is already in flight; ignore re-taps to avoid overlapping writes
+        if (state.sending) return
         viewModelScope.launch {
             update { it.copy(sending = true) }
-            val result = ble.sendPacket(addr, OlleeProtocol.buildTimerPacket(set.durations()))
+            val result = ble.sendPacket(addr, packet)
             update { it.copy(sending = false) }
             result
-                .onSuccess {
-                    timerRepo.setActive(set.id)
-                    timerActiveId = set.id
-                    showSnackbar("Sent '${set.name}' to watch")
-                }
-                .onFailure {
-                    showSnackbar("Send failed — long-press ALARM to wake the watch, then retry")
-                }
+                .onSuccess { onSuccess(); showSnackbar(successMsg) }
+                .onFailure { showSnackbar("Send failed — long-press ALARM to wake the watch, then retry") }
         }
+    }
+
+    fun saveQuickTimer(seconds: Int) {
+        prefs.quickTimerSeconds = seconds
+        quickTimerSeconds = prefs.quickTimerSeconds   // read back to apply the >=0 coercion
+    }
+
+    fun sendTimerSet(set: TimerSet) {
+        val packet = OlleeProtocol.buildTimerPacket(
+            set.durations(), headerSeconds = quickTimerSeconds, startMode = OlleeProtocol.TimerStartMode.SAVE)
+        pushTimerFrame(packet, "Sent '${set.name}' to watch") {
+            timerRepo.setActive(set.id); timerActiveId = set.id
+        }
+    }
+
+    fun startTimerSet(set: TimerSet) {
+        val packet = OlleeProtocol.buildTimerPacket(
+            set.durations(), headerSeconds = quickTimerSeconds, startMode = OlleeProtocol.TimerStartMode.START_INTERVAL)
+        pushTimerFrame(packet, "Started '${set.name}' on watch") {
+            timerRepo.setActive(set.id); timerActiveId = set.id
+        }
+    }
+
+    fun startQuickTimer() {
+        val slots = timerActiveId?.let { timerRepo.get(it) }?.durations() ?: List(10) { 0 }
+        val packet = OlleeProtocol.buildTimerPacket(
+            slots, headerSeconds = quickTimerSeconds, startMode = OlleeProtocol.TimerStartMode.START_SINGLE)
+        pushTimerFrame(packet, "Started quick timer on watch")
     }
 
     private fun validCoords(): Pair<Double, Double>? {
@@ -554,7 +622,7 @@ class AppViewModel(
         com.blizzardcaron.freeolleefaces.location.isLocationStale(prefs.lastLocationFetchedMs, nowMs())
 
     /** Initial re-arm of the auto-update chain; called once from a LaunchedEffect on start. */
-    fun onStart() { scheduler.reschedule() }
+    fun onStart() { scheduler.reschedule(); alarmScheduler.rearm() }
 
     private suspend fun sendAndReport(
         address: String,

@@ -22,6 +22,9 @@ object OlleeProtocol {
     /** Timer-face slots (10 countdown durations) — write target. Ack at 0x46. */
     const val TARGET_TIMERS = 0x26
 
+    /** Header byte 3 of the 0x26 timer write: configure-only, or start now in interval/single mode. */
+    enum class TimerStartMode(val byte3: Int) { SAVE(0x00), START_INTERVAL(0x01), START_SINGLE(0x02) }
+
     /** Alarm-face record — write target. Ack at 0x45; the chime preview shares this format. */
     const val TARGET_ALARM = 0x25
 
@@ -105,26 +108,30 @@ object OlleeProtocol {
      * little-endian uint32 durations, then delegates to [buildRawPacket]. Per-slot labels are
      * phone-side only and never sent.
      *
-     * The header is `[00, MM, SS, 00]` and seeds the Timer face's **default/primary countdown**
-     * (the one shown before you scroll into the ten slots) — verified on-device: a zero header
-     * left that timer at 00:00:00. We seed it from Slot 1's minutes:seconds so the face comes up
-     * showing the first interval, ready to start (matching the official app, which parks the
-     * last-edited timer there). The header carries no slot data — the ten words persist regardless.
-     * It only has a minutes and a seconds byte (no hour), so Slot 1 durations ≥ 1 h are clamped to
-     * MM:SS for the *display* seed only; the stored Slot 1 word stays full-precision.
+     * The header is `[00, MM, SS, byte3]` where MM:SS seeds the Timer face's **Quick-timer**
+     * (the standalone countdown shown before scrolling into the ten slots) from [headerSeconds] —
+     * independent of the ten slot durations. A 2026-06-10 BLE capture confirmed the header MM:SS
+     * is a separate "Quick timer" value, not derived from slot 1. Minutes are clamped to one byte
+     * (0xFF max) when [headerSeconds] ≥ 256 minutes. [startMode] drives byte 3: SAVE (0x00)
+     * persists the table without starting, START_INTERVAL (0x01) starts interval mode immediately,
+     * START_SINGLE (0x02) starts a single countdown immediately.
      */
-    fun buildTimerPacket(durationsSeconds: List<Int>): ByteArray {
+    fun buildTimerPacket(
+        durationsSeconds: List<Int>,
+        headerSeconds: Int,
+        startMode: TimerStartMode = TimerStartMode.SAVE,
+    ): ByteArray {
         require(durationsSeconds.size == 10) {
             "timer table needs exactly 10 slots (got ${durationsSeconds.size})"
         }
         require(durationsSeconds.all { it in 0..359_999 }) {
             "each duration must be 0..359999 s (got $durationsSeconds)"
         }
+        require(headerSeconds >= 0) { "headerSeconds must be >= 0 (got $headerSeconds)" }
         val payload = ByteArray(4 + 10 * 4) // 4-byte header + 10 LE-uint32 words
-        // Seed the face's default countdown from Slot 1 (MM:SS; minutes clamped to one byte).
-        val slot1 = durationsSeconds[0]
-        payload[1] = (slot1 / 60).coerceAtMost(0xFF).toByte() // MM
-        payload[2] = (slot1 % 60).toByte()                    // SS
+        payload[1] = (headerSeconds / 60).coerceAtMost(0xFF).toByte() // MM (Quick-timer primary)
+        payload[2] = (headerSeconds % 60).toByte()                    // SS
+        payload[3] = startMode.byte3.toByte()                         // start/mode selector
         durationsSeconds.forEachIndexed { i, s ->
             val off = 4 + i * 4
             payload[off] = (s and 0xFF).toByte()
@@ -141,11 +148,24 @@ object OlleeProtocol {
      * 0x02 = Westminster, …). Set [playNow] to sound the chosen chime immediately ("Try chime"):
      * that is a transient preview the firmware does NOT persist (the play-now byte is absent from
      * the alarm read-back at 0x2B), so it never disturbs the stored alarm. [enabled] is the
-     * candidate alarm-on flag (byte 0).
+     * alarm-on flag (byte 0).
      *
-     * Layout (13-byte payload, decoded from captures — see docs/reference/ollee-ble-protocol.md
-     * in the ollee-graphene repo):
-     *   [enable, 00, 00, hour, minute, 00, chime, 05, playNow, C0, FF, 0F, FF]
+     * The record also carries the watch's **settings**, decoded 2026-06-11 by toggle-diffing the
+     * official app's alarm screen (one "Send to watch" writes the whole record):
+     *   [enable, hourlyChime, snoozeEnable, hour, minute, dayMask, chime, snoozeMin, playNow,
+     *    hourMaskLo, hourMaskMid, hourMaskHi, FF]
+     * - byte 1 [hourlyChime]: hourly-chime on/off. We default it ON — sending 0 here is how an
+     *   earlier build kept silently disabling the watch's hourly chime on every push.
+     * - byte 2: snooze enable; byte 7: snooze period in minutes (we keep the stock 5). Every push
+     *   deliberately forces snooze off: it is a property of the one alarm record this app fully
+     *   owns and re-writes (we have no snooze UI), and the captured official-app frames sent 00
+     *   here too.
+     * - byte 5: repeat-day mask, bit1=Mon..bit7=Sun, **1 = day active**, bit0 unused. We always
+     *   send 0xFE (every day): the phone computes the true next fire and re-arms/disarms after
+     *   each one. Sending 0x00 (NO active days) makes the watch show its Alarm setting as off and
+     *   stay silent at the stored time — verified on hardware 2026-06-11, twice.
+     * - bytes 9-11: 24-bit little-endian active-hours mask for the hourly chime; C0 FF 0F =
+     *   bits 6-19 = 6:00-19:00, the stock range we preserve.
      * The final FF is a constant terminator (payload byte 12). The watch's 20-byte ATT payload
      * fragments the resulting 21-byte frame into [20][FF] — exactly how the official app sends it,
      * and how [BleClient] chunks it.
@@ -156,20 +176,23 @@ object OlleeProtocol {
         chimeIndex: Int,
         playNow: Boolean,
         enabled: Boolean = false,
+        hourlyChime: Boolean = true,
     ): ByteArray {
         require(hour in 0..23) { "hour must be 0..23 (got $hour)" }
         require(minute in 0..59) { "minute must be 0..59 (got $minute)" }
         require(chimeIndex in 0..0xFF) { "chimeIndex must be a single byte (got $chimeIndex)" }
         val payload = byteArrayOf(
             if (enabled) 0x01 else 0x00,
-            0x00, 0x00,
+            if (hourlyChime) 0x01 else 0x00,
+            0x00,                       // snooze off
             hour.toByte(),
             minute.toByte(),
-            0x00,                       // byte 5: role undecoded; 0x00 observed sounding the chime
+            0xFE.toByte(),              // repeat every day — see KDoc; 0x00 would disable
             chimeIndex.toByte(),
-            0x05,                       // byte 7: constant
+            0x05,                       // snooze period (minutes), stock value
             if (playNow) 0x01 else 0x00,
-            0xC0.toByte(), 0xFF.toByte(), 0x0F, 0xFF.toByte(), // trailer + FF terminator
+            0xC0.toByte(), 0xFF.toByte(), 0x0F, // hourly-chime hours 6:00-19:00
+            0xFF.toByte(),              // terminator
         )
         return buildRawPacket(TARGET_ALARM, payload)
     }

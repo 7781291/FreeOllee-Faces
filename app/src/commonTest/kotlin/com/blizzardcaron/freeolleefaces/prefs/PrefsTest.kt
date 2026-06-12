@@ -203,4 +203,20 @@ class PrefsTest {
         assertTrue(tv != null, "tempValue should not be null after recordTempFetch")
         assertTrue(abs(tv - 72.0) < 0.001, "recordTempFetch should store the supplied temperature: got $tv")
     }
+
+    // ---------------------------------------------------------------------------
+    // quickTimerSeconds  (Int with default 180 and negative clamping)
+    // ---------------------------------------------------------------------------
+
+    @Test fun `quickTimerSeconds defaults to 180 and round-trips, clamping negatives to zero`() {
+        val settings = MapSettings()
+        val prefs = Prefs(settings)
+        assertEquals(180, prefs.quickTimerSeconds)        // default 03:00
+
+        prefs.quickTimerSeconds = 427                      // 07:07
+        assertEquals(427, Prefs(settings).quickTimerSeconds)
+
+        prefs.quickTimerSeconds = -5                        // clamped
+        assertEquals(0, prefs.quickTimerSeconds)
+    }
 }

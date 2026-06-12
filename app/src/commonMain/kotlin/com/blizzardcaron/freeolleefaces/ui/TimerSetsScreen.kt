@@ -32,11 +32,15 @@ fun TimerSetsScreen(
     sets: List<TimerSet>,
     activeId: String?,
     sending: Boolean,
+    quickTimerSeconds: Int,
+    onSaveQuick: (Int) -> Unit,
+    onStartQuick: () -> Unit,
     onOpen: (TimerSet) -> Unit,
     onNew: () -> Unit,
     onDuplicate: (TimerSet) -> Unit,
     onDelete: (TimerSet) -> Unit,
     onSend: (TimerSet) -> Unit,
+    onStart: (TimerSet) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -54,6 +58,27 @@ fun TimerSetsScreen(
             TextButton(onClick = onBack) { Text("Done") }
         }
         HorizontalDivider()
+
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text("Quick timer", style = MaterialTheme.typography.titleMedium)
+                val (h, m, s) = TimerSetEditing.secondsToHms(quickTimerSeconds)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    NumberField("H", h) { onSaveQuick(TimerSetEditing.hmsToSeconds(it, m, s)) }
+                    NumberField("M", m) { onSaveQuick(TimerSetEditing.hmsToSeconds(h, it, s)) }
+                    NumberField("S", s) { onSaveQuick(TimerSetEditing.hmsToSeconds(h, m, it)) }
+                }
+                Button(onClick = onStartQuick, enabled = !sending, modifier = Modifier.fillMaxWidth()) {
+                    Text("▶ Start on watch")
+                }
+            }
+        }
 
         val atMax = sets.size >= TimerSetsRepository.MAX_SETS
         Button(onClick = onNew, enabled = !atMax, modifier = Modifier.fillMaxWidth()) {
@@ -77,6 +102,7 @@ fun TimerSetsScreen(
                     onDuplicate = { onDuplicate(set) },
                     onDelete = { onDelete(set) },
                     onSend = { onSend(set) },
+                    onStart = { onStart(set) },
                 )
             }
         }
@@ -92,6 +118,7 @@ private fun TimerSetRow(
     onDuplicate: () -> Unit,
     onDelete: () -> Unit,
     onSend: () -> Unit,
+    onStart: () -> Unit,
 ) {
     val cardColors = if (active) {
         CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
@@ -118,6 +145,7 @@ private fun TimerSetRow(
             } else "all blank"
             Text(summary, style = MaterialTheme.typography.bodySmall)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onStart, enabled = !sending) { Text("▶ Start") }
                 TextButton(onClick = onDuplicate) { Text("Duplicate") }
                 TextButton(onClick = onDelete) { Text("Delete") }
             }

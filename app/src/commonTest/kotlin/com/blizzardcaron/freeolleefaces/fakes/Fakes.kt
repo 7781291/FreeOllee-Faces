@@ -1,5 +1,6 @@
 package com.blizzardcaron.freeolleefaces.fakes
 
+import com.blizzardcaron.freeolleefaces.auto.AlarmScheduler
 import com.blizzardcaron.freeolleefaces.auto.Scheduler
 import com.blizzardcaron.freeolleefaces.ble.BleClient
 import com.blizzardcaron.freeolleefaces.health.StepsProvider
@@ -27,6 +28,9 @@ class FakeBleClient(
     var gate: CompletableDeferred<Unit>? = null,
 ) : BleClient {
 
+    /** Every packet passed to [sendPacket], in order — lets tests assert on the framed bytes. */
+    val sentPackets: MutableList<ByteArray> = mutableListOf()
+
     override suspend fun send(deviceAddress: String, value: String): Result<Unit> {
         gate?.await()
         callLog += "ble.send($deviceAddress,$value)"
@@ -42,6 +46,7 @@ class FakeBleClient(
     override suspend fun sendPacket(deviceAddress: String, packet: ByteArray): Result<Unit> {
         gate?.await()
         callLog += "ble.sendPacket($deviceAddress)"
+        sentPackets += packet
         return sendResult
     }
 }
@@ -99,5 +104,19 @@ class FakeScheduler(
 
     override fun reschedule() {
         callLog += "scheduler.reschedule"
+    }
+}
+
+// ---------------------------------------------------------------------------
+// FakeAlarmScheduler
+// ---------------------------------------------------------------------------
+
+/** Records "alarmScheduler.rearm" into the shared [callLog]. */
+class FakeAlarmScheduler(
+    private val callLog: MutableList<String> = mutableListOf(),
+) : AlarmScheduler {
+
+    override fun rearm() {
+        callLog += "alarmScheduler.rearm"
     }
 }

@@ -5,4 +5,5 @@ sealed interface Screen {
     data object Settings : Screen
     data object TimerSets : Screen
     data object TimerSetEdit : Screen
+    data object Alarms : Screen
 }
