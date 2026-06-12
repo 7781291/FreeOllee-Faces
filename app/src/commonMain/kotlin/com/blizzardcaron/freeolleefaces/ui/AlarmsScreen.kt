@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -28,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.blizzardcaron.freeolleefaces.alarm.Alarm
 import com.blizzardcaron.freeolleefaces.alarm.AlarmSchedule
@@ -110,7 +113,7 @@ private fun AlarmCard(
                 ) {
                     val isPm = alarm.hour >= 12
                     val hour12 = if (alarm.hour % 12 == 0) 12 else alarm.hour % 12
-                    NumberField("H", hour12) { onSave(alarm.copy(hour = hour24(it.coerceIn(1, 12), isPm))) }
+                    HourField(hour12) { onSave(alarm.copy(hour = hour24(it, isPm))) }
                     NumberField("M", alarm.minute) { onSave(alarm.copy(minute = it.coerceIn(0, 59))) }
                     TextButton(onClick = { onSave(alarm.copy(hour = hour24(hour12, !isPm))) }) {
                         Text(if (isPm) "PM" else "AM")
@@ -175,6 +178,30 @@ private fun ChimePicker(index: Int, onChange: (Int) -> Unit) {
             }
         }
     }
+}
+
+/**
+ * Hour entry for the 12-hour clock. Unlike [NumberField] it keeps a local edit buffer so the
+ * field can pass through empty/out-of-range text while typing (e.g. clearing "12" to type "8"),
+ * committing only 1..12. NumberField's 0-renders-empty convention can't express that here:
+ * hour 0 doesn't exist on a 12-hour clock, and coercing the transient 0 back to a digit made
+ * hours 2-9 unreachable by normal typing.
+ */
+@Composable
+private fun HourField(value: Int, onCommit: (Int) -> Unit) {
+    var text by remember(value) { mutableStateOf(value.toString()) }
+    OutlinedTextField(
+        value = text,
+        onValueChange = { raw ->
+            val t = raw.filter(Char::isDigit).take(2)
+            text = t
+            t.toIntOrNull()?.takeIf { it in 1..12 }?.let(onCommit)
+        },
+        label = { Text("H") },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        modifier = Modifier.width(80.dp),
+    )
 }
 
 /** 12-hour clock + AM/PM back to the 0..23 hour the [Alarm] model stores (12 AM = 0, 12 PM = 12). */
