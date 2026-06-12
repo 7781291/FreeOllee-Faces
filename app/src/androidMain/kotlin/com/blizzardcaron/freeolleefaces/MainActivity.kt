@@ -26,6 +26,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.core.content.ContextCompat
 import androidx.health.connect.client.PermissionController
 import com.blizzardcaron.freeolleefaces.alarm.AlarmsRepository
+import com.blizzardcaron.freeolleefaces.auto.AlarmRearm
 import com.blizzardcaron.freeolleefaces.auto.AndroidAlarmScheduler
 import com.blizzardcaron.freeolleefaces.auto.AndroidScheduler
 import com.blizzardcaron.freeolleefaces.ble.AndroidBleClient
@@ -100,6 +101,12 @@ private fun AppRoot(
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { snackbarHostState.showSnackbar(it) }
+    }
+
+    // Alarm BLE pushes run detached from the ViewModel (debounced in AlarmRearm, also fired by
+    // receivers) — confirm their outcomes through the same snackbar.
+    LaunchedEffect(Unit) {
+        AlarmRearm.pushResults.collect { snackbarHostState.showSnackbar(it) }
     }
 
     LaunchedEffect(Unit) {

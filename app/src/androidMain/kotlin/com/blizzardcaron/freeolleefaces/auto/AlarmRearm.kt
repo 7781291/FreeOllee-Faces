@@ -13,7 +13,9 @@ import com.blizzardcaron.freeolleefaces.prefs.alarmSettings
 import com.blizzardcaron.freeolleefaces.prefs.appSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -45,6 +47,16 @@ object AlarmRearm {
     private const val PUSH_DEBOUNCE_MS = 750L
     private val generation = AtomicInteger()
     private val pushMutex = Mutex()
+
+    /**
+     * Outcome of each completed push attempt, for UI snackbars. Debounce-superseded calls never
+     * emit — only frames that actually went over the air confirm. No-subscriber emissions
+     * (receiver/boot pushes with the app closed) drop harmlessly.
+     */
+    val pushResults = MutableSharedFlow<String>(
+        extraBufferCapacity = 4,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
 
     /**
      * Runs the full pass. Each call's [onComplete] fires after its own push attempt — or, when
@@ -106,6 +118,14 @@ object AlarmRearm {
                         TAG,
                         if (result.isSuccess) "push OK (${if (latest != null) "armed ${latest.dateTime}" else "disarm"})"
                         else "push FAIL ${result.exceptionOrNull()?.message} (will retry on next trigger/open/boot)",
+                    )
+                    pushResults.tryEmit(
+                        when {
+                            !result.isSuccess ->
+                                "Alarm send failed — long-press ALARM to wake the watch (retries automatically)"
+                            latest != null -> "Sent to watch — ${AlarmSchedule.formatNext(latest)}"
+                            else -> "Sent to watch — alarm off"
+                        },
                     )
                 }
             } finally {
