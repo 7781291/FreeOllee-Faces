@@ -1,8 +1,12 @@
 # Super FreeOllee
 
-A self-contained Android app that pushes one of four **complications** to an Ollee Watch over
-Bluetooth Low Energy (shown on the watch's 6-character "Name tag", held under ALARM on the
-Clock face):
+A self-contained Android companion app for the Ollee kids' watch, talking to it directly
+over Bluetooth Low Energy.
+
+## Features
+
+**Complications** — pushes one of four values to the watch's 6-character "Name tag"
+(held under ALARM on the Clock face), refreshed automatically in the background:
 
 - The current temperature in °F (via Open-Meteo).
 - The next sunrise or sunset time (computed locally with the NOAA solar algorithm).
@@ -10,6 +14,22 @@ Clock face):
   there — a fitness ring, phone pedometer, etc.). See
   [`docs/superpowers/specs/2026-06-02-steps-face-design.md`](docs/superpowers/specs/2026-06-02-steps-face-design.md).
 - A custom 6-character string (for experimentation).
+
+**Notification badge** — counts the phone's undismissed notifications and shows the count
+in the watch's weekday slot (requires granting Notification access; renders on the Clock
+face only).
+
+**Timers** — build and push sets of interval timers to the watch's Timer face, plus a
+one-tap quick timer and remote start (the watch starts counting the moment the frame
+lands). See
+[`docs/superpowers/specs/2026-06-10-timer-enhancements-design.md`](docs/superpowers/specs/2026-06-10-timer-enhancements-design.md).
+
+**Alarms** — up to 5 alarms with day-of-week repeats, labels, and all 15 watch chime
+tones by name. The watch itself stores only a single alarm with no day field, so the app
+computes the soonest occurrence and re-arms the watch's one slot after every edit and
+every fire — without disturbing the watch's hourly-chime settings, which live in the same
+BLE record. See
+[`docs/superpowers/specs/2026-06-10-alarm-scheduler-design.md`](docs/superpowers/specs/2026-06-10-alarm-scheduler-design.md).
 
 Built as a workaround for GrapheneOS users — the official Ollee app relies on Google Play
 Services' Fused Location Provider, which is absent on GrapheneOS. This app uses the
@@ -47,10 +67,12 @@ yet**, so this currently builds and ships as an Android app only.
 
 ## Releases
 
-Tagged versions are published as GitHub Releases with the debug-signed APK attached —
-see the [Releases page](https://github.com/kenblizzardcaron/FreeOllee-Faces/releases).
-Pushing a `v*` tag triggers `.github/workflows/release.yml`, which builds and publishes
-the APK; APKs are not committed to the repository.
+Every merge to `main` triggers `.github/workflows/release.yml`, which builds a
+release-signed APK, tags the commit `v<VERSION>` (from the [`VERSION`](VERSION) file),
+and publishes it as a GitHub Release — see the
+[Releases page](https://github.com/kenblizzardcaron/FreeOllee-Faces/releases). A PR can
+opt out by putting `[skip release]` in its title; a companion workflow rejects merges
+that forget to bump `VERSION`. APKs are not committed to the repository.
 
 ## License
 
