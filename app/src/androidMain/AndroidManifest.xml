@@ -73,6 +73,11 @@
             android:name=".notify.RetryReceiver"
             android:exported="false" />
 
+        <!-- Backs the alarm-failure notification's "Retry" action. -->
+        <receiver
+            android:name=".notify.AlarmRetryReceiver"
+            android:exported="false" />
+
         <!-- Developer BLE bench tool (adb-driven raw-frame sender). Exported so `adb shell am
              broadcast` can reach it; the receiver itself is inert unless the build is debuggable. -->
         <receiver
