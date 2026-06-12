@@ -49,9 +49,9 @@ object AlarmRearm {
     private val pushMutex = Mutex()
 
     /**
-     * Outcome of each completed push attempt, for UI snackbars. Debounce-superseded calls never
-     * emit — only frames that actually went over the air confirm. No-subscriber emissions
-     * (receiver/boot pushes with the app closed) drop harmlessly.
+     * Outcome of each completed push attempt, for UI snackbars — including "no watch selected",
+     * so edits never silently look like they reached a watch. Debounce-superseded calls never
+     * emit. No-subscriber emissions (receiver/boot pushes with the app closed) drop harmlessly.
      */
     val pushResults = MutableSharedFlow<String>(
         extraBufferCapacity = 4,
@@ -93,16 +93,18 @@ object AlarmRearm {
         }
 
         val address = Prefs(appSettings(ctx)).watchAddress
-        if (address == null) {
-            Log.w(TAG, "no watch selected — skipping push")
-            onComplete()
-            return
-        }
         val myGen = generation.incrementAndGet()
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 delay(PUSH_DEBOUNCE_MS)
                 if (generation.get() != myGen) return@launch   // superseded by a newer rearm
+                if (address == null) {
+                    // Inside the debounce so an edit burst surfaces ONE snackbar, not one per tap.
+                    // Same message the manual send path shows (AppViewModel.pushTimerFrame).
+                    Log.w(TAG, "no watch selected — skipping push")
+                    pushResults.tryEmit("No watch selected — open Settings (⚙)")
+                    return@launch
+                }
                 // Serialize pushes: GATT round-trips run seconds — far longer than the debounce —
                 // so without the lock an older push still in flight can land AFTER a newer one and
                 // leave the watch holding stale state (observed on-device 2026-06-11).
