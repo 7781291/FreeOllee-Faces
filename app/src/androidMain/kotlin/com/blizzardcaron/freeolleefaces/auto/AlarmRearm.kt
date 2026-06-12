@@ -5,9 +5,12 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import com.blizzardcaron.freeolleefaces.alarm.AlarmRearmRecovery
 import com.blizzardcaron.freeolleefaces.alarm.AlarmSchedule
 import com.blizzardcaron.freeolleefaces.alarm.AlarmsRepository
 import com.blizzardcaron.freeolleefaces.ble.AndroidBleClient
+import com.blizzardcaron.freeolleefaces.notify.ErrorNotifier
+import com.blizzardcaron.freeolleefaces.notify.FailureKind
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
 import com.blizzardcaron.freeolleefaces.prefs.alarmSettings
 import com.blizzardcaron.freeolleefaces.prefs.appSettings
@@ -32,8 +35,11 @@ import java.util.concurrent.atomic.AtomicInteger
  * alarms to their next occurrence (the watch itself has no day-of-week field).
  *
  * The watch cannot tell the phone an alarm fired, so the trigger time is our own computed
- * `nextFire + 60 s`. A failed BLE push is tolerated: the watch keeps its last good alarm and the
- * next trigger / app open / boot retries — eventually consistent.
+ * `nextFire + 60 s`. A failed BLE push is NOT left for the next trigger — that next trigger
+ * only runs after the *next* alarm should already have fired, which would silently skip it
+ * (observed on-device 2026-06-12). Instead [AlarmRearmRecovery] drives a backstop chain:
+ * exact re-arm passes at 2/5/15 min, then the alarm-failure notification once the budget is
+ * spent. A later successful push cancels the chain and clears the notification.
  *
  * The BLE push is **debounced** ([PUSH_DEBOUNCE_MS]): inline alarm cards call rearm on every edit
  * (each H/M digit, each day-chip tap), and back-to-back GATT connects would collide. Each call
@@ -43,7 +49,9 @@ import java.util.concurrent.atomic.AtomicInteger
 object AlarmRearm {
 
     const val TAG = "ALARM_REARM"
-    private const val REQUEST_CODE = 4025   // one slot: each schedule replaces the last
+    const val EXTRA_ATTEMPT = "rearm_attempt"
+    private const val REQUEST_CODE = 4025           // fire+60s trigger: one slot, each schedule replaces the last
+    private const val BACKSTOP_REQUEST_CODE = 4026  // failed-push backstop: separate slot, same receiver
     private const val PUSH_DEBOUNCE_MS = 750L
     private val generation = AtomicInteger()
     private val pushMutex = Mutex()
@@ -62,7 +70,7 @@ object AlarmRearm {
      * Runs the full pass. Each call's [onComplete] fires after its own push attempt — or, when
      * superseded by a newer call, after its debounce delay elapses without pushing.
      */
-    fun rearm(context: Context, onComplete: () -> Unit = {}) {
+    fun rearm(context: Context, attempt: Int = 0, onComplete: () -> Unit = {}) {
         val ctx = context.applicationContext
 
         // Schedule the trigger first — it must survive even if the push below fails.
@@ -118,13 +126,17 @@ object AlarmRearm {
                     val result = AndroidBleClient(ctx).sendPacket(address, AlarmSchedule.packetFor(latest))
                     Log.i(
                         TAG,
-                        if (result.isSuccess) "push OK (${if (latest != null) "armed ${latest.dateTime}" else "disarm"})"
-                        else "push FAIL ${result.exceptionOrNull()?.message} (will retry on next trigger/open/boot)",
+                        if (result.isSuccess) "push OK (${if (latest != null) "armed ${latest.dateTime}" else "disarm"}) [attempt $attempt]"
+                        else "push FAIL ${result.exceptionOrNull()?.message} [attempt $attempt]",
                     )
+                    val action = AlarmRearmRecovery.afterPush(result.isSuccess, attempt)
+                    applyRecovery(ctx, am, action)
                     pushResults.tryEmit(
                         when {
+                            !result.isSuccess && action is AlarmRearmRecovery.Action.ScheduleRetry ->
+                                "Alarm send failed — long-press ALARM to wake the watch (retrying automatically)"
                             !result.isSuccess ->
-                                "Alarm send failed — long-press ALARM to wake the watch (retries automatically)"
+                                "Alarm send failed after several tries — long-press ALARM to wake the watch, then tap Retry in the notification"
                             latest != null -> "Sent to watch — ${AlarmSchedule.formatNext(latest)}"
                             else -> "Sent to watch — alarm off"
                         },
@@ -135,4 +147,36 @@ object AlarmRearm {
             }
         }
     }
+
+    /** Applies one [AlarmRearmRecovery] outcome: backstop scheduling, cleanup, or notification. */
+    private fun applyRecovery(ctx: Context, am: AlarmManager, action: AlarmRearmRecovery.Action) {
+        when (action) {
+            AlarmRearmRecovery.Action.ClearFailure -> {
+                am.cancel(backstopTrigger(ctx, nextAttempt = 0))
+                ErrorNotifier.clearAlarm(ctx)
+            }
+            is AlarmRearmRecovery.Action.ScheduleRetry -> {
+                val atMs = System.currentTimeMillis() + action.delayMs
+                val pi = backstopTrigger(ctx, action.nextAttempt)
+                if (am.canScheduleExactAlarms()) {
+                    am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, atMs, pi)
+                } else {
+                    am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, atMs, pi)
+                }
+                Log.i(TAG, "backstop retry ${action.nextAttempt} in ${action.delayMs / 1000}s")
+            }
+            AlarmRearmRecovery.Action.NotifyFailure -> {
+                Log.w(TAG, "backstop budget spent — posting alarm-failure notification")
+                ErrorNotifier.notify(ctx, FailureKind.ALARM_UNREACHABLE)
+            }
+        }
+    }
+
+    /** Extras don't participate in PendingIntent matching, so the same shape serves cancel(). */
+    private fun backstopTrigger(ctx: Context, nextAttempt: Int): PendingIntent =
+        PendingIntent.getBroadcast(
+            ctx, BACKSTOP_REQUEST_CODE,
+            Intent(ctx, AlarmRearmReceiver::class.java).putExtra(EXTRA_ATTEMPT, nextAttempt),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
 }
