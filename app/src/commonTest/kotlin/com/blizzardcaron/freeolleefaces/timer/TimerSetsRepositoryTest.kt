@@ -176,6 +176,7 @@ class TimerSetsRepositoryTest {
         assertEquals("c", ids.first())               // requested id leads
         assertEquals(setOf("a", "b", "c"), ids.toSet()) // nothing lost
         assertEquals(3, ids.size)
+        assertEquals(listOf("a", "b"), ids.drop(1))  // absentees keep existing relative order
     }
 
     @Test fun reorder_unknownIds_areIgnored() {
