@@ -295,6 +295,15 @@ class OlleeProtocolTest {
     }
 
     @Test
+    fun `TimerStartMode of decodes the official app's two independent toggles`() {
+        val mode = OlleeProtocol.TimerStartMode
+        assertEquals(OlleeProtocol.TimerStartMode.SAVE, mode.of(startFromApp = false, intervalMode = false))
+        assertEquals(OlleeProtocol.TimerStartMode.SAVE, mode.of(startFromApp = false, intervalMode = true)) // start off wins
+        assertEquals(OlleeProtocol.TimerStartMode.START_SINGLE, mode.of(startFromApp = true, intervalMode = false))
+        assertEquals(OlleeProtocol.TimerStartMode.START_INTERVAL, mode.of(startFromApp = true, intervalMode = true))
+    }
+
+    @Test
     fun `buildTimerPacket reproduces the captured save and start-interval frames`() {
         val slots = listOf(180, 30, 180, 30, 0, 60, 120, 600, 900, 1800)
         fun hex(b: ByteArray) = b.joinToString("") { "%02X".format(it) }

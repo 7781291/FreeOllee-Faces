@@ -96,6 +96,10 @@ class AppViewModel(
         private set
     var quickTimerSeconds by mutableStateOf(prefs.quickTimerSeconds)
         private set
+    var quickTimerStartFromApp by mutableStateOf(prefs.quickTimerStartFromApp)
+        private set
+    var quickTimerIntervalMode by mutableStateOf(prefs.quickTimerIntervalMode)
+        private set
 
     var alarms by mutableStateOf(alarmRepo.getAll())
         private set
@@ -225,6 +229,18 @@ class AppViewModel(
         quickTimerSeconds = prefs.quickTimerSeconds   // read back to apply the >=0 coercion
     }
 
+    /** "Start timer from app" toggle — whether a Send to watch also starts the countdown. */
+    fun toggleQuickTimerStartFromApp(enabled: Boolean) {
+        prefs.quickTimerStartFromApp = enabled
+        quickTimerStartFromApp = enabled
+    }
+
+    /** "Interval timer mode" toggle — interval (10-slot sequence) vs. single quick-timer countdown. */
+    fun toggleQuickTimerIntervalMode(enabled: Boolean) {
+        prefs.quickTimerIntervalMode = enabled
+        quickTimerIntervalMode = enabled
+    }
+
     fun sendTimerSet(set: TimerSet) {
         val packet = OlleeProtocol.buildTimerPacket(
             set.durations(), headerSeconds = quickTimerSeconds, startMode = OlleeProtocol.TimerStartMode.SAVE)
@@ -241,11 +257,23 @@ class AppViewModel(
         }
     }
 
-    fun startQuickTimer() {
+    /**
+     * "Send to watch" for the Quick timer. The two independent toggles ([quickTimerStartFromApp],
+     * [quickTimerIntervalMode]) — not which button was pressed — select the start/mode, decoupled
+     * exactly as the official app does. Slots are the active set's (preserved on the watch), or
+     * zeros if no set is active.
+     */
+    fun sendQuickTimer() {
+        val mode = OlleeProtocol.TimerStartMode.of(quickTimerStartFromApp, quickTimerIntervalMode)
         val slots = timerActiveId?.let { timerRepo.get(it) }?.durations() ?: List(10) { 0 }
         val packet = OlleeProtocol.buildTimerPacket(
-            slots, headerSeconds = quickTimerSeconds, startMode = OlleeProtocol.TimerStartMode.START_SINGLE)
-        pushTimerFrame(packet, "Started quick timer on watch")
+            slots, headerSeconds = quickTimerSeconds, startMode = mode)
+        val msg = when (mode) {
+            OlleeProtocol.TimerStartMode.SAVE -> "Sent quick timer to watch"
+            OlleeProtocol.TimerStartMode.START_INTERVAL -> "Started intervals on watch"
+            OlleeProtocol.TimerStartMode.START_SINGLE -> "Started quick timer on watch"
+        }
+        pushTimerFrame(packet, msg)
     }
 
     private fun validCoords(): Pair<Double, Double>? {

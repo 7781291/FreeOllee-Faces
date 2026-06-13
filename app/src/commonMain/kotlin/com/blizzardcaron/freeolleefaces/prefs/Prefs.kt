@@ -82,6 +82,20 @@ class Prefs(
         get() = settings.getInt(KEY_QUICK_TIMER_SECONDS, 180)
         set(value) = settings.putInt(KEY_QUICK_TIMER_SECONDS, value.coerceAtLeast(0))
 
+    /**
+     * The two independent "Send to watch" modifiers, mirroring the official app and decoupled from
+     * the quick-timer time itself (see [com.blizzardcaron.freeolleefaces.ble.OlleeProtocol.TimerStartMode.of]).
+     * Defaults reproduce the previous single "Start on watch" behavior: start the quick timer as a
+     * single countdown.
+     */
+    var quickTimerStartFromApp: Boolean
+        get() = settings.getBoolean(KEY_QUICK_TIMER_START, true)
+        set(value) = settings.putBoolean(KEY_QUICK_TIMER_START, value)
+
+    var quickTimerIntervalMode: Boolean
+        get() = settings.getBoolean(KEY_QUICK_TIMER_INTERVAL, false)
+        set(value) = settings.putBoolean(KEY_QUICK_TIMER_INTERVAL, value)
+
     var customSentMs: Long?
         get() = if (settings.hasKey(KEY_CUSTOM_SENT_MS)) settings.getLong(KEY_CUSTOM_SENT_MS, 0L) else null
         set(value) = if (value == null) settings.remove(KEY_CUSTOM_SENT_MS) else settings.putLong(KEY_CUSTOM_SENT_MS, value)
@@ -161,6 +175,8 @@ class Prefs(
         private const val KEY_LOCATION_FETCHED_MS = "location_fetched_ms"
         private const val KEY_CUSTOM_TEXT = "custom_text"
         private const val KEY_QUICK_TIMER_SECONDS = "quick_timer_seconds"
+        private const val KEY_QUICK_TIMER_START = "quick_timer_start_from_app"
+        private const val KEY_QUICK_TIMER_INTERVAL = "quick_timer_interval_mode"
         private const val KEY_CUSTOM_SENT_MS = "custom_sent_ms"
         private const val KEY_NOTIFICATION_COUNT = "notification_count"
         private const val KEY_NOTIFICATIONS_ENABLED = "notifications_enabled"

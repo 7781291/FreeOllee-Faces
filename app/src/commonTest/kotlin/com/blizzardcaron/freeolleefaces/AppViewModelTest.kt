@@ -261,11 +261,11 @@ class AppViewModelTest {
     }
 
     // ---------------------------------------------------------------------------
-    // Test C1 — startQuickTimer with no watch selected: snackbar, no BLE
+    // Test C1 — sendQuickTimer with no watch selected: snackbar, no BLE
     // ---------------------------------------------------------------------------
 
     @Test
-    fun startQuickTimer_noWatchAddress_showsSnackbarAndNoBleCall() = runTest(testScheduler) {
+    fun sendQuickTimer_noWatchAddress_showsSnackbarAndNoBleCall() = runTest(testScheduler) {
         val callLog = mutableListOf<String>()
         val ble = FakeBleClient(callLog)
         val settings = MapSettings()
@@ -290,7 +290,7 @@ class AppViewModelTest {
             eventDeferred.complete(msg)
         }
 
-        vm.startQuickTimer()
+        vm.sendQuickTimer()
         advanceUntilIdle()
 
         // The snackbar message must match the production string.
@@ -302,11 +302,12 @@ class AppViewModelTest {
     }
 
     // ---------------------------------------------------------------------------
-    // Test C2 — startQuickTimer success: sends START_SINGLE frame with active set slots
+    // Test C2 — sendQuickTimer with default toggles (start on, interval off): START_SINGLE,
+    // active set's slots
     // ---------------------------------------------------------------------------
 
     @Test
-    fun startQuickTimer_success_sendsStartSingleFrameWithActiveSetSlots() = runTest(testScheduler) {
+    fun sendQuickTimer_defaultToggles_sendsStartSingleFrameWithActiveSetSlots() = runTest(testScheduler) {
         val callLog = mutableListOf<String>()
         val ble = FakeBleClient(callLog)
         val settings = MapSettings()
@@ -332,7 +333,7 @@ class AppViewModelTest {
             alarmScheduler = FakeAlarmScheduler(callLog),
         )
 
-        vm.startQuickTimer()
+        vm.sendQuickTimer()
         advanceUntilIdle()
 
         val pkt = ble.sentPackets.single()
@@ -340,6 +341,48 @@ class AppViewModelTest {
         assertEquals(7.toByte(), pkt[9], "header MM from quickTimerSeconds")
         assertEquals(7.toByte(), pkt[10], "header SS from quickTimerSeconds")
         assertEquals(0xB4.toByte(), pkt[12]) // slot[0] LE byte0 = 180 s = 0xB4, from the active set
+    }
+
+    // ---------------------------------------------------------------------------
+    // Test C2b — the two toggles decide header byte3, decoupled from any single button
+    // ---------------------------------------------------------------------------
+
+    @Test
+    fun sendQuickTimer_togglesSelectStartMode() = runTest(testScheduler) {
+        val callLog = mutableListOf<String>()
+        val ble = FakeBleClient(callLog)
+        val settings = MapSettings()
+        val prefs = Prefs(settings)
+        prefs.watchAddress = "00:11:22:33:44:55"
+        prefs.quickTimerSeconds = 427
+        val timerRepo = TimerSetsRepository(MapSettings())
+        val vm = AppViewModel(
+            prefs = prefs,
+            ble = ble,
+            steps = FakeStepsProvider(),
+            location = FakeLocationProvider(),
+            notificationAccess = FakeNotificationAccessChecker(),
+            timerRepo = timerRepo,
+            scheduler = FakeScheduler(callLog),
+            alarmRepo = AlarmsRepository(MapSettings()),
+            alarmScheduler = FakeAlarmScheduler(callLog),
+        )
+
+        // Interval mode on (and start on) -> START_INTERVAL.
+        vm.toggleQuickTimerIntervalMode(true)
+        vm.sendQuickTimer()
+        advanceUntilIdle()
+        assertEquals(0x01.toByte(), ble.sentPackets.last()[11], "start + interval -> START_INTERVAL")
+
+        // Start from app off -> SAVE, regardless of interval mode.
+        vm.toggleQuickTimerStartFromApp(false)
+        vm.sendQuickTimer()
+        advanceUntilIdle()
+        assertEquals(0x00.toByte(), ble.sentPackets.last()[11], "start off -> SAVE")
+
+        // Toggles persist across a fresh ViewModel (Prefs-backed).
+        assertTrue(prefs.quickTimerIntervalMode, "interval mode persisted")
+        assertEquals(false, prefs.quickTimerStartFromApp, "start-from-app persisted")
     }
 
     // ---------------------------------------------------------------------------

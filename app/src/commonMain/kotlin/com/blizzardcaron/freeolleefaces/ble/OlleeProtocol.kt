@@ -23,7 +23,23 @@ object OlleeProtocol {
     const val TARGET_TIMERS = 0x26
 
     /** Header byte 3 of the 0x26 timer write: configure-only, or start now in interval/single mode. */
-    enum class TimerStartMode(val byte3: Int) { SAVE(0x00), START_INTERVAL(0x01), START_SINGLE(0x02) }
+    enum class TimerStartMode(val byte3: Int) {
+        SAVE(0x00), START_INTERVAL(0x01), START_SINGLE(0x02);
+
+        companion object {
+            /**
+             * The official app exposes three *independent* controls — "Start timer from app",
+             * "Interval timer mode", and "Send to watch" — that together select header byte 3.
+             * This is the same decode the 2026-06-10 capture observed: start off → [SAVE];
+             * start on + interval on → [START_INTERVAL]; start on + interval off → [START_SINGLE].
+             */
+            fun of(startFromApp: Boolean, intervalMode: Boolean): TimerStartMode = when {
+                !startFromApp -> SAVE
+                intervalMode -> START_INTERVAL
+                else -> START_SINGLE
+            }
+        }
+    }
 
     /** Alarm-face record — write target. Ack at 0x45; the chime preview shares this format. */
     const val TARGET_ALARM = 0x25

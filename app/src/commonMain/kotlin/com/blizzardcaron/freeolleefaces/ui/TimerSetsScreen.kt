@@ -17,6 +17,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -33,8 +34,12 @@ fun TimerSetsScreen(
     activeId: String?,
     sending: Boolean,
     quickTimerSeconds: Int,
+    quickTimerStartFromApp: Boolean,
+    quickTimerIntervalMode: Boolean,
     onSaveQuick: (Int) -> Unit,
-    onStartQuick: () -> Unit,
+    onToggleStartFromApp: (Boolean) -> Unit,
+    onToggleIntervalMode: (Boolean) -> Unit,
+    onSendQuick: () -> Unit,
     onOpen: (TimerSet) -> Unit,
     onNew: () -> Unit,
     onDuplicate: (TimerSet) -> Unit,
@@ -74,8 +79,22 @@ fun TimerSetsScreen(
                     NumberField("M", m) { onSaveQuick(TimerSetEditing.hmsToSeconds(h, it, s)) }
                     NumberField("S", s) { onSaveQuick(TimerSetEditing.hmsToSeconds(h, m, it)) }
                 }
-                Button(onClick = onStartQuick, enabled = !sending, modifier = Modifier.fillMaxWidth()) {
-                    Text("▶ Start on watch")
+                // The official app's three independent controls. "Send to watch" pushes one frame
+                // whose start/mode is decided by these toggles, not by which button you tap.
+                ToggleRow("Start timer from app", quickTimerStartFromApp, onToggleStartFromApp)
+                ToggleRow(
+                    "Interval mode",
+                    quickTimerIntervalMode,
+                    onToggleIntervalMode,
+                    enabled = quickTimerStartFromApp,
+                )
+                val sendLabel = when {
+                    !quickTimerStartFromApp -> "Send to watch"
+                    quickTimerIntervalMode -> "▶ Send & start intervals"
+                    else -> "▶ Send & start quick timer"
+                }
+                Button(onClick = onSendQuick, enabled = !sending, modifier = Modifier.fillMaxWidth()) {
+                    Text(sendLabel)
                 }
             }
         }
@@ -106,6 +125,24 @@ fun TimerSetsScreen(
                 )
             }
         }
+    }
+}
+
+/** A label + Switch row, used for the Quick timer's "Start from app" / "Interval mode" toggles. */
+@Composable
+private fun ToggleRow(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    enabled: Boolean = true,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Text(label, style = MaterialTheme.typography.bodyLarge)
+        Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
     }
 }
 
@@ -145,7 +182,7 @@ private fun TimerSetRow(
             } else "all blank"
             Text(summary, style = MaterialTheme.typography.bodySmall)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = onStart, enabled = !sending) { Text("▶ Start") }
+                TextButton(onClick = onStart, enabled = !sending) { Text("▶ Start intervals") }
                 TextButton(onClick = onDuplicate) { Text("Duplicate") }
                 TextButton(onClick = onDelete) { Text("Delete") }
             }
