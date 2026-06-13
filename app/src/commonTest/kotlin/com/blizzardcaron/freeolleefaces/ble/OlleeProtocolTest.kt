@@ -289,13 +289,24 @@ class OlleeProtocolTest {
         assertEquals(0x00.toByte(),
             OlleeProtocol.buildTimerPacket(slots, headerSeconds = 0, startMode = OlleeProtocol.TimerStartMode.SAVE)[11])
         assertEquals(0x01.toByte(),
-            OlleeProtocol.buildTimerPacket(slots, headerSeconds = 0, startMode = OlleeProtocol.TimerStartMode.START_INTERVAL)[11])
-        assertEquals(0x02.toByte(),
             OlleeProtocol.buildTimerPacket(slots, headerSeconds = 0, startMode = OlleeProtocol.TimerStartMode.START_SINGLE)[11])
+        assertEquals(0x02.toByte(),
+            OlleeProtocol.buildTimerPacket(slots, headerSeconds = 0, startMode = OlleeProtocol.TimerStartMode.START_INTERVAL)[11])
     }
 
     @Test
-    fun `buildTimerPacket reproduces the captured save and start-interval frames`() {
+    fun `TimerStartMode of decodes the official app's two independent toggles`() {
+        val mode = OlleeProtocol.TimerStartMode
+        assertEquals(OlleeProtocol.TimerStartMode.SAVE, mode.of(startFromApp = false, intervalMode = false))
+        assertEquals(OlleeProtocol.TimerStartMode.SAVE, mode.of(startFromApp = false, intervalMode = true)) // start off wins
+        assertEquals(OlleeProtocol.TimerStartMode.START_SINGLE, mode.of(startFromApp = true, intervalMode = false))
+        assertEquals(OlleeProtocol.TimerStartMode.START_INTERVAL, mode.of(startFromApp = true, intervalMode = true))
+    }
+
+    @Test
+    fun `buildTimerPacket reproduces the captured save and start-single frames`() {
+        // byte3=01 (the second frame, header 07:07) is a SINGLE start: verified on hardware
+        // 2026-06-13 that 01 counts down the header value, not the slot sequence.
         val slots = listOf(180, 30, 180, 30, 0, 60, 120, 600, 900, 1800)
         fun hex(b: ByteArray) = b.joinToString("") { "%02X".format(it) }
         assertEquals(
@@ -303,7 +314,18 @@ class OlleeProtocolTest {
             hex(OlleeProtocol.buildTimerPacket(slots, headerSeconds = 180, startMode = OlleeProtocol.TimerStartMode.SAVE)))
         assertEquals(
             "0032AA550558022600070701B40000001E000000B40000001E000000000000003C00000078000000580200008403000008070000",
-            hex(OlleeProtocol.buildTimerPacket(slots, headerSeconds = 427, startMode = OlleeProtocol.TimerStartMode.START_INTERVAL)))
+            hex(OlleeProtocol.buildTimerPacket(slots, headerSeconds = 427, startMode = OlleeProtocol.TimerStartMode.START_SINGLE)))
+    }
+
+    @Test
+    fun `buildTimerPacket reproduces the captured 4-44 single-start frame from hardware`() {
+        // Captured 2026-06-13 from FreeOllee, confirmed on watch: 4:44 single counts down.
+        // header 00 04 2C 01 (MM=4, SS=44, byte3=01 SINGLE) + the standard slot table.
+        val slots = listOf(180, 30, 180, 30, 0, 60, 120, 600, 900, 1800)
+        fun hex(b: ByteArray) = b.joinToString("") { "%02X".format(it) }
+        assertEquals(
+            "0032AA55FE95022600042C01B40000001E000000B40000001E000000000000003C00000078000000580200008403000008070000",
+            hex(OlleeProtocol.buildTimerPacket(slots, headerSeconds = 284, startMode = OlleeProtocol.TimerStartMode.START_SINGLE)))
     }
 
     // The 02 25 alarm record: 1:30 PM, chime index 5, play-now. Field meanings decoded by

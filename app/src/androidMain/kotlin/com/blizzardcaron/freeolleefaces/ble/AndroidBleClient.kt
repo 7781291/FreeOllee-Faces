@@ -9,7 +9,9 @@ import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.bluetooth.BluetoothStatusCodes
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import android.os.Build
+import android.util.Log
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
@@ -30,6 +32,10 @@ class AndroidBleClient(private val context: Context) : BleClient {
         // ATT payload for the watch's default 23-byte MTU (MTU - 3). Frames longer than this are
         // fragmented across sequential writes and reassembled by the firmware via the LEN field.
         private const val ATT_PAYLOAD = 20
+
+        /** Space-separated lowercase hex of a frame, e.g. "00 30 aa 55 …", for diagnostic logs. */
+        private fun ByteArray.toHex(): String =
+            joinToString(" ") { (it.toInt() and 0xFF).toString(16).padStart(2, '0') }
     }
 
     override suspend fun send(deviceAddress: String, value: String): Result<Unit> =
@@ -62,6 +68,12 @@ class AndroidBleClient(private val context: Context) : BleClient {
     @SuppressLint("MissingPermission")
     private suspend fun deliver(deviceAddress: String, packet: ByteArray): Result<Unit> =
         withContext(Dispatchers.IO) {
+            // Diagnostic (debug builds only, like DevToolsReceiver): every outgoing frame, as hex,
+            // on the same OLLEE_BLE tag the official-app capture rig uses so the toggle-diff workflow
+            // filters both identically (`adb logcat -s OLLEE_BLE`). "FreeOllee TX" marks the source.
+            if ((context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+                Log.i("OLLEE_BLE", "FreeOllee TX $deviceAddress ${packet.toHex()}")
+            }
             runCatching {
                 val manager = context.getSystemService(BluetoothManager::class.java)
                     ?: error("BluetoothManager unavailable")

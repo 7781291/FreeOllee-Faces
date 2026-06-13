@@ -36,11 +36,16 @@ Two findings, both load-bearing:
 - **`byte3` is a start/mode selector** (the existing protocol doc and `buildTimerPacket` treat it as
   a reserved `0x00`):
   - `0x00` — save/configure only (no auto-start)
-  - `0x01` — start now in **interval mode** (runs the 10-slot sequence)
-  - `0x02` — start now in **single-timer mode** (runs the header countdown)
+  - `0x01` — start now in **single-timer mode** (runs the header countdown)
+  - `0x02` — start now in **interval mode** (runs the 10-slot sequence)
 
-On-device, `0x01` started the interval sequence as decoded. The watch starts the timer **in the
-background** (it does not auto-switch to the Timer face) — a firmware behavior, out of our control.
+> **CORRECTION (2026-06-13, verified on hardware):** the `0x01`/`0x02` meanings above were
+> **reversed** in this doc's first draft (it had `01`=interval, `02`=single). Driving the official
+> app with interval-mode OFF emitted `byte3=01` and the watch counted down the *header* value
+> (single); FreeOllee's quick-timer single send (then `0x02`) ran the *slot sequence* — the
+> "starts the selected set in interval mode" bug. The values above are the corrected, hardware-
+> verified mapping (see `OlleeProtocol.TimerStartMode`). The capture table below mislabeled its
+> last two rows for the same reason.
 
 ## Design
 

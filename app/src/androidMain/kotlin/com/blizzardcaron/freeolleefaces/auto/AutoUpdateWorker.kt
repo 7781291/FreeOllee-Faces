@@ -205,7 +205,11 @@ class AutoUpdateWorker(
                         AndroidBleClient(ctx).send(address, payload)
                             .onSuccess {
                                 prefs.recordAutoSend("Sent stale '$payload'$suffix")
-                                applyHealth(ctx, prefs, null, inSleep)
+                                // The BLE send succeeded, but the *fetch* failed — the watch is now
+                                // showing a stale 'E' value. Surface that as WEATHER_FETCH_FAILED;
+                                // reporting healthy (null) here would suppress the notice and even
+                                // clear one already showing, leaving the 'E' silently unexplained.
+                                applyHealth(ctx, prefs, FailureKind.WEATHER_FETCH_FAILED, inSleep)
                             }
                             .onFailure {
                                 backstopped = handleSendFailure(
