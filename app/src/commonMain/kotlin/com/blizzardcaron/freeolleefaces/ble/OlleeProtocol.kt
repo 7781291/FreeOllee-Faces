@@ -22,16 +22,24 @@ object OlleeProtocol {
     /** Timer-face slots (10 countdown durations) — write target. Ack at 0x46. */
     const val TARGET_TIMERS = 0x26
 
-    /** Header byte 3 of the 0x26 timer write: configure-only, or start now in interval/single mode. */
+    /**
+     * Header byte 3 of the 0x26 timer write: configure-only, or start now in single/interval mode.
+     *
+     * byte3 values verified on hardware 2026-06-13 (watch `panther`): `0x01` starts a **single**
+     * countdown of the header MM:SS (quick timer); `0x02` starts the **interval** 10-slot sequence.
+     * This is the REVERSE of the 2026-06-10 design doc's first guess — that capture mislabeled the
+     * interval toggle, and the earlier `START_SINGLE=0x02` shipped FreeOllee sending interval frames
+     * for the quick timer (the "starts the set in interval mode" bug).
+     */
     enum class TimerStartMode(val byte3: Int) {
-        SAVE(0x00), START_INTERVAL(0x01), START_SINGLE(0x02);
+        SAVE(0x00), START_SINGLE(0x01), START_INTERVAL(0x02);
 
         companion object {
             /**
              * The official app exposes three *independent* controls — "Start timer from app",
-             * "Interval timer mode", and "Send to watch" — that together select header byte 3.
-             * This is the same decode the 2026-06-10 capture observed: start off → [SAVE];
-             * start on + interval on → [START_INTERVAL]; start on + interval off → [START_SINGLE].
+             * "Interval timer mode", and "Send to watch" — that together select header byte 3:
+             * start off → [SAVE]; start on + interval on → [START_INTERVAL]; start on + interval
+             * off → [START_SINGLE].
              */
             fun of(startFromApp: Boolean, intervalMode: Boolean): TimerStartMode = when {
                 !startFromApp -> SAVE
@@ -129,8 +137,9 @@ object OlleeProtocol {
      * independent of the ten slot durations. A 2026-06-10 BLE capture confirmed the header MM:SS
      * is a separate "Quick timer" value, not derived from slot 1. Minutes are clamped to one byte
      * (0xFF max) when [headerSeconds] ≥ 256 minutes. [startMode] drives byte 3: SAVE (0x00)
-     * persists the table without starting, START_INTERVAL (0x01) starts interval mode immediately,
-     * START_SINGLE (0x02) starts a single countdown immediately.
+     * persists the table without starting, START_SINGLE (0x01) starts a single countdown of the
+     * header immediately, START_INTERVAL (0x02) starts the 10-slot interval sequence immediately
+     * (byte3 values verified on hardware — see [TimerStartMode]).
      */
     fun buildTimerPacket(
         durationsSeconds: List<Int>,

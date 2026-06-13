@@ -337,7 +337,7 @@ class AppViewModelTest {
         advanceUntilIdle()
 
         val pkt = ble.sentPackets.single()
-        assertEquals(0x02.toByte(), pkt[11], "header byte3 = START_SINGLE")
+        assertEquals(0x01.toByte(), pkt[11], "header byte3 = START_SINGLE (verified on hardware)")
         assertEquals(7.toByte(), pkt[9], "header MM from quickTimerSeconds")
         assertEquals(7.toByte(), pkt[10], "header SS from quickTimerSeconds")
         assertEquals(0xB4.toByte(), pkt[12]) // slot[0] LE byte0 = 180 s = 0xB4, from the active set
@@ -368,11 +368,11 @@ class AppViewModelTest {
             alarmScheduler = FakeAlarmScheduler(callLog),
         )
 
-        // Interval mode on (and start on) -> START_INTERVAL.
+        // Interval mode on (and start on) -> START_INTERVAL (byte3=0x02, verified on hardware).
         vm.toggleQuickTimerIntervalMode(true)
         vm.sendQuickTimer()
         advanceUntilIdle()
-        assertEquals(0x01.toByte(), ble.sentPackets.last()[11], "start + interval -> START_INTERVAL")
+        assertEquals(0x02.toByte(), ble.sentPackets.last()[11], "start + interval -> START_INTERVAL")
 
         // Start from app off -> SAVE, regardless of interval mode.
         vm.toggleQuickTimerStartFromApp(false)
@@ -418,7 +418,7 @@ class AppViewModelTest {
         advanceUntilIdle()
 
         val pkt = ble.sentPackets.single()
-        assertEquals(0x01.toByte(), pkt[11], "header byte3 = START_INTERVAL")
+        assertEquals(0x02.toByte(), pkt[11], "header byte3 = START_INTERVAL (verified on hardware)")
         assertEquals(7.toByte(), pkt[9], "header MM from quickTimerSeconds")
         assertEquals(7.toByte(), pkt[10], "header SS from quickTimerSeconds")
         assertEquals(0xB4.toByte(), pkt[12]) // slot[0] LE byte0 = 180 s = 0xB4, from the started set
