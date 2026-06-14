@@ -3,11 +3,15 @@ package com.blizzardcaron.freeolleefaces.fakes
 import com.blizzardcaron.freeolleefaces.auto.AlarmScheduler
 import com.blizzardcaron.freeolleefaces.auto.Scheduler
 import com.blizzardcaron.freeolleefaces.ble.BleClient
+import com.blizzardcaron.freeolleefaces.ble.ConnectionStatus
+import com.blizzardcaron.freeolleefaces.ble.WatchConnection
 import com.blizzardcaron.freeolleefaces.health.StepsProvider
 import com.blizzardcaron.freeolleefaces.location.Coords
 import com.blizzardcaron.freeolleefaces.location.LocationProvider
 import com.blizzardcaron.freeolleefaces.notifications.NotificationAccessChecker
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 // ---------------------------------------------------------------------------
 // FakeBleClient
@@ -118,5 +122,43 @@ class FakeAlarmScheduler(
 
     override fun rearm() {
         callLog += "alarmScheduler.rearm"
+    }
+}
+
+// ---------------------------------------------------------------------------
+// FakeWatchConnection
+// ---------------------------------------------------------------------------
+
+/**
+ * Scriptable WatchConnection. [connect] records into the shared [callLog], drives [status] through
+ * Connecting then [connectResult], and bumps [connectCount]. [disconnect] records and resets status.
+ * Status starts at Connecting (the production link assumes a connect is imminent on foreground).
+ */
+class FakeWatchConnection(
+    var connectResult: ConnectionStatus = ConnectionStatus.Connected,
+    private val callLog: MutableList<String> = mutableListOf(),
+) : WatchConnection {
+
+    private val _status = MutableStateFlow(ConnectionStatus.Connecting)
+    override val status: StateFlow<ConnectionStatus> = _status
+
+    var connectCount = 0
+        private set
+    var disconnectCount = 0
+        private set
+    val connectedAddresses: MutableList<String> = mutableListOf()
+
+    override suspend fun connect(address: String) {
+        connectCount++
+        connectedAddresses += address
+        callLog += "watch.connect($address)"
+        _status.value = ConnectionStatus.Connecting
+        _status.value = connectResult
+    }
+
+    override fun disconnect() {
+        disconnectCount++
+        callLog += "watch.disconnect"
+        _status.value = ConnectionStatus.NotReachable
     }
 }
