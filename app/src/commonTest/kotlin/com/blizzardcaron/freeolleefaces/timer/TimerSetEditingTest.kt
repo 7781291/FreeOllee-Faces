@@ -92,6 +92,12 @@ class TimerSetEditingTest {
     }
 
     @Test
+    fun `sortByTime on all-equal input is unchanged`() {
+        val input = (0 until 10).map { TimerSlot("L$it", 60) }
+        assertEquals(input, TimerSetEditing.sortByTime(input))
+    }
+
+    @Test
     fun `sortByTime does not mutate the input list`() {
         val input = listOf(TimerSlot("a", 90), TimerSlot("b", 30)) + List(8) { TimerSlot("", 0) }
         val snapshot = input.toList()
