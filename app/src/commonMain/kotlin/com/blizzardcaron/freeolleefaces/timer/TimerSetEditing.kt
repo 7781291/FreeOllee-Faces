@@ -35,4 +35,14 @@ object TimerSetEditing {
         val (h, m, s) = secondsToHms(total)
         return "%02d:%02d:%02d".format(h, m, s)
     }
+
+    /**
+     * Stable ascending sort of the slots by [TimerSlot.durationSeconds], with blank (0s) slots
+     * pushed to the bottom. Labels travel with their durations; equal durations — and blanks
+     * among themselves — keep their relative order. Returns a new list; input untouched.
+     */
+    fun sortByTime(slots: List<TimerSlot>): List<TimerSlot> {
+        val (active, blank) = slots.partition { it.durationSeconds > 0 }
+        return active.sortedBy { it.durationSeconds } + blank
+    }
 }

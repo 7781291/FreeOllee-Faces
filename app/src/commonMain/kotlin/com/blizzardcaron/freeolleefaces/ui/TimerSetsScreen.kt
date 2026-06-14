@@ -46,6 +46,8 @@ fun TimerSetsScreen(
     onDelete: (TimerSet) -> Unit,
     onSend: (TimerSet) -> Unit,
     onStart: (TimerSet) -> Unit,
+    onMoveUp: (TimerSet) -> Unit,
+    onMoveDown: (TimerSet) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -112,16 +114,20 @@ fun TimerSetsScreen(
                 Text("No sets yet. Tap \"New set\" to create one.",
                     style = MaterialTheme.typography.bodyMedium)
             }
-            for (set in sets) {
+            sets.forEachIndexed { index, set ->
                 TimerSetRow(
                     set = set,
                     active = set.id == activeId,
                     sending = sending,
+                    canMoveUp = index > 0,
+                    canMoveDown = index < sets.lastIndex,
                     onOpen = { onOpen(set) },
                     onDuplicate = { onDuplicate(set) },
                     onDelete = { onDelete(set) },
                     onSend = { onSend(set) },
                     onStart = { onStart(set) },
+                    onMoveUp = { onMoveUp(set) },
+                    onMoveDown = { onMoveDown(set) },
                 )
             }
         }
@@ -151,11 +157,15 @@ private fun TimerSetRow(
     set: TimerSet,
     active: Boolean,
     sending: Boolean,
+    canMoveUp: Boolean,
+    canMoveDown: Boolean,
     onOpen: () -> Unit,
     onDuplicate: () -> Unit,
     onDelete: () -> Unit,
     onSend: () -> Unit,
     onStart: () -> Unit,
+    onMoveUp: () -> Unit,
+    onMoveDown: () -> Unit,
 ) {
     val cardColors = if (active) {
         CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
@@ -168,12 +178,22 @@ private fun TimerSetRow(
             modifier = Modifier.fillMaxWidth().clickable { onOpen() }.padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                // Radio = send: timerActiveId only updates on a successful send, so the radio
-                // moves when the push lands and stays put on failure (snackbar covers errors).
-                RadioButton(selected = active, onClick = onSend, enabled = !sending)
-                Text(if (set.name.isBlank()) "(unnamed)" else set.name,
-                    style = MaterialTheme.typography.titleMedium)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                    // Radio = send: timerActiveId only updates on a successful send, so the radio
+                    // moves when the push lands and stays put on failure (snackbar covers errors).
+                    RadioButton(selected = active, onClick = onSend, enabled = !sending)
+                    Text(if (set.name.isBlank()) "(unnamed)" else set.name,
+                        style = MaterialTheme.typography.titleMedium)
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(onClick = onMoveUp, enabled = canMoveUp) { Text("▲") }
+                    TextButton(onClick = onMoveDown, enabled = canMoveDown) { Text("▼") }
+                }
             }
             val count = set.slots.count { it.durationSeconds > 0 }
             val first = set.slots.firstOrNull { it.durationSeconds > 0 }?.durationSeconds

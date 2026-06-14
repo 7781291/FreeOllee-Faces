@@ -152,4 +152,56 @@ class TimerSetsRepositoryTest {
         r.delete("id1")
         assertNull(r.activeId(), "deleting the active set should clear activeId")
     }
+
+    // ---------------------------------------------------------------------------
+    // reorder
+    // ---------------------------------------------------------------------------
+
+    @Test fun reorder_newOrder_persistsAndRoundtrips() {
+        val r = repo()
+        r.save(makeSet("a", "Alpha"))
+        r.save(makeSet("b", "Beta"))
+        r.save(makeSet("c", "Gamma"))
+        r.reorder(listOf("c", "a", "b"))
+        assertEquals(listOf("c", "a", "b"), r.getAll().map { it.id })
+    }
+
+    @Test fun reorder_idsAbsentFromOrder_areAppendedNotLost() {
+        val r = repo()
+        r.save(makeSet("a", "Alpha"))
+        r.save(makeSet("b", "Beta"))
+        r.save(makeSet("c", "Gamma"))
+        r.reorder(listOf("c"))                       // only mention one id
+        val ids = r.getAll().map { it.id }
+        assertEquals("c", ids.first())               // requested id leads
+        assertEquals(setOf("a", "b", "c"), ids.toSet()) // nothing lost
+        assertEquals(3, ids.size)
+        assertEquals(listOf("a", "b"), ids.drop(1))  // absentees keep existing relative order
+    }
+
+    @Test fun reorder_unknownIds_areIgnored() {
+        val r = repo()
+        r.save(makeSet("a", "Alpha"))
+        r.save(makeSet("b", "Beta"))
+        r.reorder(listOf("ghost", "b", "a"))
+        assertEquals(listOf("b", "a"), r.getAll().map { it.id })
+    }
+
+    @Test fun reorder_preservesActiveId() {
+        val r = repo()
+        r.save(makeSet("a", "Alpha"))
+        r.save(makeSet("b", "Beta"))
+        r.setActive("a")
+        r.reorder(listOf("b", "a"))
+        assertEquals("a", r.activeId(), "reorder must not touch the active id")
+    }
+
+    @Test fun reorder_preservesSetContents() {
+        val r = repo()
+        val alpha = makeSet("a", "Alpha", durationSeconds = 200)
+        r.save(alpha)
+        r.save(makeSet("b", "Beta"))
+        r.reorder(listOf("b", "a"))
+        assertEquals(alpha, r.get("a"), "reorder must not alter set contents")
+    }
 }

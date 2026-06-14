@@ -23,6 +23,19 @@ class TimerSetsRepository(private val settings: Settings) {
         settings.putString(KEY_SETS, TimerSetsJson.encode(merged))
     }
 
+    /**
+     * Persist a new ordering of the existing sets. Sets are reordered by id following
+     * [orderedIds]; any current set whose id is absent from [orderedIds] is appended in its
+     * existing relative order (contents can never be lost). Unknown ids are ignored. The active
+     * id is untouched.
+     */
+    fun reorder(orderedIds: List<String>) {
+        val byId = getAll().associateBy { it.id }
+        val ordered = orderedIds.mapNotNull { byId[it] }
+        val remaining = byId.values.filter { it.id !in orderedIds }
+        settings.putString(KEY_SETS, TimerSetsJson.encode(ordered + remaining))
+    }
+
     fun delete(id: String) {
         val remaining = getAll().filter { it.id != id }
         settings.putString(KEY_SETS, TimerSetsJson.encode(remaining))

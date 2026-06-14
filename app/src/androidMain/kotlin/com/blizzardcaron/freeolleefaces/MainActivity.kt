@@ -305,6 +305,8 @@ private fun AppRoot(
             onDelete = { viewModel.deleteTimerSet(it) },
             onSend = { viewModel.sendTimerSet(it) },
             onStart = { viewModel.startTimerSet(it) },
+            onMoveUp = { viewModel.moveTimerSetUp(it) },
+            onMoveDown = { viewModel.moveTimerSetDown(it) },
             onBack = { viewModel.navigateTo(Screen.Home) },
             modifier = modifier,
         )

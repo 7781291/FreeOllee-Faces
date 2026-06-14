@@ -27,6 +27,7 @@ import com.blizzardcaron.freeolleefaces.notifications.NotificationAccessChecker
 import com.blizzardcaron.freeolleefaces.notifications.NotificationCount
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
 import com.blizzardcaron.freeolleefaces.sun.SunCalc
+import com.blizzardcaron.freeolleefaces.timer.Reorder
 import com.blizzardcaron.freeolleefaces.timer.TimerSet
 import com.blizzardcaron.freeolleefaces.timer.TimerSetsRepository
 import com.blizzardcaron.freeolleefaces.ui.HomeState
@@ -206,6 +207,20 @@ class AppViewModel(
 
     fun deleteTimerSet(set: TimerSet) {
         timerRepo.delete(set.id)
+        refreshTimers()
+    }
+
+    fun moveTimerSetUp(set: TimerSet) {
+        val index = timerSets.indexOfFirst { it.id == set.id }
+        if (index < 0) return
+        timerRepo.reorder(Reorder.moveUp(timerSets.map { it.id }, index))
+        refreshTimers()
+    }
+
+    fun moveTimerSetDown(set: TimerSet) {
+        val index = timerSets.indexOfFirst { it.id == set.id }
+        if (index < 0) return
+        timerRepo.reorder(Reorder.moveDown(timerSets.map { it.id }, index))
         refreshTimers()
     }
 
