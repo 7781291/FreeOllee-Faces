@@ -7,7 +7,10 @@ import android.content.Context
  * through the process-wide [WatchLink], so they ride the foreground-held link when one is open and
  * fall back to one-shot connect/write/disconnect otherwise.
  */
-class AndroidBleClient(private val context: Context) : BleClient {
+class AndroidBleClient(context: Context) : BleClient {
+
+    // Application context: sends route through the process-wide [WatchLink], never hold an Activity context.
+    private val context = context.applicationContext
 
     override suspend fun send(deviceAddress: String, value: String): Result<Unit> =
         send(deviceAddress, value, OlleeProtocol.TARGET_NAMEPLATE)

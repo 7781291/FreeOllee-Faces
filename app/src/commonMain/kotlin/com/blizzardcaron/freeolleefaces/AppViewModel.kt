@@ -582,7 +582,9 @@ class AppViewModel(
 
     fun onWatchPicked(address: String, label: String) {
         prefs.watchAddress = address
-        update { it.copy(watchLabel = label, watchSelected = true) }
+        // Show Connecting immediately: WatchLink may already sit at Connecting, so the connect below
+        // can be a no-op StateFlow transition the mirror collector never re-emits — set it here.
+        update { it.copy(watchLabel = label, watchSelected = true, connectionStatus = ConnectionStatus.Connecting) }
         viewModelScope.launch { watchConnection.connect(address) }
         when (state.activeComplication) {
             ActiveComplication.CUSTOM -> prefs.customText.takeIf { it.isNotEmpty() }?.let { sendCustom(it) }

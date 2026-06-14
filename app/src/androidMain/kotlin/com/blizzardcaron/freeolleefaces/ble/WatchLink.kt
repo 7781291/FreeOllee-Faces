@@ -114,6 +114,7 @@ object WatchLink {
         scope.launch { lock.withLock { closeHeldLocked() } }
     }
 
+    /** Tear down the held link + clear its state. MUST be called with [lock] held (the name's suffix). */
     private fun closeHeldLocked() {
         runCatching { heldGatt?.disconnect() }
         runCatching { heldGatt?.close() }
