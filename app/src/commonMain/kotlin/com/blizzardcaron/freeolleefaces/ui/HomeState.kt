@@ -1,12 +1,14 @@
 package com.blizzardcaron.freeolleefaces.ui
 
 import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
+import com.blizzardcaron.freeolleefaces.ble.ConnectionStatus
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 
 data class HomeState(
     val activeComplication: ActiveComplication = ActiveComplication.TEMPERATURE,
     val watchLabel: String = "Watch: none selected",
     val watchSelected: Boolean = false,
+    val connectionStatus: ConnectionStatus = ConnectionStatus.NoWatch,
     val sending: Boolean = false,
 
     val locationLabel: String = "Location: not set",
