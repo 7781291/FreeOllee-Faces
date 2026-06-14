@@ -488,4 +488,56 @@ class AppViewModelTest {
         repeat(AlarmsRepository.MAX_ALARMS + 1) { vm.addAlarm() }
         assertEquals(AlarmsRepository.MAX_ALARMS, vm.alarms.size)
     }
+
+    // ---------------------------------------------------------------------------
+    // Test E — moveTimerSetUp / moveTimerSetDown
+    // ---------------------------------------------------------------------------
+
+    /** Minimal VM wired to a shared MapSettings, pre-seeded with [ids] as timer sets in order. */
+    private fun vmWithSets(vararg ids: String): AppViewModel {
+        val settings = MapSettings()
+        val timerRepo = TimerSetsRepository(settings)
+        ids.forEach { timerRepo.save(makeTimerSet(id = it, name = "Set $it")) }
+        return AppViewModel(
+            prefs = Prefs(settings),
+            ble = FakeBleClient(mutableListOf()),
+            steps = FakeStepsProvider(),
+            location = FakeLocationProvider(),
+            notificationAccess = FakeNotificationAccessChecker(),
+            timerRepo = timerRepo,
+            scheduler = FakeScheduler(mutableListOf()),
+            alarmRepo = AlarmsRepository(MapSettings()),
+            alarmScheduler = FakeAlarmScheduler(mutableListOf()),
+        )
+    }
+
+    @Test
+    fun moveTimerSetDown_reordersStateAndPersists() = runTest(testScheduler) {
+        val vm = vmWithSets("a", "b", "c")
+        val target = vm.timerSets.first { it.id == "a" }
+        vm.moveTimerSetDown(target)
+        assertEquals(listOf("b", "a", "c"), vm.timerSets.map { it.id }, "state reflects the move")
+    }
+
+    @Test
+    fun moveTimerSetUp_reordersStateAndPersists() = runTest(testScheduler) {
+        val vm = vmWithSets("a", "b", "c")
+        val target = vm.timerSets.first { it.id == "c" }
+        vm.moveTimerSetUp(target)
+        assertEquals(listOf("a", "c", "b"), vm.timerSets.map { it.id })
+    }
+
+    @Test
+    fun moveTimerSetUp_atTop_isNoOp() = runTest(testScheduler) {
+        val vm = vmWithSets("a", "b", "c")
+        vm.moveTimerSetUp(vm.timerSets.first { it.id == "a" })
+        assertEquals(listOf("a", "b", "c"), vm.timerSets.map { it.id })
+    }
+
+    @Test
+    fun moveTimerSetDown_atBottom_isNoOp() = runTest(testScheduler) {
+        val vm = vmWithSets("a", "b", "c")
+        vm.moveTimerSetDown(vm.timerSets.first { it.id == "c" })
+        assertEquals(listOf("a", "b", "c"), vm.timerSets.map { it.id })
+    }
 }
