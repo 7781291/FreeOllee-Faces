@@ -15,7 +15,10 @@ import com.blizzardcaron.freeolleefaces.auto.Scheduler
 import com.blizzardcaron.freeolleefaces.auto.SleepWindow
 import com.blizzardcaron.freeolleefaces.auto.isTempCacheFresh
 import com.blizzardcaron.freeolleefaces.ble.BleClient
+import com.blizzardcaron.freeolleefaces.ble.ConnectionStatus
+import com.blizzardcaron.freeolleefaces.ble.NoopWatchConnection
 import com.blizzardcaron.freeolleefaces.ble.OlleeProtocol
+import com.blizzardcaron.freeolleefaces.ble.WatchConnection
 import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
 import com.blizzardcaron.freeolleefaces.format.formatDecimal
 import com.blizzardcaron.freeolleefaces.format.groupThousands
@@ -38,6 +41,7 @@ import com.blizzardcaron.freeolleefaces.weather.RetryPolicy
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -84,6 +88,7 @@ class AppViewModel(
     private val alarmRepo: AlarmsRepository,
     private val alarmScheduler: AlarmScheduler,
     private val versionLabel: String = "",
+    private val watchConnection: WatchConnection = NoopWatchConnection,
 ) : ViewModel() {
 
     var state by mutableStateOf(initialState())
@@ -116,6 +121,7 @@ class AppViewModel(
 
     private var refreshJob: Job? = null
     private var debounceJob: Job? = null
+    private var statusJob: Job? = null
 
     private fun update(transform: (HomeState) -> HomeState) { state = transform(state) }
     private fun showSnackbar(message: String) { viewModelScope.launch { _events.send(message) } }
@@ -126,6 +132,8 @@ class AppViewModel(
         lng = prefs.lastLng?.toString() ?: "",
         watchLabel = prefs.watchAddress?.let { "Watch: $it" } ?: "Watch: none selected",
         watchSelected = prefs.watchAddress != null,
+        connectionStatus = if (prefs.watchAddress != null) ConnectionStatus.Connecting
+                           else ConnectionStatus.NoWatch,
         tempUnit = prefs.tempUnit,
         updateIntervalMinutes = prefs.updateIntervalMinutes,
         sleepEnabled = prefs.sleepEnabled,
@@ -574,7 +582,10 @@ class AppViewModel(
 
     fun onWatchPicked(address: String, label: String) {
         prefs.watchAddress = address
-        update { it.copy(watchLabel = label, watchSelected = true) }
+        // Show Connecting immediately: WatchLink may already sit at Connecting, so the connect below
+        // can be a no-op StateFlow transition the mirror collector never re-emits — set it here.
+        update { it.copy(watchLabel = label, watchSelected = true, connectionStatus = ConnectionStatus.Connecting) }
+        viewModelScope.launch { watchConnection.connect(address) }
         when (state.activeComplication) {
             ActiveComplication.CUSTOM -> prefs.customText.takeIf { it.isNotEmpty() }?.let { sendCustom(it) }
             else -> refreshActive(force = false, push = true)
@@ -666,6 +677,35 @@ class AppViewModel(
 
     /** Initial re-arm of the auto-update chain; called once from a LaunchedEffect on start. */
     fun onStart() { scheduler.reschedule(); alarmScheduler.rearm() }
+
+    /**
+     * UI entered the foreground: start mirroring link status into state and connect if a watch is
+     * selected. The collector is scoped to the foreground window (cancelled in [onBackground]); while
+     * no watch is selected the chip reads NoWatch regardless of the link's own status.
+     */
+    fun onForeground() {
+        if (statusJob != null) return   // already foregrounded — don't start a second collector or connect
+        statusJob = viewModelScope.launch {
+            watchConnection.status.collect { s ->
+                val effective = if (prefs.watchAddress == null) ConnectionStatus.NoWatch else s
+                update { it.copy(connectionStatus = effective) }
+            }
+        }
+        prefs.watchAddress?.let { addr -> viewModelScope.launch { watchConnection.connect(addr) } }
+    }
+
+    /** UI left the foreground: stop mirroring status and release the held link. */
+    fun onBackground() {
+        statusJob?.cancel()
+        statusJob = null
+        watchConnection.disconnect()
+    }
+
+    /** Reconnect button: re-establish the held link to the selected watch (no-op without one). */
+    fun onReconnect() {
+        val addr = prefs.watchAddress ?: return
+        viewModelScope.launch { watchConnection.connect(addr) }
+    }
 
     private suspend fun sendAndReport(
         address: String,
