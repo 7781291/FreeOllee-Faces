@@ -30,6 +30,7 @@ import com.blizzardcaron.freeolleefaces.auto.AlarmRearm
 import com.blizzardcaron.freeolleefaces.auto.AndroidAlarmScheduler
 import com.blizzardcaron.freeolleefaces.auto.AndroidScheduler
 import com.blizzardcaron.freeolleefaces.ble.AndroidBleClient
+import com.blizzardcaron.freeolleefaces.ble.AndroidWatchConnection
 import com.blizzardcaron.freeolleefaces.health.AndroidStepsProvider
 import com.blizzardcaron.freeolleefaces.health.StepsProvider
 import com.blizzardcaron.freeolleefaces.location.AndroidLocationProvider
@@ -83,6 +84,7 @@ private fun AppRoot(
         AppViewModel(
             prefs = Prefs(appSettings(context)),
             ble = AndroidBleClient(context),
+            watchConnection = AndroidWatchConnection(context),
             steps = AndroidStepsProvider(context),
             location = AndroidLocationProvider(context),
             notificationAccess = AndroidNotificationAccess(context),
@@ -183,7 +185,12 @@ private fun AppRoot(
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) viewModel.onResumeNotifications()
+            when (event) {
+                Lifecycle.Event.ON_START -> viewModel.onForeground()
+                Lifecycle.Event.ON_STOP -> viewModel.onBackground()
+                Lifecycle.Event.ON_RESUME -> viewModel.onResumeNotifications()
+                else -> {}
+            }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
@@ -267,6 +274,7 @@ private fun AppRoot(
         onGrantNotificationAccess = { openNotificationAccessSettings(context) },
         onToggleNotifications = { viewModel.setNotificationsEnabled(it) },
         onNotificationsUpdateNow = { viewModel.pushCountIfWatch() },
+        onReconnect = { viewModel.onReconnect() },
     )
 
     val settingsCallbacks = SettingsCallbacks(
