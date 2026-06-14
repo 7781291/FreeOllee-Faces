@@ -21,8 +21,10 @@ face only).
 
 **Timers** — build and push sets of interval timers to the watch's Timer face, plus a
 one-tap quick timer and remote start (the watch starts counting the moment the frame
-lands). See
-[`docs/superpowers/specs/2026-06-10-timer-enhancements-design.md`](docs/superpowers/specs/2026-06-10-timer-enhancements-design.md).
+lands). Slots within a set can be sorted by duration or hand-reordered with ▲/▼, and the
+set library on the dashboard can be reordered the same way. See
+[`docs/superpowers/specs/2026-06-10-timer-enhancements-design.md`](docs/superpowers/specs/2026-06-10-timer-enhancements-design.md)
+and [`docs/superpowers/specs/2026-06-13-timer-reorder-and-sort-design.md`](docs/superpowers/specs/2026-06-13-timer-reorder-and-sort-design.md).
 
 **Alarms** — up to 5 alarms with day-of-week repeats, labels, and all 15 watch chime
 tones by name. The watch itself stores only a single alarm with no day field, so the app
