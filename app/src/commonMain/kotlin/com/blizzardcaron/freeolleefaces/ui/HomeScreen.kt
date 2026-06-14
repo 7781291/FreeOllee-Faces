@@ -5,13 +5,17 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -36,6 +40,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
 import com.blizzardcaron.freeolleefaces.auto.displayLabel
+import com.blizzardcaron.freeolleefaces.ble.ConnectionStatus
+import com.blizzardcaron.freeolleefaces.ble.connectionChip
+import com.blizzardcaron.freeolleefaces.ble.wakeHint
 import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 
@@ -71,6 +78,8 @@ fun HomeScreen(
         }
 
         HorizontalDivider()
+
+        ConnectionRow(status = state.connectionStatus, onReconnect = callbacks.onReconnect)
 
         Column(
             modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
@@ -199,6 +208,34 @@ fun HomeScreen(
             color = MaterialTheme.colorScheme.outline,
             modifier = Modifier.fillMaxWidth(),
         )
+    }
+}
+
+@Composable
+private fun ConnectionRow(status: ConnectionStatus, onReconnect: () -> Unit) {
+    val chip = connectionChip(status)
+    val color = when (status) {
+        ConnectionStatus.Connected -> MaterialTheme.colorScheme.primary
+        ConnectionStatus.Connecting -> MaterialTheme.colorScheme.onSurfaceVariant
+        ConnectionStatus.NotReachable, ConnectionStatus.NoWatch -> MaterialTheme.colorScheme.error
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        if (chip.clickable) {
+            TextButton(onClick = onReconnect) {
+                Text(chip.label, color = color, style = MaterialTheme.typography.labelLarge)
+            }
+        } else {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (chip.showSpinner) {
+                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                    Spacer(Modifier.width(8.dp))
+                }
+                Text(chip.label, color = color, style = MaterialTheme.typography.labelLarge)
+            }
+        }
+        wakeHint(status)?.let { hint ->
+            Text(hint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+        }
     }
 }
 
