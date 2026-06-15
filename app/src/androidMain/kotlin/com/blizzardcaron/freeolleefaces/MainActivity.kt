@@ -252,9 +252,6 @@ private fun AppRoot() {
 
     val homeCallbacks = HomeCallbacks(
         onActivate = { viewModel.activate(it) },
-        onOpenTimerSets = { viewModel.refreshTimers(); viewModel.navigateTo(Screen.TimerSets) },
-        onOpenAlarms = { viewModel.refreshAlarms(); viewModel.navigateTo(Screen.Alarms) },
-        onOpenSettings = { viewModel.navigateTo(Screen.Settings) },
         onUpdateNow = { viewModel.refreshActive(force = true, push = true) },
         onTempUnitChange = { newUnit -> viewModel.setTempUnit(newUnit) },
         onCustomChange = { text -> viewModel.setCustomText(text) },

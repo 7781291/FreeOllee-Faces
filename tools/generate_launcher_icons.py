@@ -7,7 +7,10 @@ import os
 from PIL import Image
 
 SRC = "/tmp/design_bundle/extracted/super-freeollee-design-system/project/assets/app-icon-1024.png"
-RES = "app/src/androidMain/res"
+RES = "app/src/androidMain/res"  # relative — run this from the repo root
+
+if not os.path.exists(SRC):
+    raise SystemExit(f"Source not found: {SRC} — re-extract the design bundle.")
 
 art = Image.open(SRC).convert("RGBA")
 
