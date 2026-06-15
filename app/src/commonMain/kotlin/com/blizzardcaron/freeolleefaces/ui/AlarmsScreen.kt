@@ -18,7 +18,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
@@ -55,15 +54,7 @@ fun AlarmsScreen(
         modifier = modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text("Alarms", style = MaterialTheme.typography.headlineSmall)
-            TextButton(onClick = onBack) { Text("Done") }
-        }
-        HorizontalDivider()
+        AppBar(title = "Alarms")
 
         Text(nextSummary, style = MaterialTheme.typography.titleMedium)
 

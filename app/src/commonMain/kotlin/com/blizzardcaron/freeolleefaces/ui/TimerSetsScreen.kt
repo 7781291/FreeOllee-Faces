@@ -14,7 +14,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
@@ -56,15 +55,7 @@ fun TimerSetsScreen(
         modifier = modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text("Timer Sets", style = MaterialTheme.typography.headlineSmall)
-            TextButton(onClick = onBack) { Text("Done") }
-        }
-        HorizontalDivider()
+        AppBar(title = "Timer")
 
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(

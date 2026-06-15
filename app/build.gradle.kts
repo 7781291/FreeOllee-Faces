@@ -113,6 +113,12 @@ android {
     }
 }
 
+compose.resources {
+    publicResClass = true
+    packageOfResClass = "com.blizzardcaron.freeolleefaces.resources"
+    generateResClass = always
+}
+
 dependencies {
     debugImplementation(compose.uiTooling)
 }

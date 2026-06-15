@@ -54,15 +54,7 @@ fun TimerSetEditScreen(
         modifier = modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text("Edit set", style = MaterialTheme.typography.headlineSmall)
-            TextButton(onClick = onBack) { Text("Cancel") }
-        }
-        HorizontalDivider()
+        AppBar(title = "Edit set", onBack = onBack)
 
         OutlinedTextField(
             value = working.name,

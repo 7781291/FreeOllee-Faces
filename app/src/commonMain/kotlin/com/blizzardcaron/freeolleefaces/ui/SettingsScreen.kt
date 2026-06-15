@@ -1,6 +1,7 @@
 package com.blizzardcaron.freeolleefaces.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -28,9 +30,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.blizzardcaron.freeolleefaces.prefs.IntervalOptions
+import com.blizzardcaron.freeolleefaces.resources.Res
+import com.blizzardcaron.freeolleefaces.resources.wordmark_super_free
+import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun SettingsScreen(
@@ -43,11 +49,7 @@ fun SettingsScreen(
         modifier = modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = callbacks.onBack) { Text("Back") }
-            Text("Settings", style = MaterialTheme.typography.headlineSmall)
-        }
-        HorizontalDivider()
+        AppBar(title = "Settings")
 
         Column(
             modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
@@ -60,6 +62,8 @@ fun SettingsScreen(
             IntervalSection(state, callbacks)
             HorizontalDivider()
             SleepSection(state, callbacks)
+            HorizontalDivider()
+            AboutSection(state)
         }
     }
 }
@@ -168,3 +172,31 @@ private fun SleepSection(state: HomeState, callbacks: SettingsCallbacks) {
 }
 
 private fun minutesToLabel(min: Int): String = "%02d:%02d".format(min / 60, min % 60)
+
+@Composable
+private fun AboutSection(state: HomeState) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Image(
+                painter = painterResource(Res.drawable.wordmark_super_free),
+                contentDescription = "Super FreeOllee",
+                contentScale = ContentScale.FillWidth,
+                modifier = Modifier.fillMaxWidth(0.6f),
+            )
+            Text(
+                state.versionLabel,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                "Not affiliated with Ollee · GPL-3.0",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}

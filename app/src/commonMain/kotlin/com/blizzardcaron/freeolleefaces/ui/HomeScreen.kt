@@ -19,7 +19,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
@@ -36,8 +35,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
 import com.blizzardcaron.freeolleefaces.auto.displayLabel
 import com.blizzardcaron.freeolleefaces.ble.ConnectionStatus
@@ -62,22 +61,7 @@ fun HomeScreen(
         modifier = modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text("Complications", style = MaterialTheme.typography.headlineSmall)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                TextButton(onClick = callbacks.onOpenTimerSets) { Text("Timers") }
-                TextButton(onClick = callbacks.onOpenAlarms) { Text("Alarms") }
-                IconButton(onClick = callbacks.onOpenSettings) {
-                    Text("⚙", style = MaterialTheme.typography.titleLarge)
-                }
-            }
-        }
-
-        HorizontalDivider()
+        AppBar(title = "Complications")
 
         ConnectionRow(status = state.connectionStatus, onReconnect = callbacks.onReconnect)
 
@@ -247,8 +231,8 @@ private fun SettingsHint(text: String) {
 @Composable
 private fun SectionLabel(text: String) {
     Text(
-        text,
-        style = MaterialTheme.typography.labelMedium,
+        text.uppercase(),
+        style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 0.08.em),
         color = MaterialTheme.colorScheme.primary,
         modifier = Modifier.padding(top = 8.dp),
     )
@@ -383,10 +367,7 @@ private fun FaceValue(preview: PreviewState, updated: String?, next: String?) {
         is PreviewState.Loading -> Text("Loading…", style = MaterialTheme.typography.bodyMedium)
         is PreviewState.Ready -> {
             Text(preview.human, style = MaterialTheme.typography.headlineMedium)
-            Text(
-                "Watch: '${preview.payload}'",
-                style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-            )
+            LcdReadout(value = preview.payload, size = LcdSize.Md)
         }
         is PreviewState.Error -> Text(preview.message, style = MaterialTheme.typography.bodyMedium)
         PreviewState.NoEvent -> Text("No sunrise/sunset in next 24 h.", style = MaterialTheme.typography.bodyMedium)
