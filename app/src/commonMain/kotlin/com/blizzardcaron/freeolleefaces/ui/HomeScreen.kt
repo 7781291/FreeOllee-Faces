@@ -36,7 +36,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
@@ -384,10 +383,7 @@ private fun FaceValue(preview: PreviewState, updated: String?, next: String?) {
         is PreviewState.Loading -> Text("Loading…", style = MaterialTheme.typography.bodyMedium)
         is PreviewState.Ready -> {
             Text(preview.human, style = MaterialTheme.typography.headlineMedium)
-            Text(
-                "Watch: '${preview.payload}'",
-                style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-            )
+            LcdReadout(value = preview.payload, size = LcdSize.Md)
         }
         is PreviewState.Error -> Text(preview.message, style = MaterialTheme.typography.bodyMedium)
         PreviewState.NoEvent -> Text("No sunrise/sunset in next 24 h.", style = MaterialTheme.typography.bodyMedium)
