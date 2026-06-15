@@ -21,6 +21,7 @@ private val FreeOlleeColorScheme = darkColorScheme(
     onSurfaceVariant = Everforest.Grey2,
     surfaceContainerLowest = Everforest.BgDim,
     surfaceContainerLow = Everforest.Bg0,
+    // Flat card tier: the design's surface-card (and the BottomNav background) is Bg0.
     surfaceContainer = Everforest.Bg0,
     surfaceContainerHigh = Everforest.Bg1,
     surfaceContainerHighest = Everforest.Bg2,

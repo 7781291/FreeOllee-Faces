@@ -24,6 +24,8 @@ internal object Everforest {
     val Aqua = Color(0xFF83C092)
     val Blue = Color(0xFF7FBBB3)
 
+    // Named for its M3 role (light green text on the green container); the design has
+    // no separate palette name for this tint.
     val OnPrimaryContainer = Color(0xFFCBE0A6)
     val MarkerRed = Color(0xFFF85552) // wordmark only
 }

@@ -17,8 +17,10 @@ import com.blizzardcaron.freeolleefaces.resources.nunito_regular
 import com.blizzardcaron.freeolleefaces.resources.nunito_semibold
 import org.jetbrains.compose.resources.Font
 
+// Nunito's heaviest face in the design bundle is the 800 weight (tokens define
+// --fw-black: 800), so the "black" file is registered at ExtraBold (800).
 @Composable
-fun nunitoFamily() = FontFamily(
+internal fun nunitoFamily() = FontFamily(
     Font(Res.font.nunito_regular, FontWeight.Normal),
     Font(Res.font.nunito_semibold, FontWeight.SemiBold),
     Font(Res.font.nunito_bold, FontWeight.Bold),
@@ -26,13 +28,13 @@ fun nunitoFamily() = FontFamily(
 )
 
 @Composable
-fun dseg7Family() = FontFamily(
+internal fun dseg7Family() = FontFamily(
     Font(Res.font.dseg7_regular, FontWeight.Normal),
     Font(Res.font.dseg7_bold, FontWeight.Bold),
 )
 
 @Composable
-fun jetBrainsMonoFamily() = FontFamily(
+internal fun jetBrainsMonoFamily() = FontFamily(
     Font(Res.font.jetbrainsmono_regular, FontWeight.Normal),
     Font(Res.font.jetbrainsmono_bold, FontWeight.Bold),
 )
@@ -40,8 +42,8 @@ fun jetBrainsMonoFamily() = FontFamily(
 @Composable
 fun freeOlleeTypography(): Typography {
     val sans = nunitoFamily()
-    fun s(size: Int, lh: Int, weight: FontWeight) =
-        TextStyle(fontFamily = sans, fontSize = size.sp, lineHeight = lh.sp, fontWeight = weight)
+    fun s(size: Int, lineHeight: Int, weight: FontWeight) =
+        TextStyle(fontFamily = sans, fontSize = size.sp, lineHeight = lineHeight.sp, fontWeight = weight)
     return Typography(
         displaySmall = s(40, 44, FontWeight.ExtraBold),
         headlineLarge = s(32, 38, FontWeight.ExtraBold),
