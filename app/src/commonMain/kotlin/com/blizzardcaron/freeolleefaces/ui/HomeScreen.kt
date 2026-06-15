@@ -38,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
 import com.blizzardcaron.freeolleefaces.auto.displayLabel
 import com.blizzardcaron.freeolleefaces.ble.ConnectionStatus
@@ -247,8 +248,8 @@ private fun SettingsHint(text: String) {
 @Composable
 private fun SectionLabel(text: String) {
     Text(
-        text,
-        style = MaterialTheme.typography.labelMedium,
+        text.uppercase(),
+        style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 0.08.em),
         color = MaterialTheme.colorScheme.primary,
         modifier = Modifier.padding(top = 8.dp),
     )
