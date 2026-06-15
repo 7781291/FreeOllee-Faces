@@ -1,16 +1,17 @@
 """Generate Android launcher icons from the design-system 1024px app icon.
 
-Legacy square/round icons use the full framed art; the adaptive foreground
-scales the art into the ~62% safe zone on a transparent canvas (the adaptive
-background color matches the art's canvas, so the seam is invisible)."""
+The design tile is a complete square icon (rounded plate on a gradient grid),
+so both the legacy icons and the adaptive foreground use the full tile
+full-bleed; the launcher mask rounds the corners. The flat adaptive background
+only shows under parallax and is color-matched to the tile's canvas."""
 import os
 from PIL import Image
 
-SRC = "/tmp/design_bundle/extracted/super-freeollee-design-system/project/assets/app-icon-1024.png"
+SRC = "tools/brand/app-icon-1024.png"  # committed design-system source art — run from repo root
 RES = "app/src/androidMain/res"  # relative — run this from the repo root
 
 if not os.path.exists(SRC):
-    raise SystemExit(f"Source not found: {SRC} — re-extract the design bundle.")
+    raise SystemExit(f"Source not found: {SRC} — run from the repo root.")
 
 art = Image.open(SRC).convert("RGBA")
 
@@ -30,11 +31,11 @@ for density, size in LEGACY.items():
     save(im, density, "ic_launcher_round.png")
 
 for density, size in FOREGROUND.items():
-    canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    content = int(size * 0.62)
-    scaled = art.resize((content, content), Image.LANCZOS)
-    off = (size - content) // 2
-    canvas.alpha_composite(scaled, (off, off))
-    save(canvas, density, "ic_launcher_foreground.png")
+    # Full-bleed: the design tile is already a complete square icon (rounded
+    # plate on a gradient grid), so the adaptive foreground IS the whole tile.
+    # The launcher mask rounds the corners; the flat adaptive background only
+    # peeks through under parallax and is color-matched to the tile's canvas.
+    im = art.resize((size, size), Image.LANCZOS)
+    save(im, density, "ic_launcher_foreground.png")
 
 print("Launcher icons generated.")
