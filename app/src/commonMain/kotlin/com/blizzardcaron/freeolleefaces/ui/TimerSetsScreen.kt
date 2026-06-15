@@ -56,15 +56,7 @@ fun TimerSetsScreen(
         modifier = modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text("Timer Sets", style = MaterialTheme.typography.headlineSmall)
-            TextButton(onClick = onBack) { Text("Done") }
-        }
-        HorizontalDivider()
+        AppBar(title = "Timer")
 
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(

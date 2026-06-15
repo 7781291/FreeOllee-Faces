@@ -43,11 +43,7 @@ fun SettingsScreen(
         modifier = modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = callbacks.onBack) { Text("Back") }
-            Text("Settings", style = MaterialTheme.typography.headlineSmall)
-        }
-        HorizontalDivider()
+        AppBar(title = "Settings")
 
         Column(
             modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),

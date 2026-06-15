@@ -62,22 +62,7 @@ fun HomeScreen(
         modifier = modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text("Complications", style = MaterialTheme.typography.headlineSmall)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                TextButton(onClick = callbacks.onOpenTimerSets) { Text("Timers") }
-                TextButton(onClick = callbacks.onOpenAlarms) { Text("Alarms") }
-                IconButton(onClick = callbacks.onOpenSettings) {
-                    Text("⚙", style = MaterialTheme.typography.titleLarge)
-                }
-            }
-        }
-
-        HorizontalDivider()
+        AppBar(title = "Complications")
 
         ConnectionRow(status = state.connectionStatus, onReconnect = callbacks.onReconnect)
 

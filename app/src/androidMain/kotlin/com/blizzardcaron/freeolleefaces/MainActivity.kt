@@ -14,9 +14,13 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -42,6 +46,7 @@ import com.blizzardcaron.freeolleefaces.prefs.timerSettings
 import com.blizzardcaron.freeolleefaces.timer.TimerSetsRepository
 import com.blizzardcaron.freeolleefaces.ui.BondedDevice
 import com.blizzardcaron.freeolleefaces.ui.BondedDevicesDialog
+import com.blizzardcaron.freeolleefaces.ui.BottomNavTab
 import com.blizzardcaron.freeolleefaces.ui.AlarmsScreen
 import com.blizzardcaron.freeolleefaces.ui.HomeCallbacks
 import com.blizzardcaron.freeolleefaces.ui.HomeScreen
@@ -60,23 +65,16 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             FreeOlleeFacesTheme {
-                val snackbarHostState = remember { SnackbarHostState() }
-                Scaffold(
-                    snackbarHost = { SnackbarHost(snackbarHostState) },
-                ) { inner ->
-                    AppRoot(snackbarHostState, Modifier.padding(inner))
-                }
+                AppRoot()
             }
         }
     }
 }
 
 @Composable
-private fun AppRoot(
-    snackbarHostState: SnackbarHostState,
-    modifier: Modifier = Modifier,
-) {
+private fun AppRoot() {
     val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
     val viewModel = remember {
         val versionName = runCatching {
             context.packageManager.getPackageInfo(context.packageName, 0).versionName
@@ -289,7 +287,32 @@ private fun AppRoot(
         onUseMyLocation = ::useMyLocation,
     )
 
-    when (screen) {
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        bottomBar = {
+            if (BottomNavTab.showsBottomBar(screen)) {
+                NavigationBar {
+                    BottomNavTab.entries.forEach { tab ->
+                        NavigationBarItem(
+                            selected = BottomNavTab.forScreen(screen) == tab,
+                            onClick = {
+                                when (tab) {
+                                    BottomNavTab.Alarm -> viewModel.refreshAlarms()
+                                    BottomNavTab.Timer -> viewModel.refreshTimers()
+                                    else -> {}
+                                }
+                                viewModel.navigateTo(tab.screen)
+                            },
+                            icon = { Text(tab.glyph, style = MaterialTheme.typography.titleLarge) },
+                            label = { Text(tab.label, style = MaterialTheme.typography.labelSmall) },
+                        )
+                    }
+                }
+            }
+        },
+    ) { inner ->
+        val modifier = Modifier.padding(inner)
+        when (screen) {
         Screen.Home -> HomeScreen(state = state, callbacks = homeCallbacks, modifier = modifier)
         Screen.Settings -> SettingsScreen(
             state = state,
@@ -341,6 +364,7 @@ private fun AppRoot(
                     modifier = modifier,
                 )
             }
+        }
         }
     }
 

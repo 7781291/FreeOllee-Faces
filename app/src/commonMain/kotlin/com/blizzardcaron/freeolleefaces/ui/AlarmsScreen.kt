@@ -55,15 +55,7 @@ fun AlarmsScreen(
         modifier = modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text("Alarms", style = MaterialTheme.typography.headlineSmall)
-            TextButton(onClick = onBack) { Text("Done") }
-        }
-        HorizontalDivider()
+        AppBar(title = "Alarms")
 
         Text(nextSummary, style = MaterialTheme.typography.titleMedium)
 
