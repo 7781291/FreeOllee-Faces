@@ -30,6 +30,7 @@ import com.blizzardcaron.freeolleefaces.notifications.NotificationAccessChecker
 import com.blizzardcaron.freeolleefaces.notifications.NotificationCount
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
 import com.blizzardcaron.freeolleefaces.sun.SunCalc
+import com.blizzardcaron.freeolleefaces.timer.QuickAlarm
 import com.blizzardcaron.freeolleefaces.timer.Reorder
 import com.blizzardcaron.freeolleefaces.timer.TimerSet
 import com.blizzardcaron.freeolleefaces.timer.TimerSetsRepository
@@ -89,6 +90,7 @@ class AppViewModel(
     private val alarmScheduler: AlarmScheduler,
     private val versionLabel: String = "",
     private val watchConnection: WatchConnection = NoopWatchConnection,
+    private val clock: Clock = Clock.System,
 ) : ViewModel() {
 
     var state by mutableStateOf(initialState())
@@ -105,6 +107,12 @@ class AppViewModel(
     var quickTimerStartFromApp by mutableStateOf(prefs.quickTimerStartFromApp)
         private set
     var quickTimerIntervalMode by mutableStateOf(prefs.quickTimerIntervalMode)
+        private set
+    var quickTimerAlarmMode by mutableStateOf(prefs.quickTimerAlarmMode)
+        private set
+    var quickTimerAlarmHour by mutableStateOf(prefs.quickTimerAlarmHour)
+        private set
+    var quickTimerAlarmMinute by mutableStateOf(prefs.quickTimerAlarmMinute)
         private set
 
     var alarms by mutableStateOf(alarmRepo.getAll())
@@ -262,6 +270,33 @@ class AppViewModel(
     fun toggleQuickTimerIntervalMode(enabled: Boolean) {
         prefs.quickTimerIntervalMode = enabled
         quickTimerIntervalMode = enabled
+    }
+
+    fun toggleQuickTimerAlarmMode(enabled: Boolean) {
+        prefs.quickTimerAlarmMode = enabled
+        quickTimerAlarmMode = enabled
+    }
+
+    fun saveQuickTimerAlarmTime(hour: Int, minute: Int) {
+        prefs.quickTimerAlarmHour = hour
+        prefs.quickTimerAlarmMinute = minute
+        quickTimerAlarmHour = prefs.quickTimerAlarmHour     // read back to apply coercion
+        quickTimerAlarmMinute = prefs.quickTimerAlarmMinute
+    }
+
+    /**
+     * Alarm-mode quick timer: compute the countdown to the next occurrence of the saved
+     * wall-clock target and push it as a single countdown the watch starts immediately.
+     * Capped at 23:59:59 so the header hours byte stays <= 23 (the watch UI's own max).
+     */
+    fun sendQuickAlarm() {
+        val now = clock.now().toLocalDateTime(TimeZone.currentSystemDefault()).time
+        val seconds = QuickAlarm.countdownSeconds(now, quickTimerAlarmHour, quickTimerAlarmMinute)
+            .coerceAtMost(86_399)
+        val slots = timerActiveId?.let { timerRepo.get(it) }?.durations() ?: List(10) { 0 }
+        val packet = OlleeProtocol.buildTimerPacket(
+            slots, headerSeconds = seconds, startMode = OlleeProtocol.TimerStartMode.START_SINGLE)
+        pushTimerFrame(packet, "Started alarm timer on watch")
     }
 
     fun sendTimerSet(set: TimerSet) {

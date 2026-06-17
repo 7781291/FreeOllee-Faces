@@ -26,6 +26,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.Clock
+import kotlinx.datetime.toLocalDateTime
 import com.blizzardcaron.freeolleefaces.alarm.Alarm
 import com.blizzardcaron.freeolleefaces.alarm.AlarmsRepository
 import com.blizzardcaron.freeolleefaces.fakes.FakeAlarmScheduler
@@ -385,6 +386,71 @@ class AppViewModelTest {
         // Toggles persist across a fresh ViewModel (Prefs-backed).
         assertTrue(prefs.quickTimerIntervalMode, "interval mode persisted")
         assertEquals(false, prefs.quickTimerStartFromApp, "start-from-app persisted")
+    }
+
+    // ---------------------------------------------------------------------------
+    // Test C2c — alarm-mode quick timer: computes countdown to wall-clock target
+    // ---------------------------------------------------------------------------
+
+    @Test
+    fun sendQuickAlarm_sendsStartSingleFrameWithComputedCountdown() = runTest(testScheduler) {
+        val callLog = mutableListOf<String>()
+        val ble = FakeBleClient(callLog)
+        val settings = MapSettings()
+        val prefs = Prefs(settings)
+        prefs.watchAddress = "00:11:22:33:44:55"
+        // Fixed instant so the computed countdown is deterministic relative to the assertion.
+        val fixedClock = object : Clock {
+            override fun now() = kotlinx.datetime.Instant.parse("2026-06-15T12:00:00Z")
+        }
+        val vm = AppViewModel(
+            prefs = prefs,
+            ble = ble,
+            steps = FakeStepsProvider(),
+            location = FakeLocationProvider(),
+            notificationAccess = FakeNotificationAccessChecker(),
+            timerRepo = TimerSetsRepository(MapSettings()),
+            scheduler = FakeScheduler(callLog),
+            alarmRepo = AlarmsRepository(MapSettings()),
+            alarmScheduler = FakeAlarmScheduler(callLog),
+            clock = fixedClock,
+        )
+
+        vm.saveQuickTimerAlarmTime(hour = 14, minute = 30)
+        vm.sendQuickAlarm()
+        advanceUntilIdle()
+
+        // Expected countdown via the same path the VM uses (timezone-agnostic).
+        val now = fixedClock.now()
+            .toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault()).time
+        val expected = com.blizzardcaron.freeolleefaces.timer.QuickAlarm
+            .countdownSeconds(now, 14, 30).coerceAtMost(86_399)
+
+        val pkt = ble.sentPackets.single()
+        assertEquals(0x01.toByte(), pkt[11], "alarm send must be START_SINGLE")
+        assertEquals((expected / 3600).toByte(), pkt[8], "header hours")
+        assertEquals(((expected % 3600) / 60).toByte(), pkt[9], "header minutes")
+        assertEquals((expected % 60).toByte(), pkt[10], "header seconds")
+    }
+
+    @Test
+    fun toggleQuickTimerAlarmMode_persistsAndUpdatesState() = runTest(testScheduler) {
+        val settings = MapSettings()
+        val prefs = Prefs(settings)
+        val vm = AppViewModel(
+            prefs = prefs,
+            ble = FakeBleClient(),
+            steps = FakeStepsProvider(),
+            location = FakeLocationProvider(),
+            notificationAccess = FakeNotificationAccessChecker(),
+            timerRepo = TimerSetsRepository(MapSettings()),
+            scheduler = FakeScheduler(),
+            alarmRepo = AlarmsRepository(MapSettings()),
+            alarmScheduler = FakeAlarmScheduler(),
+        )
+        vm.toggleQuickTimerAlarmMode(true)
+        assertTrue(vm.quickTimerAlarmMode, "state updated")
+        assertTrue(prefs.quickTimerAlarmMode, "persisted to prefs")
     }
 
     // ---------------------------------------------------------------------------
