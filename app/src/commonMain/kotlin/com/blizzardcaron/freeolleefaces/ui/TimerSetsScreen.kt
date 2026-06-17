@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.blizzardcaron.freeolleefaces.ble.ConnectionStatus
 import com.blizzardcaron.freeolleefaces.timer.QuickAlarm
 import com.blizzardcaron.freeolleefaces.timer.TimerSet
 import com.blizzardcaron.freeolleefaces.timer.TimerSetEditing
@@ -58,6 +59,8 @@ fun TimerSetsScreen(
     onMoveUp: (TimerSet) -> Unit,
     onMoveDown: (TimerSet) -> Unit,
     onBack: () -> Unit,
+    connectionStatus: ConnectionStatus,
+    onReconnect: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     BackHandler { onBack() }
@@ -65,7 +68,7 @@ fun TimerSetsScreen(
         modifier = modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        AppBar(title = "Timer")
+        AppBar(title = "Timer", connectionStatus = connectionStatus, onReconnect = onReconnect)
 
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(

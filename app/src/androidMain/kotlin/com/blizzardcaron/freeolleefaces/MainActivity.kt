@@ -314,6 +314,7 @@ private fun AppRoot() {
         Screen.Settings -> SettingsScreen(
             state = state,
             callbacks = settingsCallbacks,
+            onReconnect = { viewModel.onReconnect() },
             modifier = modifier,
         )
         Screen.TimerSets -> TimerSetsScreen(
@@ -342,6 +343,8 @@ private fun AppRoot() {
             onMoveUp = { viewModel.moveTimerSetUp(it) },
             onMoveDown = { viewModel.moveTimerSetDown(it) },
             onBack = { viewModel.navigateTo(Screen.Home) },
+            connectionStatus = state.connectionStatus,
+            onReconnect = { viewModel.onReconnect() },
             modifier = modifier,
         )
         Screen.Alarms -> AlarmsScreen(
@@ -352,6 +355,8 @@ private fun AppRoot() {
             onToggle = { id, enabled -> viewModel.toggleAlarm(id, enabled) },
             onDelete = { viewModel.deleteAlarm(it) },
             onBack = { viewModel.navigateTo(Screen.Home) },
+            connectionStatus = state.connectionStatus,
+            onReconnect = { viewModel.onReconnect() },
             modifier = modifier,
         )
         Screen.TimerSetEdit -> {
@@ -364,6 +369,8 @@ private fun AppRoot() {
                     onSave = { s -> viewModel.saveTimerSet(s); viewModel.navigateTo(Screen.TimerSets) },
                     onSend = { s -> viewModel.saveTimerSet(s); viewModel.sendTimerSet(s); viewModel.navigateTo(Screen.TimerSets) },
                     onBack = { viewModel.navigateTo(Screen.TimerSets) },
+                    connectionStatus = state.connectionStatus,
+                    onReconnect = { viewModel.onReconnect() },
                     modifier = modifier,
                 )
             }

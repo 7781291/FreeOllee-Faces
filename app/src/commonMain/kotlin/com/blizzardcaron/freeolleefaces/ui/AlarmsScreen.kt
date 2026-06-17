@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import com.blizzardcaron.freeolleefaces.alarm.Alarm
 import com.blizzardcaron.freeolleefaces.alarm.AlarmSchedule
 import com.blizzardcaron.freeolleefaces.alarm.AlarmsRepository
+import com.blizzardcaron.freeolleefaces.ble.ConnectionStatus
 import kotlinx.datetime.DayOfWeek
 
 @Composable
@@ -44,6 +45,8 @@ fun AlarmsScreen(
     onToggle: (String, Boolean) -> Unit,
     onDelete: (String) -> Unit,
     onBack: () -> Unit,
+    connectionStatus: ConnectionStatus,
+    onReconnect: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     BackHandler { onBack() }
@@ -51,7 +54,7 @@ fun AlarmsScreen(
         modifier = modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        AppBar(title = "Alarms")
+        AppBar(title = "Alarms", connectionStatus = connectionStatus, onReconnect = onReconnect)
 
         Text(nextSummary, style = MaterialTheme.typography.titleMedium)
 

@@ -28,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.blizzardcaron.freeolleefaces.ble.ConnectionStatus
 import com.blizzardcaron.freeolleefaces.timer.Reorder
 import com.blizzardcaron.freeolleefaces.timer.TimerSet
 import com.blizzardcaron.freeolleefaces.timer.TimerSetEditing
@@ -39,6 +40,8 @@ fun TimerSetEditScreen(
     onSave: (TimerSet) -> Unit,
     onSend: (TimerSet) -> Unit,
     onBack: () -> Unit,
+    connectionStatus: ConnectionStatus,
+    onReconnect: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var working by remember(set.id) { mutableStateOf(set) }
@@ -54,7 +57,7 @@ fun TimerSetEditScreen(
         modifier = modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        AppBar(title = "Edit set", onBack = onBack)
+        AppBar(title = "Edit set", onBack = onBack, connectionStatus = connectionStatus, onReconnect = onReconnect)
 
         OutlinedTextField(
             value = working.name,

@@ -42,6 +42,7 @@ import org.jetbrains.compose.resources.painterResource
 fun SettingsScreen(
     state: HomeState,
     callbacks: SettingsCallbacks,
+    onReconnect: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     BackHandler { callbacks.onBack() }
@@ -49,7 +50,7 @@ fun SettingsScreen(
         modifier = modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        AppBar(title = "Settings")
+        AppBar(title = "Settings", connectionStatus = state.connectionStatus, onReconnect = onReconnect)
 
         Column(
             modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
