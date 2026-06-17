@@ -1,6 +1,6 @@
 # Super FreeOllee
 
-A self-contained Android companion app for the Ollee kids' watch, talking to it directly
+A self-contained Android companion app for the Ollee watch, talking to it directly
 over Bluetooth Low Energy.
 
 ## Screenshots
@@ -49,7 +49,7 @@ notification with a Retry action — a missed push otherwise means a silently sk
 `Connecting…`, or a tappable `⟳ Reconnect`), so you always know whether a push will actually reach
 the watch.
 
-Built as a workaround for GrapheneOS users — the official Ollee app relies on Google Play
+Originally built as a workaround for GrapheneOS users — the official Ollee app relies on Google Play
 Services' Fused Location Provider, which is absent on GrapheneOS. This app uses the
 platform `LocationManager` directly (so location works without Play Services) and also
 accepts manual lat/lng entry.
