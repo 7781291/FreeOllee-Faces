@@ -29,7 +29,10 @@ face only).
 
 **Timers** — build and push sets of interval timers to the watch's Timer face, plus a
 one-tap quick timer and remote start (the watch starts counting the moment the frame
-lands). Slots within a set can be sorted by duration or hand-reordered with ▲/▼, and the
+lands). The quick timer also has an **alarm mode** — flip it on to enter a wall-clock time
+(H:M AM/PM) instead of a duration, and the app sends the watch a one-shot countdown that
+fires at that time (rolling to the next day for times already past, up to ~24h out). Slots
+within a set can be sorted by duration or hand-reordered with ▲/▼, and the
 set library on the dashboard can be reordered the same way. See
 [`docs/superpowers/specs/2026-06-10-timer-enhancements-design.md`](docs/superpowers/specs/2026-06-10-timer-enhancements-design.md)
 and [`docs/superpowers/specs/2026-06-13-timer-reorder-and-sort-design.md`](docs/superpowers/specs/2026-06-13-timer-reorder-and-sort-design.md).
@@ -41,6 +44,10 @@ every fire — without disturbing the watch's hourly-chime settings, which live 
 BLE record. If a re-arm push can't reach the watch it retries at 2/5/15 minutes, then posts a
 notification with a Retry action — a missed push otherwise means a silently skipped alarm. See
 [`docs/superpowers/specs/2026-06-10-alarm-scheduler-design.md`](docs/superpowers/specs/2026-06-10-alarm-scheduler-design.md).
+
+**Connection status** — every screen shows the current watch link in its top bar (`Connected`,
+`Connecting…`, or a tappable `⟳ Reconnect`), so you always know whether a push will actually reach
+the watch.
 
 Originally built as a workaround for GrapheneOS users — the official Ollee app relies on Google Play
 Services' Fused Location Provider, which is absent on GrapheneOS. This app uses the

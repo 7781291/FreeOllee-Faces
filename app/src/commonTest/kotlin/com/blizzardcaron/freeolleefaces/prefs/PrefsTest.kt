@@ -219,4 +219,32 @@ class PrefsTest {
         prefs.quickTimerSeconds = -5                        // clamped
         assertEquals(0, prefs.quickTimerSeconds)
     }
+
+    // ---------------------------------------------------------------------------
+    // quickTimerAlarmMode / quickTimerAlarmHour / quickTimerAlarmMinute
+    // ---------------------------------------------------------------------------
+
+    @Test
+    fun `quickTimerAlarmMode defaults to false and round-trips`() {
+        val settings = MapSettings()
+        assertEquals(false, Prefs(settings).quickTimerAlarmMode)
+        Prefs(settings).quickTimerAlarmMode = true
+        assertEquals(true, Prefs(settings).quickTimerAlarmMode)
+    }
+
+    @Test
+    fun `quickTimerAlarmHour defaults to 7 and round-trips`() {
+        val settings = MapSettings()
+        assertEquals(7, Prefs(settings).quickTimerAlarmHour)
+        Prefs(settings).quickTimerAlarmHour = 22
+        assertEquals(22, Prefs(settings).quickTimerAlarmHour)
+    }
+
+    @Test
+    fun `quickTimerAlarmMinute defaults to 0 and round-trips`() {
+        val settings = MapSettings()
+        assertEquals(0, Prefs(settings).quickTimerAlarmMinute)
+        Prefs(settings).quickTimerAlarmMinute = 45
+        assertEquals(45, Prefs(settings).quickTimerAlarmMinute)
+    }
 }

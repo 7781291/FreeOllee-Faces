@@ -198,11 +198,7 @@ fun HomeScreen(
 @Composable
 private fun ConnectionRow(status: ConnectionStatus, onReconnect: () -> Unit) {
     val chip = connectionChip(status)
-    val color = when (status) {
-        ConnectionStatus.Connected -> MaterialTheme.colorScheme.primary
-        ConnectionStatus.Connecting -> MaterialTheme.colorScheme.onSurfaceVariant
-        ConnectionStatus.NotReachable, ConnectionStatus.NoWatch -> MaterialTheme.colorScheme.error
-    }
+    val color = connectionStatusColor(status)
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         if (chip.clickable) {
             TextButton(onClick = onReconnect) {

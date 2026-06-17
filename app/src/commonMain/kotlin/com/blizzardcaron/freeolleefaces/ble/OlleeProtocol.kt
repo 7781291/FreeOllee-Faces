@@ -132,11 +132,12 @@ object OlleeProtocol {
      * little-endian uint32 durations, then delegates to [buildRawPacket]. Per-slot labels are
      * phone-side only and never sent.
      *
-     * The header is `[00, MM, SS, byte3]` where MM:SS seeds the Timer face's **Quick-timer**
+     * The header is `[HH, MM, SS, byte3]` where HH:MM:SS seeds the Timer face's **Quick-timer**
      * (the standalone countdown shown before scrolling into the ten slots) from [headerSeconds] —
-     * independent of the ten slot durations. A 2026-06-10 BLE capture confirmed the header MM:SS
-     * is a separate "Quick timer" value, not derived from slot 1. Minutes are clamped to one byte
-     * (0xFF max) when [headerSeconds] ≥ 256 minutes. [startMode] drives byte 3: SAVE (0x00)
+     * independent of the ten slot durations. A 2026-06-10 BLE capture confirmed the header HH:MM:SS
+     * is a separate "Quick timer" value, not derived from slot 1. Byte 0 = hours decoded from a
+     * 2026-06-15 capture of the official app sending 20h05m00s (`14 05 00 01`); the hours byte is
+     * clamped to `0xFF` only for values beyond ~255h. [startMode] drives byte 3: SAVE (0x00)
      * persists the table without starting, START_SINGLE (0x01) starts a single countdown of the
      * header immediately, START_INTERVAL (0x02) starts the 10-slot interval sequence immediately
      * (byte3 values verified on hardware — see [TimerStartMode]).
@@ -154,9 +155,10 @@ object OlleeProtocol {
         }
         require(headerSeconds >= 0) { "headerSeconds must be >= 0 (got $headerSeconds)" }
         val payload = ByteArray(4 + 10 * 4) // 4-byte header + 10 LE-uint32 words
-        payload[1] = (headerSeconds / 60).coerceAtMost(0xFF).toByte() // MM (Quick-timer primary)
-        payload[2] = (headerSeconds % 60).toByte()                    // SS
-        payload[3] = startMode.byte3.toByte()                         // start/mode selector
+        payload[0] = (headerSeconds / 3600).coerceAtMost(0xFF).toByte() // HH (hours; clamp for safety)
+        payload[1] = ((headerSeconds % 3600) / 60).toByte()             // MM (0-59)
+        payload[2] = (headerSeconds % 60).toByte()                      // SS (0-59)
+        payload[3] = startMode.byte3.toByte()                           // start/mode selector
         durationsSeconds.forEachIndexed { i, s ->
             val off = 4 + i * 4
             payload[off] = (s and 0xFF).toByte()

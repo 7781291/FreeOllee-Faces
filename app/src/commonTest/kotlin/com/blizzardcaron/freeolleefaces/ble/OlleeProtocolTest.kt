@@ -233,18 +233,36 @@ class OlleeProtocolTest {
     }
 
     @Test
-    fun `buildTimerPacket clamps the header minutes byte when headerSeconds over 255 minutes`() {
-        // headerSeconds = 359_999 s -> 5999 minutes overflows one byte; clamp to 0xFF.
-        // Slot 1 = 100_000 s confirms the header clamp does NOT touch the full-precision slot word.
-        val packet = OlleeProtocol.buildTimerPacket(
-            listOf(100_000, 0, 0, 0, 0, 0, 0, 0, 0, 0), headerSeconds = 359_999)
-        assertEquals(0xFF.toByte(), packet[9])  // minutes clamped
-        assertEquals(59.toByte(), packet[10])   // 359999 % 60
-        // Slot-1 word (100_000 = 0x000186A0) stays full precision, independent of the clamped header.
-        assertEquals(0xA0.toByte(), packet[12])
-        assertEquals(0x86.toByte(), packet[13])
-        assertEquals(0x01.toByte(), packet[14])
-        assertEquals(0x00.toByte(), packet[15])
+    fun `buildTimerPacket encodes the header as hours, minutes, seconds in bytes 0-2`() {
+        // 20h05m00s = 72300 s -> header 14 05 00 (the 2026-06-15 captured value).
+        val packet = OlleeProtocol.buildTimerPacket(List(10) { 0 }, headerSeconds = 72_300)
+        assertEquals(20.toByte(), packet[8])  // hours
+        assertEquals(5.toByte(), packet[9])   // minutes
+        assertEquals(0.toByte(), packet[10])  // seconds
+    }
+
+    @Test
+    fun `buildTimerPacket carries minutes over 59 into the hours byte`() {
+        // 75 min = 4500 s -> 1h15m -> header 01 0F 00 (was 00 4B 00 under the old model).
+        val packet = OlleeProtocol.buildTimerPacket(List(10) { 0 }, headerSeconds = 4_500)
+        assertEquals(1.toByte(), packet[8])
+        assertEquals(15.toByte(), packet[9])
+        assertEquals(0.toByte(), packet[10])
+    }
+
+    @Test
+    fun `buildTimerPacket encodes the 23h59m59s ceiling exactly`() {
+        val packet = OlleeProtocol.buildTimerPacket(List(10) { 0 }, headerSeconds = 86_399)
+        assertEquals(23.toByte(), packet[8])
+        assertEquals(59.toByte(), packet[9])
+        assertEquals(59.toByte(), packet[10])
+    }
+
+    @Test
+    fun `buildTimerPacket clamps the hours byte at 0xFF for absurd values`() {
+        // 256 h = 921_600 s -> hours byte would be 256; clamp to 0xFF. Seconds/minutes still encode.
+        val packet = OlleeProtocol.buildTimerPacket(List(10) { 0 }, headerSeconds = 921_600)
+        assertEquals(0xFF.toByte(), packet[8])
     }
 
     @Test

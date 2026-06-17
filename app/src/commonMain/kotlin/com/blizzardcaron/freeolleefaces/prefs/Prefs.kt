@@ -96,6 +96,21 @@ class Prefs(
         get() = settings.getBoolean(KEY_QUICK_TIMER_INTERVAL, false)
         set(value) = settings.putBoolean(KEY_QUICK_TIMER_INTERVAL, value)
 
+    /** Alarm-mode quick timer: when on, the card takes a wall-clock target time instead of H/M/S. */
+    var quickTimerAlarmMode: Boolean
+        get() = settings.getBoolean(KEY_QUICK_TIMER_ALARM_MODE, false)
+        set(value) = settings.putBoolean(KEY_QUICK_TIMER_ALARM_MODE, value)
+
+    /** Alarm-mode target hour, 0..23 (24h; UI renders 12h + AM/PM). */
+    var quickTimerAlarmHour: Int
+        get() = settings.getInt(KEY_QUICK_TIMER_ALARM_HOUR, 7)
+        set(value) = settings.putInt(KEY_QUICK_TIMER_ALARM_HOUR, value.coerceIn(0, 23))
+
+    /** Alarm-mode target minute, 0..59. */
+    var quickTimerAlarmMinute: Int
+        get() = settings.getInt(KEY_QUICK_TIMER_ALARM_MINUTE, 0)
+        set(value) = settings.putInt(KEY_QUICK_TIMER_ALARM_MINUTE, value.coerceIn(0, 59))
+
     var customSentMs: Long?
         get() = if (settings.hasKey(KEY_CUSTOM_SENT_MS)) settings.getLong(KEY_CUSTOM_SENT_MS, 0L) else null
         set(value) = if (value == null) settings.remove(KEY_CUSTOM_SENT_MS) else settings.putLong(KEY_CUSTOM_SENT_MS, value)
@@ -177,6 +192,9 @@ class Prefs(
         private const val KEY_QUICK_TIMER_SECONDS = "quick_timer_seconds"
         private const val KEY_QUICK_TIMER_START = "quick_timer_start_from_app"
         private const val KEY_QUICK_TIMER_INTERVAL = "quick_timer_interval_mode"
+        private const val KEY_QUICK_TIMER_ALARM_MODE = "quick_timer_alarm_mode"
+        private const val KEY_QUICK_TIMER_ALARM_HOUR = "quick_timer_alarm_hour"
+        private const val KEY_QUICK_TIMER_ALARM_MINUTE = "quick_timer_alarm_minute"
         private const val KEY_CUSTOM_SENT_MS = "custom_sent_ms"
         private const val KEY_NOTIFICATION_COUNT = "notification_count"
         private const val KEY_NOTIFICATIONS_ENABLED = "notifications_enabled"
