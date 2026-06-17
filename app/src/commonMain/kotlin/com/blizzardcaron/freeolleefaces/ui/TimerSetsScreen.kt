@@ -96,7 +96,7 @@ fun TimerSetsScreen(
                         style = MaterialTheme.typography.bodySmall,
                     )
                     Button(onClick = onSendAlarm, enabled = !sending, modifier = Modifier.fillMaxWidth()) {
-                        Text("▶ Send alarm")
+                        Text("▶ Send & start quick timer")
                     }
                 } else {
                     val (h, m, s) = TimerSetEditing.secondsToHms(quickTimerSeconds)
