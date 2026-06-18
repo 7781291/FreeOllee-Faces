@@ -59,6 +59,9 @@ class FakeBleClient(
     var awaitResult: Result<OlleeProtocol.Frame> =
         Result.failure(IllegalStateException("no reply configured"))
 
+    /** Replies consumed in order by successive [sendAndAwait] calls; falls back to [awaitResult]. */
+    val awaitResults: ArrayDeque<Result<OlleeProtocol.Frame>> = ArrayDeque()
+
     override suspend fun sendAndAwait(
         deviceAddress: String,
         requestPacket: ByteArray,
@@ -68,7 +71,7 @@ class FakeBleClient(
         gate?.await()
         callLog += "ble.sendAndAwait($deviceAddress,target=$expectedTarget)"
         sentPackets += requestPacket
-        return awaitResult
+        return if (awaitResults.isNotEmpty()) awaitResults.removeFirst() else awaitResult
     }
 }
 
