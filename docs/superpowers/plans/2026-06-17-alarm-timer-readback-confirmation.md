@@ -729,6 +729,15 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 
 ### Task 5 (Phase 2 — gated on a hardware capture): Timer push confirmation
 
+> **⚠️ SUPERSEDED BY THE HARDWARE CAPTURE (2026-06-17, watch `panther`).** Step A disproved the
+> full-table hypothesis below: the `0x2C`→`4C` reply is only `[HH, MM, SS, runFlag]` of the **active
+> countdown** (header value for SAVE/START_SINGLE, first slot for START_INTERVAL), **not** the 10-slot
+> table. As shipped, `TimerConfirm` is therefore a *partial* confirmation (active value + run flag),
+> and `TimerReadback` does **not** auto-heal (re-sending would restart a running timer). The code
+> docstrings in `TimerConfirm.kt`/`TimerReadback.kt` are authoritative; the `decodeTimerPayload` /
+> `REPLY_SLOT_BASE` / heal-once design described in Steps B–E below was the pre-capture plan and was
+> not shipped. See `../reference/...` and `ollee-graphene` `0x2C` doc rows for the decode.
+
 > **Gate:** Step A captures the unobserved `4C` reply layout on hardware **before** any comparator
 > code. The comparator/tests are written against the *captured* bytes; the layout below is the
 > hypothesis (the `0x26` write payload minus the transient start-mode byte) to be confirmed or
