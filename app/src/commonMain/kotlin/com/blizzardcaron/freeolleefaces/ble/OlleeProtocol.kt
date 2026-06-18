@@ -93,6 +93,9 @@ object OlleeProtocol {
             (raw[CONFIG_PERIOD_OFFSET + 3].toInt() and 0xFF)
 
         fun withAutoSleep(on: Boolean, periodSec: Int): WatchConfig {
+            require(periodSec in CONFIG_PERIOD_VALUES_SEC) {
+                "autosleep period must be one of $CONFIG_PERIOD_VALUES_SEC (got $periodSec)"
+            }
             val copy = raw.copyOf()
             var word = maskWord()
             word = if (on) word or (1 shl CONFIG_BIT_AUTOSLEEP)

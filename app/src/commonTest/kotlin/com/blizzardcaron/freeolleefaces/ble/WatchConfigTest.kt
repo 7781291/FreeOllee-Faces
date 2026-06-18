@@ -3,6 +3,7 @@ package com.blizzardcaron.freeolleefaces.ble
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.assertFalse
@@ -66,5 +67,11 @@ class WatchConfigTest {
         assertEquals(OlleeProtocol.TARGET_SET_CONFIG, reparsed.target)
         assertTrue(reparsed.crcOk)
         assertEquals(0x82, reparsed.payload[3].toInt() and 0xFF)  // bit 6 cleared: C2 -> 82
+    }
+
+    @Test
+    fun `withAutoSleep rejects a period not in the allowed set`() {
+        val cfg = OlleeProtocol.parseConfig(OlleeProtocol.parseFrame(framed(OFF))!!)!!
+        assertFailsWith<IllegalArgumentException> { cfg.withAutoSleep(on = true, periodSec = 45) }
     }
 }
