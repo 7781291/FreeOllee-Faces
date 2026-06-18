@@ -18,6 +18,7 @@ import com.blizzardcaron.freeolleefaces.ble.BleClient
 import com.blizzardcaron.freeolleefaces.ble.ConnectionStatus
 import com.blizzardcaron.freeolleefaces.ble.NoopWatchConnection
 import com.blizzardcaron.freeolleefaces.ble.OlleeProtocol
+import com.blizzardcaron.freeolleefaces.ble.TimerReadback
 import com.blizzardcaron.freeolleefaces.ble.WatchConnection
 import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
 import com.blizzardcaron.freeolleefaces.format.formatDecimal
@@ -250,7 +251,13 @@ class AppViewModel(
             val result = ble.sendPacket(addr, packet)
             update { it.copy(sending = false) }
             result
-                .onSuccess { onSuccess(); showSnackbar(successMsg) }
+                .onSuccess {
+                    onSuccess()
+                    // Partial read-back confirmation: the watch's 0x2c reply exposes only the active
+                    // countdown value + run flag, not the full slot table (see TimerConfirm).
+                    val confirmed = TimerReadback.confirm(ble, addr, packet)
+                    showSnackbar(if (confirmed) successMsg else "$successMsg — but the watch didn't confirm it")
+                }
                 .onFailure { showSnackbar("Send failed — long-press ALARM to wake the watch, then retry") }
         }
     }

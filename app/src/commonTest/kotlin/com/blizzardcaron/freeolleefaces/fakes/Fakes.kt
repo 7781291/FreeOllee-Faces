@@ -70,7 +70,7 @@ class FakeBleClient(
     ): Result<OlleeProtocol.Frame> {
         gate?.await()
         callLog += "ble.sendAndAwait($deviceAddress,target=$expectedTarget)"
-        sentPackets += requestPacket
+        // Read requests are recorded in callLog only — sentPackets tracks actual sendPacket writes.
         return if (awaitResults.isNotEmpty()) awaitResults.removeFirst() else awaitResult
     }
 }
