@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.blizzardcaron.freeolleefaces.ble.AndroidBleClient
+import com.blizzardcaron.freeolleefaces.ble.AutoSleepApply
 import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
 import com.blizzardcaron.freeolleefaces.health.AndroidStepsProvider
 import com.blizzardcaron.freeolleefaces.notifications.AndroidNotificationAccess
@@ -47,6 +48,7 @@ class AutoUpdateWorker(
         // name-tag face. Best-effort backstop to the listener's live pushes; it piggybacks on
         // whatever schedule the active face arms and never affects that face's success/scheduling.
         maybePushNotificationCount(ctx, prefs, address)
+        maybeReconcileAutoSleep(ctx, prefs, address)
 
         // CUSTOM has no schedule; clear any stale error notification and stop the chain.
         if (face == ActiveComplication.CUSTOM) {
@@ -93,6 +95,20 @@ class AutoUpdateWorker(
         runCatching {
             AndroidBleClient(ctx).sendPacket(address, NotificationCount.packetFor(count))
         }
+    }
+
+    /**
+     * Best-effort reconcile of the watch's auto-sleep register to the scheduled desired state.
+     * Independent of the active complication; no-op when the schedule is disabled or no watch is set.
+     * Fire-and-forget: never affects face scheduling or failure accounting.
+     */
+    private suspend fun maybeReconcileAutoSleep(ctx: Context, prefs: Prefs, address: String?) {
+        if (address == null) return
+        val now = nowLocal()
+        val desired = AutoSleepReconciler.desiredProfile(
+            prefs.autoSleepWindowConfig(), now.hour * 60 + now.minute,
+        ) ?: return
+        runCatching { AutoSleepApply.reconcile(AndroidBleClient(ctx), address, desired) }
     }
 
     private suspend fun runSteps(

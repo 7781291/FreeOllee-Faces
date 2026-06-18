@@ -10,10 +10,12 @@ import com.blizzardcaron.freeolleefaces.alarm.AlarmSchedule
 import com.blizzardcaron.freeolleefaces.alarm.AlarmsRepository
 import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
 import com.blizzardcaron.freeolleefaces.auto.AlarmScheduler
+import com.blizzardcaron.freeolleefaces.auto.AutoSleepReconciler
 import com.blizzardcaron.freeolleefaces.auto.AutoUpdateSchedule
 import com.blizzardcaron.freeolleefaces.auto.Scheduler
 import com.blizzardcaron.freeolleefaces.auto.SleepWindow
 import com.blizzardcaron.freeolleefaces.auto.isTempCacheFresh
+import com.blizzardcaron.freeolleefaces.ble.AutoSleepApply
 import com.blizzardcaron.freeolleefaces.ble.BleClient
 import com.blizzardcaron.freeolleefaces.ble.ConnectionStatus
 import com.blizzardcaron.freeolleefaces.ble.NoopWatchConnection
@@ -731,9 +733,20 @@ class AppViewModel(
             watchConnection.status.collect { s ->
                 val effective = if (prefs.watchAddress == null) ConnectionStatus.NoWatch else s
                 update { it.copy(connectionStatus = effective) }
+                if (s == ConnectionStatus.Connected) reconcileAutoSleepOnConnect()
             }
         }
         prefs.watchAddress?.let { addr -> viewModelScope.launch { watchConnection.connect(addr) } }
+    }
+
+    /** On a fresh link, converge the watch's auto-sleep register to the scheduled desired state. */
+    private fun reconcileAutoSleepOnConnect() {
+        val addr = prefs.watchAddress ?: return
+        val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+        val desired = AutoSleepReconciler.desiredProfile(
+            prefs.autoSleepWindowConfig(), now.hour * 60 + now.minute,
+        ) ?: return
+        viewModelScope.launch { runCatching { AutoSleepApply.reconcile(ble, addr, desired) } }
     }
 
     /** UI left the foreground: stop mirroring status and release the held link. */
