@@ -177,6 +177,43 @@ class Prefs(
         lastAutoSendSummary = summary
     }
 
+    var autoSleepScheduleEnabled: Boolean
+        get() = settings.getBoolean(KEY_AS_ENABLED, false)
+        set(value) = settings.putBoolean(KEY_AS_ENABLED, value)
+
+    var autoSleepWindowStartMin: Int
+        get() = settings.getInt(KEY_AS_START, 22 * 60)
+        set(value) = settings.putInt(KEY_AS_START, value)
+
+    var autoSleepWindowEndMin: Int
+        get() = settings.getInt(KEY_AS_END, 7 * 60)
+        set(value) = settings.putInt(KEY_AS_END, value)
+
+    var autoSleepInWindowOn: Boolean
+        get() = settings.getBoolean(KEY_AS_IN_ON, true)
+        set(value) = settings.putBoolean(KEY_AS_IN_ON, value)
+
+    var autoSleepInWindowPeriodSec: Int
+        get() = settings.getInt(KEY_AS_IN_PERIOD, 120)
+        set(value) = settings.putInt(KEY_AS_IN_PERIOD, value.coerceAtLeast(1))
+
+    var autoSleepOutWindowOn: Boolean
+        get() = settings.getBoolean(KEY_AS_OUT_ON, false)
+        set(value) = settings.putBoolean(KEY_AS_OUT_ON, value)
+
+    var autoSleepOutWindowPeriodSec: Int
+        get() = settings.getInt(KEY_AS_OUT_PERIOD, 120)
+        set(value) = settings.putInt(KEY_AS_OUT_PERIOD, value.coerceAtLeast(1))
+
+    /** Assemble the schedule from the flat-keyed vars above. */
+    fun autoSleepWindowConfig(): AutoSleepWindowConfig = AutoSleepWindowConfig(
+        enabled = autoSleepScheduleEnabled,
+        startMin = autoSleepWindowStartMin,
+        endMin = autoSleepWindowEndMin,
+        inWindow = AutoSleepProfile(autoSleepInWindowOn, autoSleepInWindowPeriodSec),
+        outWindow = AutoSleepProfile(autoSleepOutWindowOn, autoSleepOutWindowPeriodSec),
+    )
+
     companion object {
         private const val KEY_LAT = "last_lat"
         private const val KEY_LNG = "last_lng"
@@ -209,5 +246,12 @@ class Prefs(
         private const val KEY_LAST_SEND_MS = "last_auto_send_ms"
         private const val KEY_LAST_SEND_SUMMARY = "last_auto_send_summary"
         private const val KEY_LAST_NOTIFIED_KIND = "last_notified_kind"
+        private const val KEY_AS_ENABLED = "auto_sleep_schedule_enabled"
+        private const val KEY_AS_START = "auto_sleep_window_start_min"
+        private const val KEY_AS_END = "auto_sleep_window_end_min"
+        private const val KEY_AS_IN_ON = "auto_sleep_in_on"
+        private const val KEY_AS_IN_PERIOD = "auto_sleep_in_period_sec"
+        private const val KEY_AS_OUT_ON = "auto_sleep_out_on"
+        private const val KEY_AS_OUT_PERIOD = "auto_sleep_out_period_sec"
     }
 }

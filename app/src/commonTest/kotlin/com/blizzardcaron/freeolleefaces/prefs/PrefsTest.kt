@@ -247,4 +247,32 @@ class PrefsTest {
         Prefs(settings).quickTimerAlarmMinute = 45
         assertEquals(45, Prefs(settings).quickTimerAlarmMinute)
     }
+
+    // ---------------------------------------------------------------------------
+    // auto-sleep window schedule
+    // ---------------------------------------------------------------------------
+
+    @Test fun autoSleep_defaults_disabledScreenAlwaysOnByDay() {
+        val prefs = freshPrefs()
+        assertEquals(false, prefs.autoSleepScheduleEnabled)
+        assertEquals(22 * 60, prefs.autoSleepWindowStartMin)
+        assertEquals(7 * 60, prefs.autoSleepWindowEndMin)
+        assertEquals(true, prefs.autoSleepInWindowOn)
+        assertEquals(120, prefs.autoSleepInWindowPeriodSec)
+        assertEquals(false, prefs.autoSleepOutWindowOn)
+    }
+
+    @Test fun autoSleep_windowConfig_assemblesFromFlatVars() {
+        val prefs = freshPrefs()
+        prefs.autoSleepScheduleEnabled = true
+        prefs.autoSleepWindowStartMin = 23 * 60
+        prefs.autoSleepWindowEndMin = 6 * 60
+        prefs.autoSleepInWindowPeriodSec = 60
+        val cfg = prefs.autoSleepWindowConfig()
+        assertEquals(true, cfg.enabled)
+        assertEquals(23 * 60, cfg.startMin)
+        assertEquals(6 * 60, cfg.endMin)
+        assertEquals(AutoSleepProfile(autoSleepOn = true, periodSec = 60), cfg.inWindow)
+        assertEquals(false, cfg.outWindow.autoSleepOn)
+    }
 }
