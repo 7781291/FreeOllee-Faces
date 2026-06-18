@@ -49,6 +49,11 @@ object WatchLink {
     private const val CONNECT_TIMEOUT_MS = 8_000L
     private const val WRITE_TIMEOUT_MS = 8_000L
     private const val READ_TIMEOUT_MS = 5_000L
+    // The Android GATT stack allows one outstanding op; a read-request write can be transiently
+    // rejected while a prior write's ack-notify, the CCCD enable, or a concurrent push is in flight.
+    // Retry the write while busy, bounded by READ_TIMEOUT_MS via the surrounding withTimeout.
+    private const val READ_WRITE_RETRY_MS = 100L
+    private const val READ_WRITE_MAX_ATTEMPTS = 40
     // ATT payload for the watch's default 23-byte MTU (MTU - 3). Longer frames are fragmented across
     // sequential writes and reassembled by the firmware via the LEN field.
     private const val ATT_PAYLOAD = 20
@@ -218,17 +223,22 @@ object WatchLink {
             }
             runCatching {
                 withTimeout(timeoutMs) {
+                    cb.reassembler.reset()
+                    cb.writeCont = null   // request write ack is irrelevant; we wait for the notify
+                    val chunk = chunksOf(requestPacket)[0]   // a read request is a single 8-byte chunk
+                    // Issue the read request, retrying while the GATT stack is transiently busy. The
+                    // watch cannot reply before it receives the request, so awaitTarget/awaitCont are
+                    // set only after the write is accepted — no reply can be lost in between.
+                    var attempt = 0
+                    while (!writeChunk(g, char, chunk)) {
+                        if (++attempt >= READ_WRITE_MAX_ATTEMPTS) {
+                            throw IllegalStateException("read request write stayed busy")
+                        }
+                        delay(READ_WRITE_RETRY_MS)
+                    }
                     suspendCancellableCoroutine<Result<OlleeProtocol.Frame>> { cont ->
-                        cb.reassembler.reset()
                         cb.awaitTarget = expectedTarget
                         cb.awaitCont = cont
-                        cb.writeChunks = chunksOf(requestPacket)
-                        cb.writeIndex = 0
-                        cb.writeCont = null   // request write ack is irrelevant; we wait for the notify
-                        if (!writeChunk(g, char, cb.writeChunks[0])) {
-                            cb.awaitCont = null; cb.awaitTarget = null
-                            cont.resume(Result.failure(IllegalStateException("write returned false")))
-                        }
                         cont.invokeOnCancellation { cb.awaitCont = null; cb.awaitTarget = null }
                     }
                 }
