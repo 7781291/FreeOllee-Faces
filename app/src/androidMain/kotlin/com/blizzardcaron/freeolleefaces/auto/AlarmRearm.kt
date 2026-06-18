@@ -8,6 +8,7 @@ import android.util.Log
 import com.blizzardcaron.freeolleefaces.alarm.AlarmRearmRecovery
 import com.blizzardcaron.freeolleefaces.alarm.AlarmSchedule
 import com.blizzardcaron.freeolleefaces.alarm.AlarmsRepository
+import com.blizzardcaron.freeolleefaces.ble.AlarmReadback
 import com.blizzardcaron.freeolleefaces.ble.AndroidBleClient
 import com.blizzardcaron.freeolleefaces.notify.ErrorNotifier
 import com.blizzardcaron.freeolleefaces.notify.FailureKind
@@ -123,19 +124,26 @@ object AlarmRearm {
                         AlarmsRepository(alarmSettings(ctx)).getAll(),
                         Clock.System.now().toLocalDateTime(zone),
                     )
-                    val result = AndroidBleClient(ctx).sendPacket(address, AlarmSchedule.packetFor(latest))
+                    val ble = AndroidBleClient(ctx)
+                    val packet = AlarmSchedule.packetFor(latest)
+                    val sent = ble.sendPacket(address, packet)
+                    val confirmed = sent.isSuccess && AlarmReadback.confirm(
+                        ble, address, packet,
+                        enabled = latest != null,
+                        hour = latest?.hour ?: 0, minute = latest?.minute ?: 0, chimeIndex = latest?.chimeIndex ?: 0,
+                    )
                     Log.i(
                         TAG,
-                        if (result.isSuccess) "push OK (${if (latest != null) "armed ${latest.dateTime}" else "disarm"}) [attempt $attempt]"
-                        else "push FAIL ${result.exceptionOrNull()?.message} [attempt $attempt]",
+                        if (confirmed) "push+confirm OK (${if (latest != null) "armed ${latest.dateTime}" else "disarm"}) [attempt $attempt]"
+                        else "push/confirm FAIL ${sent.exceptionOrNull()?.message ?: "read-back mismatch"} [attempt $attempt]",
                     )
-                    val action = AlarmRearmRecovery.afterPush(result.isSuccess, attempt)
+                    val action = AlarmRearmRecovery.afterPush(confirmed, attempt)
                     applyRecovery(ctx, am, action)
                     pushResults.tryEmit(
                         when {
-                            !result.isSuccess && action is AlarmRearmRecovery.Action.ScheduleRetry ->
+                            !confirmed && action is AlarmRearmRecovery.Action.ScheduleRetry ->
                                 "Alarm send failed — long-press ALARM to wake the watch (retrying automatically)"
-                            !result.isSuccess ->
+                            !confirmed ->
                                 "Alarm send failed after several tries — long-press ALARM to wake the watch, then tap Retry in the notification"
                             latest != null -> "Sent to watch — ${AlarmSchedule.formatNext(latest)}"
                             else -> "Sent to watch — alarm off"

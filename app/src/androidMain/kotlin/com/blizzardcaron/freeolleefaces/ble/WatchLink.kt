@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
+import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.bluetooth.BluetoothStatusCodes
@@ -43,8 +44,16 @@ object WatchLink {
 
     val SERVICE_UUID: UUID = UUID.fromString("6e400001-b5a3-f393-e0a9-e50e24dcca9e")
     val CHAR_UUID: UUID = UUID.fromString("6e400002-b5a3-f393-e0a9-e50e24dcca9e")
+    val NOTIFY_CHAR_UUID: UUID = UUID.fromString("6e400003-b5a3-f393-e0a9-e50e24dcca9e")
+    val CCCD_UUID: UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
     private const val CONNECT_TIMEOUT_MS = 8_000L
     private const val WRITE_TIMEOUT_MS = 8_000L
+    private const val READ_TIMEOUT_MS = 5_000L
+    // The Android GATT stack allows one outstanding op; a read-request write can be transiently
+    // rejected while a prior write's ack-notify, the CCCD enable, or a concurrent push is in flight.
+    // Retry the write while busy, bounded by READ_TIMEOUT_MS via the surrounding withTimeout.
+    private const val READ_WRITE_RETRY_MS = 100L
+    private const val READ_WRITE_MAX_ATTEMPTS = 40
     // ATT payload for the watch's default 23-byte MTU (MTU - 3). Longer frames are fragmented across
     // sequential writes and reassembled by the firmware via the LEN field.
     private const val ATT_PAYLOAD = 20
@@ -184,6 +193,59 @@ object WatchLink {
         }
     }
 
+    /**
+     * Write [requestPacket] and await the notify reply whose target == [expectedTarget]. Ensures a
+     * connection (reusing the held link when it is already Connected to [address], else opening one),
+     * subscribes to notify during service discovery, and resumes on the first matching frame.
+     */
+    suspend fun sendAndAwait(
+        context: Context, address: String, requestPacket: ByteArray, expectedTarget: Int,
+        timeoutMs: Long = READ_TIMEOUT_MS,
+    ): Result<OlleeProtocol.Frame> = withContext(Dispatchers.IO) {
+        if ((context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+            Log.i("OLLEE_BLE", "FreeOllee TX(read) $address ${requestPacket.toHex()} expect=$expectedTarget")
+        }
+        lock.withLock {
+            val connected = heldGatt != null && heldAddress == address &&
+                _status.value == ConnectionStatus.Connected
+            if (!connected) {
+                closeHeldLocked()
+                _status.value = ConnectionStatus.Connecting
+                val ok = runCatching { withTimeout(CONNECT_TIMEOUT_MS) { openHeld(context, address) } }
+                    .getOrDefault(false)
+                if (!ok) { closeHeldLocked(); _status.value = ConnectionStatus.NotReachable
+                    return@withLock Result.failure(IllegalStateException("connect failed")) }
+                _status.value = ConnectionStatus.Connected
+            }
+            val g = heldGatt; val cb = heldCallback; val char = cb?.writeChar
+            if (g == null || cb == null || char == null) {
+                return@withLock Result.failure(IllegalStateException("no link"))
+            }
+            runCatching {
+                withTimeout(timeoutMs) {
+                    cb.reassembler.reset()
+                    cb.writeCont = null   // request write ack is irrelevant; we wait for the notify
+                    val chunk = chunksOf(requestPacket)[0]   // a read request is a single 8-byte chunk
+                    // Issue the read request, retrying while the GATT stack is transiently busy. The
+                    // watch cannot reply before it receives the request, so awaitTarget/awaitCont are
+                    // set only after the write is accepted — no reply can be lost in between.
+                    var attempt = 0
+                    while (!writeChunk(g, char, chunk)) {
+                        if (++attempt >= READ_WRITE_MAX_ATTEMPTS) {
+                            throw IllegalStateException("read request write stayed busy")
+                        }
+                        delay(READ_WRITE_RETRY_MS)
+                    }
+                    suspendCancellableCoroutine<Result<OlleeProtocol.Frame>> { cont ->
+                        cb.awaitTarget = expectedTarget
+                        cb.awaitCont = cont
+                        cont.invokeOnCancellation { cb.awaitCont = null; cb.awaitTarget = null }
+                    }
+                }
+            }.getOrElse { Result.failure(it) }
+        }
+    }
+
     // --- One-shot fallback: connect -> write -> disconnect, with retry ----------------
 
     // NOTE: callers run oneShotSend inside [lock], so a background-Worker retry storm (worst case
@@ -286,6 +348,11 @@ object WatchLink {
         @Volatile var writeChunks: List<ByteArray> = emptyList()
         @Volatile var writeIndex: Int = 0
 
+        @Volatile var notifyChar: BluetoothGattCharacteristic? = null
+        @Volatile var awaitTarget: Int? = null
+        @Volatile var awaitCont: CancellableContinuation<Result<OlleeProtocol.Frame>>? = null
+        val reassembler = NotifyFrameReassembler()
+
         override fun onConnectionStateChange(g: BluetoothGatt, status: Int, newState: Int) {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 g.discoverServices()
@@ -296,6 +363,10 @@ object WatchLink {
                     if (it.isActive) it.resume(Result.failure(IllegalStateException("link dropped: status=$status")))
                 }
                 writeCont = null
+                awaitCont?.let {
+                    if (it.isActive) it.resume(Result.failure(IllegalStateException("link dropped: status=$status")))
+                }
+                awaitCont = null; awaitTarget = null
                 WatchLink.onHeldDropped()
                 g.close()
             }
@@ -311,6 +382,20 @@ object WatchLink {
                 connectCont = null; cc?.resume(false); g.disconnect(); return
             }
             writeChar = char
+            notifyChar = g.getService(WatchLink.SERVICE_UUID)?.getCharacteristic(WatchLink.NOTIFY_CHAR_UUID)
+            notifyChar?.let { nc ->
+                g.setCharacteristicNotification(nc, true)
+                nc.getDescriptor(WatchLink.CCCD_UUID)?.let { d ->
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        g.writeDescriptor(d, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
+                    } else {
+                        @Suppress("DEPRECATION") run {
+                            d.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+                            g.writeDescriptor(d)
+                        }
+                    }
+                }
+            }
             connectCont = null
             cc?.resume(true)
         }
@@ -332,6 +417,28 @@ object WatchLink {
             } else if (!WatchLink.writeChunk(g, characteristic, writeChunks[writeIndex])) {
                 writeCont = null
                 wc.resume(Result.failure(IllegalStateException("writeCharacteristic returned false")))
+            }
+        }
+
+        @Suppress("DEPRECATION")
+        override fun onCharacteristicChanged(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
+            handleNotify(characteristic.uuid, characteristic.value)
+        }
+
+        override fun onCharacteristicChanged(
+            g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, value: ByteArray,
+        ) {
+            handleNotify(characteristic.uuid, value)
+        }
+
+        private fun handleNotify(uuid: UUID, value: ByteArray?) {
+            if (uuid != WatchLink.NOTIFY_CHAR_UUID || value == null) return
+            val frame = reassembler.offer(value) ?: return
+            val want = awaitTarget ?: return
+            if (frame.target == want && frame.crcOk) {
+                val c = awaitCont
+                awaitCont = null; awaitTarget = null
+                c?.let { if (it.isActive) it.resume(Result.success(frame)) }
             }
         }
     }

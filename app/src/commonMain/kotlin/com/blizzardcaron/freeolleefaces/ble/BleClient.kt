@@ -21,4 +21,16 @@ interface BleClient {
      * [OlleeProtocol.buildRawPacket]) without the ASCII/6-char nameplate framing path.
      */
     suspend fun sendPacket(deviceAddress: String, packet: ByteArray): Result<Unit>
+
+    /**
+     * Sends a `02 <target>` read request and awaits the matching notify reply (its target is the
+     * request target + [OlleeProtocol.RESPONSE_TARGET_OFFSET]). Returns the parsed reply frame, or
+     * [Result.failure] on timeout, link loss, or no matching reply.
+     */
+    suspend fun sendAndAwait(
+        deviceAddress: String,
+        requestPacket: ByteArray,
+        expectedTarget: Int,
+        timeoutMs: Long = 5_000L,
+    ): Result<OlleeProtocol.Frame>
 }
