@@ -52,6 +52,11 @@ object OlleeProtocol {
     /** Alarm-face record — write target. Ack at 0x45; the chime preview shares this format. */
     const val TARGET_ALARM = 0x25
 
+    /** Read-request targets and the reply-target shift (`02 <t>` → reply target `t + 0x20`). */
+    const val TARGET_GET_ALARM = 0x2B
+    const val TARGET_GET_TIMER = 0x2C
+    const val RESPONSE_TARGET_OFFSET = 0x20
+
     fun crc16(data: ByteArray): Int {
         var crc = 0xFFFF
         for (b in data) {
@@ -110,6 +115,9 @@ object OlleeProtocol {
             (crc and 0xFF).toByte()
         ) + inner
     }
+
+    /** The `02 <target>` read-request frame (no payload). Reply arrives with target `+0x20`. */
+    fun readRequest(target: Int): ByteArray = buildRawPacket(target, ByteArray(0))
 
     /**
      * Builds the weekday-table write (0x34). [slots] must be 7 entries of exactly 2 ASCII chars,
