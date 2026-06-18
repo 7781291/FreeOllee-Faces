@@ -150,6 +150,13 @@ class AppViewModel(
         sleepEnabled = prefs.sleepEnabled,
         sleepStartMin = prefs.sleepStartMin,
         sleepEndMin = prefs.sleepEndMin,
+        autoSleepScheduleEnabled = prefs.autoSleepScheduleEnabled,
+        autoSleepWindowStartMin = prefs.autoSleepWindowStartMin,
+        autoSleepWindowEndMin = prefs.autoSleepWindowEndMin,
+        autoSleepInWindowOn = prefs.autoSleepInWindowOn,
+        autoSleepInWindowPeriodSec = prefs.autoSleepInWindowPeriodSec,
+        autoSleepOutWindowOn = prefs.autoSleepOutWindowOn,
+        autoSleepOutWindowPeriodSec = prefs.autoSleepOutWindowPeriodSec,
         custom = prefs.customText,
         customSent = prefs.customSentMs?.let { "Sent '${prefs.customText}' at ${clockTime(it)}" },
         stepsPreview = prefs.lastStepCount?.let {
@@ -622,6 +629,41 @@ class AppViewModel(
         prefs.sleepEndMin = min
         update { it.copy(sleepEndMin = min, tempNext = tempNextText()) }
         scheduler.reschedule()
+    }
+
+    fun setAutoSleepScheduleEnabled(enabled: Boolean) {
+        prefs.autoSleepScheduleEnabled = enabled
+        update { it.copy(autoSleepScheduleEnabled = enabled) }
+    }
+
+    fun setAutoSleepWindowStart(min: Int) {
+        prefs.autoSleepWindowStartMin = min
+        update { it.copy(autoSleepWindowStartMin = min) }
+    }
+
+    fun setAutoSleepWindowEnd(min: Int) {
+        prefs.autoSleepWindowEndMin = min
+        update { it.copy(autoSleepWindowEndMin = min) }
+    }
+
+    fun setAutoSleepInWindowOn(on: Boolean) {
+        prefs.autoSleepInWindowOn = on
+        update { it.copy(autoSleepInWindowOn = on) }
+    }
+
+    fun setAutoSleepInWindowPeriod(sec: Int) {
+        prefs.autoSleepInWindowPeriodSec = sec
+        update { it.copy(autoSleepInWindowPeriodSec = prefs.autoSleepInWindowPeriodSec) }
+    }
+
+    fun setAutoSleepOutWindowOn(on: Boolean) {
+        prefs.autoSleepOutWindowOn = on
+        update { it.copy(autoSleepOutWindowOn = on) }
+    }
+
+    fun setAutoSleepOutWindowPeriod(sec: Int) {
+        prefs.autoSleepOutWindowPeriodSec = sec
+        update { it.copy(autoSleepOutWindowPeriodSec = prefs.autoSleepOutWindowPeriodSec) }
     }
 
     fun onWatchPicked(address: String, label: String) {
