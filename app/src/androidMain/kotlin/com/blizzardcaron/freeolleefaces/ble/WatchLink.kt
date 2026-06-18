@@ -425,7 +425,7 @@ object WatchLink {
             if (uuid != WatchLink.NOTIFY_CHAR_UUID || value == null) return
             val frame = reassembler.offer(value) ?: return
             val want = awaitTarget ?: return
-            if (frame.target == want) {
+            if (frame.target == want && frame.crcOk) {
                 val c = awaitCont
                 awaitCont = null; awaitTarget = null
                 c?.let { if (it.isActive) it.resume(Result.success(frame)) }
