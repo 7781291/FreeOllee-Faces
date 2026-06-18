@@ -4,6 +4,7 @@ import com.blizzardcaron.freeolleefaces.auto.AlarmScheduler
 import com.blizzardcaron.freeolleefaces.auto.Scheduler
 import com.blizzardcaron.freeolleefaces.ble.BleClient
 import com.blizzardcaron.freeolleefaces.ble.ConnectionStatus
+import com.blizzardcaron.freeolleefaces.ble.OlleeProtocol
 import com.blizzardcaron.freeolleefaces.ble.WatchConnection
 import com.blizzardcaron.freeolleefaces.health.StepsProvider
 import com.blizzardcaron.freeolleefaces.location.Coords
@@ -52,6 +53,22 @@ class FakeBleClient(
         callLog += "ble.sendPacket($deviceAddress)"
         sentPackets += packet
         return sendResult
+    }
+
+    /** Reply returned by [sendAndAwait]; default is a failure so tests must opt into a reply. */
+    var awaitResult: Result<OlleeProtocol.Frame> =
+        Result.failure(IllegalStateException("no reply configured"))
+
+    override suspend fun sendAndAwait(
+        deviceAddress: String,
+        requestPacket: ByteArray,
+        expectedTarget: Int,
+        timeoutMs: Long,
+    ): Result<OlleeProtocol.Frame> {
+        gate?.await()
+        callLog += "ble.sendAndAwait($deviceAddress,target=$expectedTarget)"
+        sentPackets += requestPacket
+        return awaitResult
     }
 }
 

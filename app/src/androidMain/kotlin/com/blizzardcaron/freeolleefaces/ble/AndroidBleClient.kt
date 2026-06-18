@@ -22,4 +22,9 @@ class AndroidBleClient(context: Context) : BleClient {
 
     override suspend fun sendPacket(deviceAddress: String, packet: ByteArray): Result<Unit> =
         WatchLink.send(context, deviceAddress, packet)
+
+    override suspend fun sendAndAwait(
+        deviceAddress: String, requestPacket: ByteArray, expectedTarget: Int, timeoutMs: Long,
+    ): Result<OlleeProtocol.Frame> =
+        WatchLink.sendAndAwait(context, deviceAddress, requestPacket, expectedTarget, timeoutMs)
 }
