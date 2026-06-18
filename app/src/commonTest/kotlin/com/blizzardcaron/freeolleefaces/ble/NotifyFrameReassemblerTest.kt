@@ -46,4 +46,21 @@ class NotifyFrameReassemblerTest {
         val r = NotifyFrameReassembler()
         assertNull(r.offer(byteArrayOf(0x00, 0x06, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66)))
     }
+
+    @Test fun reset_discards_partial_buffer() {
+        val r = NotifyFrameReassembler()
+        assertNull(r.offer(alarm4B.copyOfRange(0, 10)))        // partial: only 10 of 20 bytes
+        r.reset()
+        val frame = r.offer(alarm4B)                            // fresh, complete frame
+        assertTrue(frame != null && frame.crcOk)
+        assertEquals(0x4B, frame.target)
+    }
+
+    @Test fun short_garbage_then_valid_frame_still_parses() {
+        val r = NotifyFrameReassembler()
+        assertNull(r.offer(byteArrayOf(0x11, 0x22)))            // stray fragment, no AA 55, too short to decide at size>=4
+        val frame = r.offer(alarm4B)
+        assertTrue(frame != null && frame.crcOk)
+        assertEquals(0x4B, frame.target)
+    }
 }
