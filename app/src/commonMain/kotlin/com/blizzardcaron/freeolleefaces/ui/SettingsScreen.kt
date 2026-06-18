@@ -176,7 +176,10 @@ private fun SleepSection(state: HomeState, callbacks: SettingsCallbacks) {
     }
 }
 
-private fun minutesToLabel(min: Int): String = "%02d:%02d".format(min / 60, min % 60)
+private fun minutesToLabel(min: Int): String {
+    val h = min / 60
+    return "%d:%02d %s".format(hour12Of(h), min % 60, if (isPm(h)) "PM" else "AM")
+}
 
 @Composable
 private fun AutoSleepSection(state: HomeState, callbacks: SettingsCallbacks) {
