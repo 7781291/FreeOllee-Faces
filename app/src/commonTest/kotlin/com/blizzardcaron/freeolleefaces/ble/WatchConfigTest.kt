@@ -74,4 +74,12 @@ class WatchConfigTest {
         val cfg = OlleeProtocol.parseConfig(OlleeProtocol.parseFrame(framed(OFF))!!)!!
         assertFailsWith<IllegalArgumentException> { cfg.withAutoSleep(on = true, periodSec = 45) }
     }
+
+    @Test
+    fun `withAutoSleep does not validate period when turning off`() {
+        val cfg = OlleeProtocol.parseConfig(OlleeProtocol.parseFrame(framed(ON))!!)!!
+        val updated = cfg.withAutoSleep(on = false, periodSec = 45)
+        assertFalse(updated.autoSleepOn)
+        assertEquals(0x82, updated.raw[3].toInt() and 0xFF)  // bit 6 cleared: C2 -> 82
+    }
 }
