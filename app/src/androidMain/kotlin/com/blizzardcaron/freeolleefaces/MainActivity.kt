@@ -115,8 +115,8 @@ private fun AppRoot() {
                 PackageManager.PERMISSION_GRANTED ||
                 ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) ==
                 PackageManager.PERMISSION_GRANTED
-        val haveCoords = viewModel.hasSavedCoords()
-        val stale = viewModel.locationIsStale()
+        val haveCoords = viewModel.complications.hasSavedCoords()
+        val stale = viewModel.complications.locationIsStale()
 
         when {
             // Fresh saved coords: use them silently, no fix.
@@ -124,25 +124,25 @@ private fun AppRoot() {
 
             // Stale saved coords + permission: render saved, silently refresh.
             haveCoords && hasAnyLocation -> {
-                viewModel.setLocating(true)
-                viewModel.fetchLocation()
-                    .onSuccess { coords -> viewModel.onLocationFetchedSilent(coords.lat, coords.lng) }
-                    .onFailure { viewModel.onLocationRefreshFailed() }
+                viewModel.complications.setLocating(true)
+                viewModel.complications.fetchLocation()
+                    .onSuccess { coords -> viewModel.complications.onLocationFetchedSilent(coords.lat, coords.lng) }
+                    .onFailure { viewModel.complications.onLocationRefreshFailed() }
             }
 
             // No saved coords, permission held: first-run fix.
             !haveCoords && hasAnyLocation -> {
-                viewModel.setLocating(true)
-                viewModel.fetchLocation()
-                    .onSuccess { coords -> viewModel.onLocationFetchedSilent(coords.lat, coords.lng) }
-                    .onFailure { viewModel.setLocating(false) }
+                viewModel.complications.setLocating(true)
+                viewModel.complications.fetchLocation()
+                    .onSuccess { coords -> viewModel.complications.onLocationFetchedSilent(coords.lat, coords.lng) }
+                    .onFailure { viewModel.complications.setLocating(false) }
             }
 
             // No permission and no saved coords: the user sets location in Settings.
             else -> { /* nothing to fetch */ }
         }
 
-        viewModel.refreshActive(force = false, push = false)
+        viewModel.complications.refreshActive(force = false, push = false)
         viewModel.onStart()
     }
 
@@ -151,7 +151,7 @@ private fun AppRoot() {
     LaunchedEffect(screen) {
         if (screen == Screen.Home) {
             while (true) {
-                viewModel.refreshAllPreviews()
+                viewModel.complications.refreshAllPreviews()
                 delay(60_000)
             }
         }
@@ -186,7 +186,7 @@ private fun AppRoot() {
             when (event) {
                 Lifecycle.Event.ON_START -> viewModel.onForeground()
                 Lifecycle.Event.ON_STOP -> viewModel.onBackground()
-                Lifecycle.Event.ON_RESUME -> viewModel.onResumeNotifications()
+                Lifecycle.Event.ON_RESUME -> viewModel.complications.onResumeNotifications()
                 else -> {}
             }
         }
@@ -198,14 +198,14 @@ private fun AppRoot() {
         ActivityResultContracts.RequestMultiplePermissions()
     ) { results ->
         if (results.values.any { it }) {
-            viewModel.setLocating(true)
+            viewModel.complications.setLocating(true)
             kotlinScope.launch {
-                viewModel.fetchLocation()
-                    .onSuccess { coords -> viewModel.onLocationFetched(coords.lat, coords.lng) }
-                    .onFailure { err -> viewModel.onLocationFailed(err.message) }
+                viewModel.complications.fetchLocation()
+                    .onSuccess { coords -> viewModel.complications.onLocationFetched(coords.lat, coords.lng) }
+                    .onFailure { err -> viewModel.complications.onLocationFailed(err.message) }
             }
         } else {
-            viewModel.onLocationDenied()
+            viewModel.complications.onLocationDenied()
         }
     }
 
@@ -214,9 +214,9 @@ private fun AppRoot() {
     ) { granted ->
         // The read permission alone is enough to show steps; background read just lets the
         // worker keep updating while the app is closed.
-        viewModel.refreshSteps(push = viewModel.activeIsSteps())
+        viewModel.complications.refreshSteps(push = viewModel.complications.activeIsSteps())
         if (!granted.containsAll(AndroidStepsProvider.PERMISSIONS)) {
-            viewModel.onPartialHealthGrant()
+            viewModel.complications.onPartialHealthGrant()
         }
     }
 
@@ -234,11 +234,11 @@ private fun AppRoot() {
                 ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) ==
                 PackageManager.PERMISSION_GRANTED
         if (hasAny) {
-            viewModel.setLocating(true)
+            viewModel.complications.setLocating(true)
             kotlinScope.launch {
-                viewModel.fetchLocation()
-                    .onSuccess { coords -> viewModel.onLocationFetched(coords.lat, coords.lng) }
-                    .onFailure { err -> viewModel.onLocationFailed(err.message) }
+                viewModel.complications.fetchLocation()
+                    .onSuccess { coords -> viewModel.complications.onLocationFetched(coords.lat, coords.lng) }
+                    .onFailure { err -> viewModel.complications.onLocationFailed(err.message) }
             }
         } else {
             locationPermissionLauncher.launch(
@@ -251,24 +251,24 @@ private fun AppRoot() {
     }
 
     val homeCallbacks = HomeCallbacks(
-        onActivate = { viewModel.activate(it) },
-        onUpdateNow = { viewModel.refreshActive(force = true, push = true) },
-        onTempUnitChange = { newUnit -> viewModel.setTempUnit(newUnit) },
-        onCustomChange = { text -> viewModel.setCustomText(text) },
-        onSendCustom = { viewModel.sendCustom(state.custom) },
+        onActivate = { viewModel.complications.activate(it) },
+        onUpdateNow = { viewModel.complications.refreshActive(force = true, push = true) },
+        onTempUnitChange = { newUnit -> viewModel.complications.setTempUnit(newUnit) },
+        onCustomChange = { text -> viewModel.complications.setCustomText(text) },
+        onSendCustom = { viewModel.complications.sendCustom(state.custom) },
         onGrantHealth = {
-            when (viewModel.healthAvailability()) {
+            when (viewModel.complications.healthAvailability()) {
                 StepsProvider.Availability.AVAILABLE ->
                     healthPermissionLauncher.launch(AndroidStepsProvider.PERMISSIONS)
                 StepsProvider.Availability.UPDATE_REQUIRED ->
-                    viewModel.onHealthUpdateRequired()
+                    viewModel.complications.onHealthUpdateRequired()
                 StepsProvider.Availability.UNAVAILABLE ->
-                    viewModel.onHealthUnavailable()
+                    viewModel.complications.onHealthUnavailable()
             }
         },
         onGrantNotificationAccess = { openNotificationAccessSettings(context) },
-        onToggleNotifications = { viewModel.setNotificationsEnabled(it) },
-        onNotificationsUpdateNow = { viewModel.pushCountIfWatch() },
+        onToggleNotifications = { viewModel.complications.setNotificationsEnabled(it) },
+        onNotificationsUpdateNow = { viewModel.complications.pushCountIfWatch() },
         onReconnect = { viewModel.onReconnect() },
     )
 

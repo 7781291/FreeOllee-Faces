@@ -8,10 +8,10 @@
     <ID>ArgumentListWrapping:AlarmRearm.kt$AlarmRearm$( ctx, REQUEST_CODE, Intent(ctx, AlarmRearmReceiver::class.java), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE, )</ID>
     <ID>ArgumentListWrapping:AlarmSchedule.kt$AlarmSchedule$( hour = next.hour, minute = next.minute, chimeIndex = next.chimeIndex, playNow = false, enabled = true, )</ID>
     <ID>ArgumentListWrapping:AlarmsScreen.kt$("No alarms yet. Tap \"Add alarm\" to create one.", style = MaterialTheme.typography.bodyMedium)</ID>
-    <ID>ArgumentListWrapping:AppViewModel.kt$AppViewModel$( Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()), prefs.updateIntervalMinutes, sleep, )</ID>
-    <ID>ArgumentListWrapping:AppViewModel.kt$AppViewModel$( lat = lat.toString(), lng = lng.toString(), locating = false, locationLabel = locLabel(lat, lng), locationFreshness = "just now", )</ID>
     <ID>ArgumentListWrapping:AutoUpdateWorker.kt$AutoUpdateWorker$( ctx, AutoUpdateSchedule.backstopDelayMs(attempt), sendAttempt = attempt + 1, )</ID>
     <ID>ArgumentListWrapping:AutoUpdateWorker.kt$AutoUpdateWorker$( now.toInstant(TimeZone.currentSystemDefault()), lat, lng, TimeZone.currentSystemDefault(), )</ID>
+    <ID>ArgumentListWrapping:ComplicationController.kt$ComplicationController$( clock.now().toLocalDateTime(TimeZone.currentSystemDefault()), prefs.updateIntervalMinutes, sleep, )</ID>
+    <ID>ArgumentListWrapping:ComplicationController.kt$ComplicationController$( lat = lat.toString(), lng = lng.toString(), locating = false, locationLabel = locLabel(lat, lng), locationFreshness = "just now", )</ID>
     <ID>ArgumentListWrapping:ErrorNotifier.kt$ErrorNotifier$( ctx, 0, intent, PendingIntent.FLAG_IMMUTABLE, )</ID>
     <ID>ArgumentListWrapping:ErrorNotifier.kt$ErrorNotifier$( ctx, retryRequestCodeFor(kind), retryIntent, PendingIntent.FLAG_IMMUTABLE, )</ID>
     <ID>ArgumentListWrapping:HomeScreen.kt$("Waiting for coordinates…", style = MaterialTheme.typography.bodyMedium)</ID>
@@ -40,8 +40,8 @@
     <ID>ArgumentListWrapping:TimerSetsScreen.kt$("No sets yet. Tap \"New set\" to create one.", style = MaterialTheme.typography.bodyMedium)</ID>
     <ID>ArgumentListWrapping:TimerSetsScreen.kt$(if (set.name.isBlank()) "(unnamed)" else set.name, style = MaterialTheme.typography.titleMedium)</ID>
     <ID>ArgumentListWrapping:WatchLink.kt$WatchLink$("OLLEE_BLE", "FreeOllee RX $address target=0x${f.target.toString(16)} " + "payload=${f.payload.toHex()} crcOk=${f.crcOk}")</ID>
-    <ID>ComplexCondition:AppViewModel.kt$AppViewModel$lat != null &amp;&amp; lng != null &amp;&amp; lat in -90.0..90.0 &amp;&amp; lng in -180.0..180.0</ID>
     <ID>ComplexCondition:AppViewModel.kt$AppViewModel$latD != null &amp;&amp; lngD != null &amp;&amp; latD in -90.0..90.0 &amp;&amp; lngD in -180.0..180.0</ID>
+    <ID>ComplexCondition:ComplicationController.kt$ComplicationController$lat != null &amp;&amp; lng != null &amp;&amp; lat in -90.0..90.0 &amp;&amp; lng in -180.0..180.0</ID>
     <ID>ComplexCondition:WatchLink.kt$WatchLink$g != null &amp;&amp; cb != null &amp;&amp; char != null &amp;&amp; heldAddress == address &amp;&amp; _status.value == ConnectionStatus.Connected</ID>
     <ID>CyclomaticComplexMethod:AlarmRearm.kt$AlarmRearm$fun rearm(context: Context, attempt: Int = 0, onComplete: () -&gt; Unit = {})</ID>
     <ID>CyclomaticComplexMethod:MainActivity.kt$@Composable private fun AppRoot()</ID>
@@ -80,7 +80,6 @@
     <ID>FunctionNaming:TimerWidgets.kt$@Composable internal fun HourField(value: Int, onCommit: (Int) -&gt; Unit)</ID>
     <ID>FunctionNaming:TimerWidgets.kt$@Composable internal fun NumberField(label: String, value: Int, onChange: (Int) -&gt; Unit)</ID>
     <ID>FunctionOnlyReturningConstant:BleRetryPolicy.kt$BleRetryPolicy$@Suppress("UNUSED_PARAMETER") fun isRetryable(error: Throwable): Boolean</ID>
-    <ID>ImportOrdering:AppViewModel.kt$import androidx.compose.runtime.getValue import androidx.compose.runtime.mutableStateOf import androidx.compose.runtime.setValue import androidx.lifecycle.ViewModel import androidx.lifecycle.viewModelScope import com.blizzardcaron.freeolleefaces.alarm.AlarmsRepository import com.blizzardcaron.freeolleefaces.auto.ActiveComplication import com.blizzardcaron.freeolleefaces.auto.AlarmScheduler import com.blizzardcaron.freeolleefaces.auto.AutoSleepReconciler import com.blizzardcaron.freeolleefaces.auto.AutoUpdateSchedule import com.blizzardcaron.freeolleefaces.auto.Scheduler import com.blizzardcaron.freeolleefaces.auto.SleepWindow import com.blizzardcaron.freeolleefaces.auto.isTempCacheFresh import com.blizzardcaron.freeolleefaces.ble.AutoSleepApply import com.blizzardcaron.freeolleefaces.ble.BleClient import com.blizzardcaron.freeolleefaces.ble.ConnectionStatus import com.blizzardcaron.freeolleefaces.ble.NoopWatchConnection import com.blizzardcaron.freeolleefaces.ble.OlleeProtocol import com.blizzardcaron.freeolleefaces.ble.WatchConnection import com.blizzardcaron.freeolleefaces.format.DisplayFormatter import com.blizzardcaron.freeolleefaces.format.formatDecimal import com.blizzardcaron.freeolleefaces.format.groupThousands import com.blizzardcaron.freeolleefaces.format.WeatherErrorCopy import com.blizzardcaron.freeolleefaces.health.StepsProvider import com.blizzardcaron.freeolleefaces.location.LocationProvider import com.blizzardcaron.freeolleefaces.location.freshnessLabel import com.blizzardcaron.freeolleefaces.notifications.NotificationAccessChecker import com.blizzardcaron.freeolleefaces.notifications.NotificationCount import com.blizzardcaron.freeolleefaces.prefs.Prefs import com.blizzardcaron.freeolleefaces.sun.SunCalc import com.blizzardcaron.freeolleefaces.timer.TimerSetsRepository import com.blizzardcaron.freeolleefaces.ui.HomeState import com.blizzardcaron.freeolleefaces.ui.PreviewState import com.blizzardcaron.freeolleefaces.ui.Screen import com.blizzardcaron.freeolleefaces.vm.AlarmController import com.blizzardcaron.freeolleefaces.vm.TimerController import com.blizzardcaron.freeolleefaces.weather.OpenMeteoClient import com.blizzardcaron.freeolleefaces.weather.RetryPolicy import kotlinx.coroutines.Job import kotlinx.coroutines.channels.Channel import kotlinx.coroutines.delay import kotlinx.coroutines.flow.collect import kotlinx.coroutines.flow.receiveAsFlow import kotlinx.coroutines.launch import kotlinx.datetime.Clock import kotlinx.datetime.Instant import kotlinx.datetime.LocalTime import kotlinx.datetime.TimeZone import kotlinx.datetime.format.DateTimeFormat import kotlinx.datetime.format.Padding import kotlinx.datetime.format.char import kotlinx.datetime.toLocalDateTime</ID>
     <ID>ImportOrdering:HomeScreen.kt$import androidx.compose.foundation.BorderStroke import androidx.compose.foundation.clickable import androidx.compose.foundation.layout.Arrangement import androidx.compose.foundation.layout.Column import androidx.compose.foundation.layout.Row import androidx.compose.foundation.layout.Spacer import androidx.compose.foundation.layout.fillMaxSize import androidx.compose.foundation.layout.fillMaxWidth import androidx.compose.foundation.layout.padding import androidx.compose.foundation.layout.size import androidx.compose.foundation.layout.width import androidx.compose.foundation.rememberScrollState import androidx.compose.foundation.verticalScroll import androidx.compose.material3.Button import androidx.compose.material3.Card import androidx.compose.material3.CircularProgressIndicator import androidx.compose.material3.CardDefaults import androidx.compose.material3.ExperimentalMaterial3Api import androidx.compose.material3.HorizontalDivider import androidx.compose.material3.MaterialTheme import androidx.compose.material3.OutlinedTextField import androidx.compose.material3.RadioButton import androidx.compose.material3.SegmentedButton import androidx.compose.material3.SegmentedButtonDefaults import androidx.compose.material3.SingleChoiceSegmentedButtonRow import androidx.compose.material3.Switch import androidx.compose.material3.Text import androidx.compose.material3.TextButton import androidx.compose.runtime.Composable import androidx.compose.runtime.getValue import androidx.compose.runtime.mutableStateOf import androidx.compose.runtime.remember import androidx.compose.runtime.setValue import androidx.compose.ui.Alignment import androidx.compose.ui.Modifier import androidx.compose.ui.unit.dp import androidx.compose.ui.unit.em import com.blizzardcaron.freeolleefaces.auto.ActiveComplication import com.blizzardcaron.freeolleefaces.auto.displayLabel import com.blizzardcaron.freeolleefaces.ble.ConnectionStatus import com.blizzardcaron.freeolleefaces.ble.connectionChip import com.blizzardcaron.freeolleefaces.ble.wakeHint import com.blizzardcaron.freeolleefaces.format.DisplayFormatter import com.blizzardcaron.freeolleefaces.format.TempUnit</ID>
     <ID>ImportOrdering:MainActivity.kt$import android.Manifest import android.annotation.SuppressLint import android.bluetooth.BluetoothManager import android.content.Context import android.content.Intent import android.content.pm.PackageManager import android.provider.Settings import android.os.Build import android.os.Bundle import androidx.activity.ComponentActivity import androidx.activity.compose.rememberLauncherForActivityResult import androidx.activity.compose.setContent import androidx.activity.result.contract.ActivityResultContracts import androidx.compose.foundation.layout.padding import androidx.compose.material3.MaterialTheme import androidx.compose.material3.NavigationBar import androidx.compose.material3.NavigationBarItem import androidx.compose.material3.Scaffold import androidx.compose.material3.SnackbarHost import androidx.compose.material3.SnackbarHostState import androidx.compose.material3.Text import androidx.compose.runtime.* import androidx.compose.ui.Modifier import androidx.compose.ui.platform.LocalContext import androidx.lifecycle.Lifecycle import androidx.lifecycle.LifecycleEventObserver import androidx.lifecycle.compose.LocalLifecycleOwner import androidx.core.content.ContextCompat import androidx.health.connect.client.PermissionController import com.blizzardcaron.freeolleefaces.alarm.AlarmsRepository import com.blizzardcaron.freeolleefaces.auto.AlarmRearm import com.blizzardcaron.freeolleefaces.auto.AndroidAlarmScheduler import com.blizzardcaron.freeolleefaces.auto.AndroidScheduler import com.blizzardcaron.freeolleefaces.ble.AndroidBleClient import com.blizzardcaron.freeolleefaces.ble.AndroidWatchConnection import com.blizzardcaron.freeolleefaces.health.AndroidStepsProvider import com.blizzardcaron.freeolleefaces.health.StepsProvider import com.blizzardcaron.freeolleefaces.location.AndroidLocationProvider import com.blizzardcaron.freeolleefaces.notifications.AndroidNotificationAccess import com.blizzardcaron.freeolleefaces.prefs.Prefs import com.blizzardcaron.freeolleefaces.prefs.alarmSettings import com.blizzardcaron.freeolleefaces.prefs.appSettings import com.blizzardcaron.freeolleefaces.prefs.timerSettings import com.blizzardcaron.freeolleefaces.timer.TimerSetsRepository import com.blizzardcaron.freeolleefaces.ui.BondedDevice import com.blizzardcaron.freeolleefaces.ui.BondedDevicesDialog import com.blizzardcaron.freeolleefaces.ui.BottomNavTab import com.blizzardcaron.freeolleefaces.ui.AlarmsScreen import com.blizzardcaron.freeolleefaces.ui.HomeCallbacks import com.blizzardcaron.freeolleefaces.ui.HomeScreen import com.blizzardcaron.freeolleefaces.ui.Screen import com.blizzardcaron.freeolleefaces.ui.SettingsCallbacks import com.blizzardcaron.freeolleefaces.ui.SettingsScreen import com.blizzardcaron.freeolleefaces.ui.TimerSetEditScreen import com.blizzardcaron.freeolleefaces.ui.TimerSetsScreen import com.blizzardcaron.freeolleefaces.ui.theme.FreeOlleeFacesTheme import com.blizzardcaron.freeolleefaces.ui.versionLabel import kotlinx.coroutines.delay import kotlinx.coroutines.launch</ID>
     <ID>ImportOrdering:OpenMeteoClient.kt$import com.blizzardcaron.freeolleefaces.format.TempUnit import io.ktor.client.HttpClient import io.ktor.client.network.sockets.ConnectTimeoutException import io.ktor.client.network.sockets.SocketTimeoutException import io.ktor.client.plugins.HttpTimeout import io.ktor.client.request.get import io.ktor.client.statement.bodyAsText import kotlinx.io.IOException import kotlinx.coroutines.TimeoutCancellationException import kotlinx.serialization.SerialName import kotlinx.serialization.Serializable import kotlinx.serialization.json.Json</ID>
@@ -117,7 +116,6 @@
     <ID>MagicNumber:AppViewModel.kt$4</ID>
     <ID>MagicNumber:AppViewModel.kt$AppViewModel$180.0</ID>
     <ID>MagicNumber:AppViewModel.kt$AppViewModel$500</ID>
-    <ID>MagicNumber:AppViewModel.kt$AppViewModel$6</ID>
     <ID>MagicNumber:AppViewModel.kt$AppViewModel$60</ID>
     <ID>MagicNumber:AppViewModel.kt$AppViewModel$90.0</ID>
     <ID>MagicNumber:AutoUpdateSchedule.kt$AutoUpdateSchedule$15L</ID>
@@ -154,6 +152,10 @@
     <ID>MagicNumber:Color.kt$Everforest$0xFFE67E80</ID>
     <ID>MagicNumber:Color.kt$Everforest$0xFFE8E0CC</ID>
     <ID>MagicNumber:Color.kt$Everforest$0xFFF85552</ID>
+    <ID>MagicNumber:ComplicationController.kt$4</ID>
+    <ID>MagicNumber:ComplicationController.kt$ComplicationController$180.0</ID>
+    <ID>MagicNumber:ComplicationController.kt$ComplicationController$6</ID>
+    <ID>MagicNumber:ComplicationController.kt$ComplicationController$90.0</ID>
     <ID>MagicNumber:DevToolsReceiver.kt$DevToolsReceiver$16</ID>
     <ID>MagicNumber:DisplayFormatter.kt$DisplayFormatter$10</ID>
     <ID>MagicNumber:DisplayFormatter.kt$DisplayFormatter$1000</ID>
@@ -327,11 +329,13 @@
     <ID>MultiLineIfElse:AppViewModel.kt$"Location: not set"</ID>
     <ID>MultiLineIfElse:AppViewModel.kt$AppViewModel$ConnectionStatus.Connecting</ID>
     <ID>MultiLineIfElse:AppViewModel.kt$AppViewModel$ConnectionStatus.NoWatch</ID>
-    <ID>MultiLineIfElse:AppViewModel.kt$AppViewModel$null</ID>
     <ID>MultiLineIfElse:AutoSleepReconciler.kt$AutoSleepReconciler$config.inWindow</ID>
     <ID>MultiLineIfElse:AutoSleepReconciler.kt$AutoSleepReconciler$config.outWindow</ID>
     <ID>MultiLineIfElse:AutoUpdateScheduler.kt$AutoUpdateScheduler$null</ID>
     <ID>MultiLineIfElse:AutoUpdateWorker.kt$AutoUpdateWorker$null</ID>
+    <ID>MultiLineIfElse:ComplicationController.kt$"Location: ${formatDecimal(lat, 4)}, ${formatDecimal(lng, 4)}"</ID>
+    <ID>MultiLineIfElse:ComplicationController.kt$"Location: not set"</ID>
+    <ID>MultiLineIfElse:ComplicationController.kt$ComplicationController$null</ID>
     <ID>MultiLineIfElse:ConnectionStatus.kt$"Wake the watch: long-press ALARM or triple-tap the Clock face, then tap Reconnect."</ID>
     <ID>MultiLineIfElse:ConnectionStatus.kt$null</ID>
     <ID>MultiLineIfElse:DevToolsReceiver.kt$DevToolsReceiver$"result: FAIL ${result.exceptionOrNull()?.message}"</ID>
@@ -356,6 +360,7 @@
     <ID>NoMultipleSpaces:AlarmsJson.kt$AlarmsJson$ </ID>
     <ID>NoMultipleSpaces:AppViewModel.kt$AppViewModel$ </ID>
     <ID>NoMultipleSpaces:Color.kt$Everforest$ </ID>
+    <ID>NoMultipleSpaces:ComplicationController.kt$ComplicationController$ </ID>
     <ID>NoMultipleSpaces:NotifyFrameReassembler.kt$NotifyFrameReassembler$ </ID>
     <ID>NoMultipleSpaces:OlleeProtocol.kt$OlleeProtocol$ </ID>
     <ID>NoMultipleSpaces:TimerConfirm.kt$TimerConfirm$ </ID>
@@ -412,6 +417,7 @@
     <ID>TooGenericExceptionCaught:WatchLink.kt$WatchLink$error: Exception</ID>
     <ID>TooManyFunctions:AppViewModel.kt$AppViewModel : ViewModel</ID>
     <ID>TooManyFunctions:AutoUpdateWorker.kt$AutoUpdateWorker : CoroutineWorker</ID>
+    <ID>TooManyFunctions:ComplicationController.kt$ComplicationController</ID>
     <ID>TooManyFunctions:OlleeProtocol.kt$OlleeProtocol</ID>
     <ID>TooManyFunctions:SunCalc.kt$SunCalc</ID>
     <ID>TooManyFunctions:TimerController.kt$TimerController</ID>
@@ -425,17 +431,19 @@
     <ID>Wrapping:AlarmsScreen.kt$;</ID>
     <ID>Wrapping:AppViewModel.kt$;</ID>
     <ID>Wrapping:AppViewModel.kt$AppViewModel$;</ID>
-    <ID>Wrapping:AppViewModel.kt$AppViewModel$it.copy( lat = lat.toString(), lng = lng.toString(), locating = false, locationLabel = locLabel(lat, lng), locationFreshness = "just now", )</ID>
-    <ID>Wrapping:AppViewModel.kt$AppViewModel$it.copy( locating = false, locationFreshness = (freshnessLabel(prefs.lastLocationFetchedMs, nowMs()) ?: "stale") + " · refresh failed", )</ID>
     <ID>Wrapping:AppViewModel.kt$AppViewModel$it.copy( locationLabel = locLabel(latD, lngD), locationFreshness = "just now", )</ID>
-    <ID>Wrapping:AppViewModel.kt$AppViewModel$it.copy( notificationCount = prefs.notificationCount, notificationAccessGranted = notificationAccess.isGranted(), notificationsEnabled = prefs.notificationsEnabled, )</ID>
-    <ID>Wrapping:AppViewModel.kt$AppViewModel$it.copy( stepsHealthGranted = false, stepsPreview = PreviewState.Error("Grant Health access to read steps"), )</ID>
-    <ID>Wrapping:AppViewModel.kt$AppViewModel$it.copy( stepsPreview = PreviewState.Error("Couldn't read steps from Health Connect"), )</ID>
-    <ID>Wrapping:AppViewModel.kt$AppViewModel$it.copy( stepsPreview = PreviewState.Ready(payload, stepsHuman(cached) + " (stale)"), stepsUpdated = prefs.stepsFetchedMs?.let { ms -&gt; "Updated ${clockTime(ms)}" }, )</ID>
-    <ID>Wrapping:AppViewModel.kt$AppViewModel$it.copy( stepsPreview = PreviewState.Ready(payload, stepsHuman(count)), stepsUpdated = "Updated ${clockTime(prefs.stepsFetchedMs!!)}", )</ID>
-    <ID>Wrapping:AppViewModel.kt$AppViewModel$it.copy( sunPreview = PreviewState.Ready(payload, "$kindLabel at $pretty"), sunUpdated = "Updated ${clockTime(nowMs())}", sunNext = "Next: $kindLabel at $pretty", )</ID>
-    <ID>Wrapping:AppViewModel.kt$AppViewModel$it.copy( tempPreview = PreviewState.Ready(payload, human), tempUpdated = "Updated ${clockTime(prefs.tempFetchedMs!!)}", tempNext = tempNextText(), )</ID>
-    <ID>Wrapping:AppViewModel.kt$AppViewModel$it.copy( tempPreview = PreviewState.Ready(payload, human), tempUpdated = prefs.tempFetchedMs?.let { ms -&gt; "Updated ${clockTime(ms)}" }, )</ID>
+    <ID>Wrapping:ComplicationController.kt$;</ID>
+    <ID>Wrapping:ComplicationController.kt$ComplicationController$;</ID>
+    <ID>Wrapping:ComplicationController.kt$ComplicationController$it.copy( lat = lat.toString(), lng = lng.toString(), locating = false, locationLabel = locLabel(lat, lng), locationFreshness = "just now", )</ID>
+    <ID>Wrapping:ComplicationController.kt$ComplicationController$it.copy( locating = false, locationFreshness = (freshnessLabel(prefs.lastLocationFetchedMs, nowMs()) ?: "stale") + " · refresh failed", )</ID>
+    <ID>Wrapping:ComplicationController.kt$ComplicationController$it.copy( notificationCount = prefs.notificationCount, notificationAccessGranted = notificationAccess.isGranted(), notificationsEnabled = prefs.notificationsEnabled, )</ID>
+    <ID>Wrapping:ComplicationController.kt$ComplicationController$it.copy( stepsHealthGranted = false, stepsPreview = PreviewState.Error("Grant Health access to read steps"), )</ID>
+    <ID>Wrapping:ComplicationController.kt$ComplicationController$it.copy( stepsPreview = PreviewState.Error("Couldn't read steps from Health Connect"), )</ID>
+    <ID>Wrapping:ComplicationController.kt$ComplicationController$it.copy( stepsPreview = PreviewState.Ready(payload, stepsHuman(cached) + " (stale)"), stepsUpdated = prefs.stepsFetchedMs?.let { ms -&gt; "Updated ${clockTime(ms)}" }, )</ID>
+    <ID>Wrapping:ComplicationController.kt$ComplicationController$it.copy( stepsPreview = PreviewState.Ready(payload, stepsHuman(count)), stepsUpdated = "Updated ${clockTime(prefs.stepsFetchedMs!!)}", )</ID>
+    <ID>Wrapping:ComplicationController.kt$ComplicationController$it.copy( sunPreview = PreviewState.Ready(payload, "$kindLabel at $pretty"), sunUpdated = "Updated ${clockTime(nowMs())}", sunNext = "Next: $kindLabel at $pretty", )</ID>
+    <ID>Wrapping:ComplicationController.kt$ComplicationController$it.copy( tempPreview = PreviewState.Ready(payload, human), tempUpdated = "Updated ${clockTime(prefs.tempFetchedMs!!)}", tempNext = tempNextText(), )</ID>
+    <ID>Wrapping:ComplicationController.kt$ComplicationController$it.copy( tempPreview = PreviewState.Ready(payload, human), tempUpdated = prefs.tempFetchedMs?.let { ms -&gt; "Updated ${clockTime(ms)}" }, )</ID>
     <ID>Wrapping:MainActivity.kt$;</ID>
     <ID>Wrapping:SettingsScreen.kt$;</ID>
     <ID>Wrapping:TimerController.kt$TimerController$(</ID>
