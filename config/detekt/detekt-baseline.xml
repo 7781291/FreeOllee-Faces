@@ -8,39 +8,6 @@
     <ID>CyclomaticComplexMethod:AlarmRearm.kt$AlarmRearm$fun rearm(context: Context, attempt: Int = 0, onComplete: () -&gt; Unit = {})</ID>
     <ID>CyclomaticComplexMethod:MainActivity.kt$@Composable private fun AppRoot()</ID>
     <ID>EmptyFunctionBlock:WatchConnection.kt$NoopWatchConnection${}</ID>
-    <ID>FunctionNaming:AlarmsScreen.kt$@Composable fun AlarmsScreen( alarms: List&lt;Alarm&gt;, nextSummary: String, onAdd: () -&gt; Unit, onSave: (Alarm) -&gt; Unit, onToggle: (String, Boolean) -&gt; Unit, onDelete: (String) -&gt; Unit, onBack: () -&gt; Unit, connectionStatus: ConnectionStatus, onReconnect: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
-    <ID>FunctionNaming:AlarmsScreen.kt$@Composable private fun AlarmCard( alarm: Alarm, onSave: (Alarm) -&gt; Unit, onToggle: (Boolean) -&gt; Unit, onDelete: () -&gt; Unit, )</ID>
-    <ID>FunctionNaming:AlarmsScreen.kt$@Composable private fun ChimePicker(index: Int, onChange: (Int) -&gt; Unit)</ID>
-    <ID>FunctionNaming:AlarmsScreen.kt$@Composable private fun DayChips(mask: Int, onChange: (Int) -&gt; Unit)</ID>
-    <ID>FunctionNaming:AppBar.kt$@Composable fun AppBar( title: String, modifier: Modifier = Modifier, onBack: (() -&gt; Unit)? = null, connectionStatus: ConnectionStatus? = null, onReconnect: (() -&gt; Unit)? = null, actions: @Composable () -&gt; Unit = {}, )</ID>
-    <ID>FunctionNaming:AppBar.kt$@Composable private fun ConnectionChipCompact(status: ConnectionStatus, onReconnect: (() -&gt; Unit)?)</ID>
-    <ID>FunctionNaming:BondedDevicesDialog.kt$@Composable fun BondedDevicesDialog( devices: List&lt;BondedDevice&gt;, onPick: (BondedDevice) -&gt; Unit, onDismiss: () -&gt; Unit, )</ID>
-    <ID>FunctionNaming:HomeScreen.kt$@Composable private fun ComplicationCard( title: String, active: Boolean, onActivate: () -&gt; Unit, preview: PreviewState, updated: String?, next: String?, expanded: Boolean, onToggle: (() -&gt; Unit)?, expandedContent: (@Composable () -&gt; Unit)? = null, )</ID>
-    <ID>FunctionNaming:HomeScreen.kt$@Composable private fun ConnectionRow(status: ConnectionStatus, onReconnect: () -&gt; Unit)</ID>
-    <ID>FunctionNaming:HomeScreen.kt$@Composable private fun FaceValue(preview: PreviewState, updated: String?, next: String?)</ID>
-    <ID>FunctionNaming:HomeScreen.kt$@Composable private fun NotificationsCard( state: HomeState, expanded: Boolean, onToggle: () -&gt; Unit, onToggleEnabled: (Boolean) -&gt; Unit, onGrantAccess: () -&gt; Unit, onUpdateNow: () -&gt; Unit, )</ID>
-    <ID>FunctionNaming:HomeScreen.kt$@Composable private fun SectionLabel(text: String)</ID>
-    <ID>FunctionNaming:HomeScreen.kt$@Composable private fun SettingsHint(text: String)</ID>
-    <ID>FunctionNaming:HomeScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun HomeScreen( state: HomeState, callbacks: HomeCallbacks, modifier: Modifier = Modifier, )</ID>
-    <ID>FunctionNaming:LcdReadout.kt$@Composable fun LcdReadout( value: String, modifier: Modifier = Modifier, size: LcdSize = LcdSize.Lg, tone: LcdTone = LcdTone.Green, )</ID>
-    <ID>FunctionNaming:MainActivity.kt$@Composable private fun AppRoot()</ID>
-    <ID>FunctionNaming:SettingsScreen.kt$@Composable fun SettingsScreen( state: HomeState, callbacks: SettingsCallbacks, onReconnect: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
-    <ID>FunctionNaming:SettingsScreen.kt$@Composable private fun AboutSection(state: HomeState)</ID>
-    <ID>FunctionNaming:SettingsScreen.kt$@Composable private fun AutoSleepSection(state: HomeState, callbacks: SettingsCallbacks)</ID>
-    <ID>FunctionNaming:SettingsScreen.kt$@Composable private fun LocationSection(state: HomeState, callbacks: SettingsCallbacks)</ID>
-    <ID>FunctionNaming:SettingsScreen.kt$@Composable private fun PeriodRow(periods: List&lt;Int&gt;, selected: Int, onChange: (Int) -&gt; Unit)</ID>
-    <ID>FunctionNaming:SettingsScreen.kt$@Composable private fun SleepSection(state: HomeState, callbacks: SettingsCallbacks)</ID>
-    <ID>FunctionNaming:SettingsScreen.kt$@Composable private fun WatchSection(state: HomeState, callbacks: SettingsCallbacks)</ID>
-    <ID>FunctionNaming:SettingsScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable private fun IntervalSection(state: HomeState, callbacks: SettingsCallbacks)</ID>
-    <ID>FunctionNaming:Theme.kt$@Composable fun FreeOlleeFacesTheme(content: @Composable () -&gt; Unit)</ID>
-    <ID>FunctionNaming:TimePickerDialog.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun TimePickerDialog( initialMinuteOfDay: Int, onConfirm: (Int) -&gt; Unit, onDismiss: () -&gt; Unit, )</ID>
-    <ID>FunctionNaming:TimerSetEditScreen.kt$@Composable fun TimerSetEditScreen( set: TimerSet, onSave: (TimerSet) -&gt; Unit, onSend: (TimerSet) -&gt; Unit, onBack: () -&gt; Unit, connectionStatus: ConnectionStatus, onReconnect: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
-    <ID>FunctionNaming:TimerSetEditScreen.kt$@Composable private fun SlotEditor( index: Int, slot: TimerSlot, onLabelChange: (String) -&gt; Unit, onDurationChange: (Int) -&gt; Unit, onFillDown: () -&gt; Unit, onDuplicate: () -&gt; Unit, canMoveUp: Boolean, canMoveDown: Boolean, onMoveUp: () -&gt; Unit, onMoveDown: () -&gt; Unit, )</ID>
-    <ID>FunctionNaming:TimerSetsScreen.kt$@Composable fun TimerSetsScreen( sets: List&lt;TimerSet&gt;, activeId: String?, sending: Boolean, quickTimerSeconds: Int, quickTimerStartFromApp: Boolean, quickTimerIntervalMode: Boolean, onSaveQuick: (Int) -&gt; Unit, onToggleStartFromApp: (Boolean) -&gt; Unit, onToggleIntervalMode: (Boolean) -&gt; Unit, quickTimerAlarmMode: Boolean, quickTimerAlarmHour: Int, quickTimerAlarmMinute: Int, onToggleAlarmMode: (Boolean) -&gt; Unit, onSaveAlarmTime: (Int, Int) -&gt; Unit, onSendAlarm: () -&gt; Unit, onSendQuick: () -&gt; Unit, onOpen: (TimerSet) -&gt; Unit, onNew: () -&gt; Unit, onDuplicate: (TimerSet) -&gt; Unit, onDelete: (TimerSet) -&gt; Unit, onSend: (TimerSet) -&gt; Unit, onStart: (TimerSet) -&gt; Unit, onMoveUp: (TimerSet) -&gt; Unit, onMoveDown: (TimerSet) -&gt; Unit, onBack: () -&gt; Unit, connectionStatus: ConnectionStatus, onReconnect: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
-    <ID>FunctionNaming:TimerSetsScreen.kt$@Composable private fun TimerSetRow( set: TimerSet, active: Boolean, sending: Boolean, canMoveUp: Boolean, canMoveDown: Boolean, onOpen: () -&gt; Unit, onDuplicate: () -&gt; Unit, onDelete: () -&gt; Unit, onSend: () -&gt; Unit, onStart: () -&gt; Unit, onMoveUp: () -&gt; Unit, onMoveDown: () -&gt; Unit, )</ID>
-    <ID>FunctionNaming:TimerSetsScreen.kt$@Composable private fun ToggleRow( label: String, checked: Boolean, onCheckedChange: (Boolean) -&gt; Unit, enabled: Boolean = true, )</ID>
-    <ID>FunctionNaming:TimerWidgets.kt$@Composable internal fun HourField(value: Int, onCommit: (Int) -&gt; Unit)</ID>
-    <ID>FunctionNaming:TimerWidgets.kt$@Composable internal fun NumberField(label: String, value: Int, onChange: (Int) -&gt; Unit)</ID>
     <ID>FunctionOnlyReturningConstant:BleRetryPolicy.kt$BleRetryPolicy$@Suppress("UNUSED_PARAMETER") fun isRetryable(error: Throwable): Boolean</ID>
     <ID>LongMethod:AlarmRearm.kt$AlarmRearm$fun rearm(context: Context, attempt: Int = 0, onComplete: () -&gt; Unit = {})</ID>
     <ID>LongMethod:HomeScreen.kt$@Composable private fun NotificationsCard( state: HomeState, expanded: Boolean, onToggle: () -&gt; Unit, onToggleEnabled: (Boolean) -&gt; Unit, onGrantAccess: () -&gt; Unit, onUpdateNow: () -&gt; Unit, )</ID>
@@ -246,8 +213,6 @@
     <ID>MagicNumber:WeatherFetchError.kt$WeatherFetchError.Companion$299</ID>
     <ID>MagicNumber:WeatherFetchError.kt$WeatherFetchError.Companion$500</ID>
     <ID>MagicNumber:WeatherFetchError.kt$WeatherFetchError.Companion$599</ID>
-    <ID>MatchingDeclarationName:BondedDevicesDialog.kt$BondedDevice</ID>
-    <ID>MatchingDeclarationName:Retry.kt$RetryPolicy</ID>
     <ID>MaxLineLength:AlarmRearm.kt$AlarmRearm$"Alarm send failed after several tries — long-press ALARM to wake the watch, then tap Retry in the notification"</ID>
     <ID>MaxLineLength:AppViewModel.kt$AppViewModel$fun</ID>
     <ID>MaxLineLength:ErrorNotifier.kt$ErrorNotifier$FailureKind.ALARM_UNREACHABLE -&gt; "Couldn't push your next alarm to the watch after several tries — it won't ring until this succeeds. Long-press the ALARM button to wake the watch, then tap Retry."</ID>
@@ -261,8 +226,6 @@
     <ID>MaximumLineLength:TimerConfirm.kt$TimerConfirm$ </ID>
     <ID>MaximumLineLength:TimerSetEditScreen.kt$ </ID>
     <ID>NestedBlockDepth:WatchLink.kt$WatchLink.HeldCallback$override fun onServicesDiscovered(g: BluetoothGatt, status: Int)</ID>
-    <ID>NoWildcardImports:BondedDevicesDialog.kt$import androidx.compose.foundation.layout.*</ID>
-    <ID>NoWildcardImports:MainActivity.kt$import androidx.compose.runtime.*</ID>
     <ID>ReturnCount:AlarmConfirm.kt$AlarmConfirm$fun matches(enabled: Boolean, hour: Int, minute: Int, chimeIndex: Int, frame: OlleeProtocol.Frame): Boolean</ID>
     <ID>ReturnCount:AndroidStepsProvider.kt$AndroidStepsProvider$override suspend fun todaySteps(): Result&lt;Long&gt;</ID>
     <ID>ReturnCount:AutoSleepApply.kt$AutoSleepApply$suspend fun reconcile(ble: BleClient, address: String, desired: AutoSleepProfile): Boolean</ID>
@@ -293,7 +256,5 @@
     <ID>TooManyFunctions:SunCalc.kt$SunCalc</ID>
     <ID>TooManyFunctions:WatchLink.kt$WatchLink</ID>
     <ID>UseCheckOrError:WatchLink.kt$WatchLink$throw IllegalStateException("read request write stayed busy")</ID>
-    <ID>WildcardImport:BondedDevicesDialog.kt$import androidx.compose.foundation.layout.*</ID>
-    <ID>WildcardImport:MainActivity.kt$import androidx.compose.runtime.*</ID>
   </CurrentIssues>
 </SmellBaseline>
