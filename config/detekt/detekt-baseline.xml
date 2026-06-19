@@ -52,25 +52,6 @@
     <ID>MagicNumber:AutoUpdateWorker.kt$AutoUpdateWorker$60L</ID>
     <ID>MagicNumber:BleRetryPolicy.kt$BleRetryPolicy$2_000L</ID>
     <ID>MagicNumber:BleRetryPolicy.kt$BleRetryPolicy$4_000L</ID>
-    <ID>MagicNumber:Color.kt$BrandColors$0xFF1A1F1C</ID>
-    <ID>MagicNumber:Color.kt$Everforest$0xFF232A2E</ID>
-    <ID>MagicNumber:Color.kt$Everforest$0xFF2D353B</ID>
-    <ID>MagicNumber:Color.kt$Everforest$0xFF343F44</ID>
-    <ID>MagicNumber:Color.kt$Everforest$0xFF3C4841</ID>
-    <ID>MagicNumber:Color.kt$Everforest$0xFF3D484D</ID>
-    <ID>MagicNumber:Color.kt$Everforest$0xFF475258</ID>
-    <ID>MagicNumber:Color.kt$Everforest$0xFF4F585E</ID>
-    <ID>MagicNumber:Color.kt$Everforest$0xFF543A48</ID>
-    <ID>MagicNumber:Color.kt$Everforest$0xFF7FBBB3</ID>
-    <ID>MagicNumber:Color.kt$Everforest$0xFF83C092</ID>
-    <ID>MagicNumber:Color.kt$Everforest$0xFF9DA9A0</ID>
-    <ID>MagicNumber:Color.kt$Everforest$0xFFA7C080</ID>
-    <ID>MagicNumber:Color.kt$Everforest$0xFFCBE0A6</ID>
-    <ID>MagicNumber:Color.kt$Everforest$0xFFD3C6AA</ID>
-    <ID>MagicNumber:Color.kt$Everforest$0xFFDBBC7F</ID>
-    <ID>MagicNumber:Color.kt$Everforest$0xFFE67E80</ID>
-    <ID>MagicNumber:Color.kt$Everforest$0xFFE8E0CC</ID>
-    <ID>MagicNumber:Color.kt$Everforest$0xFFF85552</ID>
     <ID>MagicNumber:ComplicationController.kt$ComplicationController$6</ID>
     <ID>MagicNumber:DevToolsReceiver.kt$DevToolsReceiver$16</ID>
     <ID>MagicNumber:DisplayFormatter.kt$DisplayFormatter$10</ID>
@@ -190,23 +171,6 @@
     <ID>MagicNumber:TimerSetsScreen.kt$60</ID>
     <ID>MagicNumber:TimerSetsScreen.kt$86_399</ID>
     <ID>MagicNumber:TimerWidgets.kt$12</ID>
-    <ID>MagicNumber:Type.kt$11</ID>
-    <ID>MagicNumber:Type.kt$12</ID>
-    <ID>MagicNumber:Type.kt$13</ID>
-    <ID>MagicNumber:Type.kt$14</ID>
-    <ID>MagicNumber:Type.kt$15</ID>
-    <ID>MagicNumber:Type.kt$16</ID>
-    <ID>MagicNumber:Type.kt$18</ID>
-    <ID>MagicNumber:Type.kt$20</ID>
-    <ID>MagicNumber:Type.kt$22</ID>
-    <ID>MagicNumber:Type.kt$24</ID>
-    <ID>MagicNumber:Type.kt$28</ID>
-    <ID>MagicNumber:Type.kt$30</ID>
-    <ID>MagicNumber:Type.kt$32</ID>
-    <ID>MagicNumber:Type.kt$34</ID>
-    <ID>MagicNumber:Type.kt$38</ID>
-    <ID>MagicNumber:Type.kt$40</ID>
-    <ID>MagicNumber:Type.kt$44</ID>
     <ID>MagicNumber:WatchLink.kt$WatchLink$0xFF</ID>
     <ID>MagicNumber:WatchLink.kt$WatchLink$16</ID>
     <ID>MagicNumber:WeatherFetchError.kt$WeatherFetchError.Companion$200</ID>

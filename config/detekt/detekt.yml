@@ -25,3 +25,5 @@ style:
   MaxLineLength:
     active: true
     maxLineLength: 120
+  MagicNumber:
+    excludes: ['**/ui/theme/Color.kt', '**/ui/theme/Type.kt']
