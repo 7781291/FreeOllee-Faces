@@ -35,6 +35,16 @@ class AutoUpdateWorker(
     params: WorkerParameters,
 ) : CoroutineWorker(context, params) {
 
+    companion object {
+        private const val MINUTES_PER_HOUR = 60
+        private const val POLAR_RESCHEDULE_HOURS = 12L
+        private const val MINUTES_PER_HOUR_L = 60L
+        private const val SECONDS_PER_MINUTE_L = 60L
+        private const val MILLIS_PER_SECOND_L = 1000L
+
+        const val KEY_SEND_ATTEMPT = "send_attempt"
+    }
+
     override suspend fun doWork(): Result {
         val ctx = applicationContext
         val prefs = Prefs(appSettings(ctx))
@@ -106,7 +116,7 @@ class AutoUpdateWorker(
         if (address == null) return
         val now = nowLocal()
         val desired = AutoSleepReconciler.desiredProfile(
-            prefs.autoSleepWindowConfig(), now.hour * 60 + now.minute,
+            prefs.autoSleepWindowConfig(), now.hour * MINUTES_PER_HOUR + now.minute,
         ) ?: return
         runCatching { AutoSleepApply.reconcile(AndroidBleClient(ctx), address, desired) }
     }
@@ -122,7 +132,7 @@ class AutoUpdateWorker(
         } else {
             null
         }
-        val nowMinOfDay = now.hour * 60 + now.minute
+        val nowMinOfDay = now.hour * MINUTES_PER_HOUR + now.minute
         val inSleep = sleep != null &&
             AutoUpdateSchedule.isInSleepWindow(nowMinOfDay, sleep.startMin, sleep.endMin)
 
@@ -191,7 +201,7 @@ class AutoUpdateWorker(
         } else {
             null
         }
-        val nowMinOfDay = now.hour * 60 + now.minute
+        val nowMinOfDay = now.hour * MINUTES_PER_HOUR + now.minute
 
         // Guard: if we somehow fired inside the sleep window, skip the send.
         val inSleep = sleep != null &&
@@ -270,7 +280,11 @@ class AutoUpdateWorker(
         )
         if (event == null) {
             prefs.recordAutoSend("Skipped: no sun event (polar)")
-            AutoUpdateScheduler.enqueueNext(ctx, 12L * 60L * 60L * 1000L, sendAttempt = 0)
+            AutoUpdateScheduler.enqueueNext(
+                ctx,
+                POLAR_RESCHEDULE_HOURS * MINUTES_PER_HOUR_L * SECONDS_PER_MINUTE_L * MILLIS_PER_SECOND_L,
+                sendAttempt = 0,
+            )
             return Result.success()
         }
 
@@ -342,7 +356,7 @@ class AutoUpdateWorker(
     private fun inSleepNow(prefs: Prefs): Boolean {
         if (!prefs.sleepEnabled) return false
         val now = nowLocal()
-        val m = now.hour * 60 + now.minute
+        val m = now.hour * MINUTES_PER_HOUR + now.minute
         return AutoUpdateSchedule.isInSleepWindow(m, prefs.sleepStartMin, prefs.sleepEndMin)
     }
 
@@ -354,9 +368,5 @@ class AutoUpdateWorker(
         val zone = TimeZone.currentSystemDefault()
         val diff = to.toInstant(zone).toEpochMilliseconds() - from.toInstant(zone).toEpochMilliseconds()
         return diff.coerceAtLeast(0)
-    }
-
-    companion object {
-        const val KEY_SEND_ATTEMPT = "send_attempt"
     }
 }

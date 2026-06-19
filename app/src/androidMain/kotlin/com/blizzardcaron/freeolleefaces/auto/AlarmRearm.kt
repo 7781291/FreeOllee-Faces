@@ -54,6 +54,8 @@ object AlarmRearm {
     private const val REQUEST_CODE = 4025 // fire+60s trigger: one slot, each schedule replaces the last
     private const val BACKSTOP_REQUEST_CODE = 4026 // failed-push backstop: separate slot, same receiver
     private const val PUSH_DEBOUNCE_MS = 750L
+    private const val POST_FIRE_TRIGGER_DELAY_MS = 60_000L
+    private const val MILLIS_PER_SECOND = 1000
     private val generation = AtomicInteger()
     private val pushMutex = Mutex()
 
@@ -88,7 +90,7 @@ object AlarmRearm {
             Clock.System.now().toLocalDateTime(zone),
         )
         if (next != null) {
-            val atMs = next.dateTime.toInstant(zone).toEpochMilliseconds() + 60_000L
+            val atMs = next.dateTime.toInstant(zone).toEpochMilliseconds() + POST_FIRE_TRIGGER_DELAY_MS
             if (am.canScheduleExactAlarms()) {
                 am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, atMs, trigger)
                 Log.i(TAG, "next fire ${next.dateTime}; trigger set for fire+60s")
@@ -176,7 +178,7 @@ object AlarmRearm {
                 } else {
                     am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, atMs, pi)
                 }
-                Log.i(TAG, "backstop retry ${action.nextAttempt} in ${action.delayMs / 1000}s")
+                Log.i(TAG, "backstop retry ${action.nextAttempt} in ${action.delayMs / MILLIS_PER_SECOND}s")
             }
             AlarmRearmRecovery.Action.NotifyFailure -> {
                 Log.w(TAG, "backstop budget spent — posting alarm-failure notification")

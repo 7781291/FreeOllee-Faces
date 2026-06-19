@@ -2,6 +2,8 @@ package com.blizzardcaron.freeolleefaces.auto
 
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 
+private const val MILLIS_PER_MINUTE = 60_000L
+
 /**
  * True when a cached temperature can be pushed without re-fetching: it exists, was fetched in the
  * current unit, and is younger than the auto-update interval.
@@ -15,5 +17,5 @@ fun isTempCacheFresh(
 ): Boolean {
     if (fetchedMs == null || cacheUnit == null) return false
     if (cacheUnit != currentUnit) return false
-    return nowMs - fetchedMs < intervalMin * 60_000L
+    return nowMs - fetchedMs < intervalMin * MILLIS_PER_MINUTE
 }

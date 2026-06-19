@@ -19,6 +19,15 @@ object AutoUpdateSchedule {
     // correct day rollover (no DST surprises, matching the previous ZonedDateTime field math).
     private val ARITHMETIC_ZONE = TimeZone.UTC
 
+    private const val MINUTES_PER_HOUR = 60
+    private const val DEFAULT_SUN_WAKE_BUFFER_SECONDS = 60L
+    private const val BACKSTOP_DELAY_1_MINUTES = 2L
+    private const val BACKSTOP_DELAY_2_MINUTES = 5L
+    private const val BACKSTOP_DELAY_3_MINUTES = 15L
+    private const val MILLIS_PER_MINUTE = 60_000L
+    private const val HOURS_PER_DAY = 24L
+    private const val MINUTES_PER_HOUR_L = 60L
+
     /** Start inclusive, end exclusive. `startMin == endMin` means never in window. */
     fun isInSleepWindow(minuteOfDay: Int, startMin: Int, endMin: Int): Boolean {
         if (startMin == endMin) return false
@@ -40,13 +49,13 @@ object AutoUpdateSchedule {
     ): LocalDateTime {
         val base = now.plusMinutes(intervalMinutes.toLong())
         if (sleep == null) return base
-        val baseMinOfDay = base.hour * 60 + base.minute
+        val baseMinOfDay = base.hour * MINUTES_PER_HOUR + base.minute
         if (!isInSleepWindow(baseMinOfDay, sleep.startMin, sleep.endMin)) return base
         return snapToEnd(base, sleep.endMin)
     }
 
     /** Wake right after the event goes stale. */
-    fun nextSunWake(eventTime: LocalDateTime, bufferSeconds: Long = 60): LocalDateTime =
+    fun nextSunWake(eventTime: LocalDateTime, bufferSeconds: Long = DEFAULT_SUN_WAKE_BUFFER_SECONDS): LocalDateTime =
         eventTime.plusSeconds(bufferSeconds)
 
     /** Backstop retry budget: up to this many re-tries after the first failed send. */
@@ -61,16 +70,19 @@ object AutoUpdateSchedule {
      */
     fun backstopDelayMs(attempt: Int): Long {
         val minutes = when (attempt) {
-            0 -> 2L
-            1 -> 5L
-            else -> 15L
+            0 -> BACKSTOP_DELAY_1_MINUTES
+            1 -> BACKSTOP_DELAY_2_MINUTES
+            else -> BACKSTOP_DELAY_3_MINUTES
         }
-        return minutes * 60_000L
+        return minutes * MILLIS_PER_MINUTE
     }
 
     private fun snapToEnd(from: LocalDateTime, endMin: Int): LocalDateTime {
-        var candidate = LocalDateTime(from.date, LocalTime(endMin / 60, endMin % 60, 0, 0))
-        if (candidate <= from) candidate = candidate.plusMinutes(24L * 60L)
+        var candidate = LocalDateTime(
+            from.date,
+            LocalTime(endMin / MINUTES_PER_HOUR, endMin % MINUTES_PER_HOUR, 0, 0),
+        )
+        if (candidate <= from) candidate = candidate.plusMinutes(HOURS_PER_DAY * MINUTES_PER_HOUR_L)
         return candidate
     }
 

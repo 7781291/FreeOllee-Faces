@@ -14,6 +14,15 @@ import kotlinx.datetime.plus
  */
 object AlarmSchedule {
 
+    /** Inclusive day-scan window: today plus a full week, covering same-weekday-but-time-passed. */
+    private const val SCAN_DAYS_AHEAD = 7
+
+    /** Hours in a 12-hour clock half (noon/midnight boundary for AM/PM conversion). */
+    private const val HOURS_PER_12H_CLOCK = 12
+
+    /** Day-of-week name abbreviation length, e.g. "Tuesday" -> "Tue". */
+    private const val DAY_ABBREVIATION_LENGTH = 3
+
     /** The soonest upcoming occurrence across all enabled alarms. */
     data class NextFire(val dateTime: LocalDateTime, val hour: Int, val minute: Int, val chimeIndex: Int)
 
@@ -29,7 +38,7 @@ object AlarmSchedule {
 
     private fun nextOccurrence(alarm: Alarm, now: LocalDateTime): LocalDateTime? {
         // Scan today..+7 days; the +7 covers "only weekday bit is today's, but the time passed".
-        for (offset in 0..7) {
+        for (offset in 0..SCAN_DAYS_AHEAD) {
             val date = now.date.plus(offset, DateTimeUnit.DAY)
             if (!alarm.repeatsOn(date.dayOfWeek)) continue
             val candidate = LocalDateTime(date, LocalTime(alarm.hour, alarm.minute))
@@ -59,11 +68,12 @@ object AlarmSchedule {
     /** UI summary, e.g. "Next: Tue 7:00 AM · Breeze" — or "No alarms". */
     fun formatNext(next: NextFire?): String {
         if (next == null) return "No alarms"
-        val day = next.dateTime.dayOfWeek.name.take(3).lowercase().replaceFirstChar { it.uppercase() }
-        val h12 = when { next.hour == 0 -> 12
-            next.hour > 12 -> next.hour - 12
+        val day = next.dateTime.dayOfWeek.name.take(DAY_ABBREVIATION_LENGTH).lowercase()
+            .replaceFirstChar { it.uppercase() }
+        val h12 = when { next.hour == 0 -> HOURS_PER_12H_CLOCK
+            next.hour > HOURS_PER_12H_CLOCK -> next.hour - HOURS_PER_12H_CLOCK
             else -> next.hour }
-        val amPm = if (next.hour < 12) "AM" else "PM"
+        val amPm = if (next.hour < HOURS_PER_12H_CLOCK) "AM" else "PM"
         val mm = next.minute.toString().padStart(2, '0')
         return "Next: $day $h12:$mm $amPm · ${chimeName(next.chimeIndex)}"
     }

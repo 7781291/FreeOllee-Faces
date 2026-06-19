@@ -24,29 +24,9 @@
     <ID>MagicNumber:Alarm.kt$Alarm$0x7F</ID>
     <ID>MagicNumber:Alarm.kt$Alarm$23</ID>
     <ID>MagicNumber:Alarm.kt$Alarm$59</ID>
-    <ID>MagicNumber:AlarmRearm.kt$AlarmRearm$1000</ID>
-    <ID>MagicNumber:AlarmRearm.kt$AlarmRearm$60_000L</ID>
-    <ID>MagicNumber:AlarmSchedule.kt$AlarmSchedule$12</ID>
-    <ID>MagicNumber:AlarmSchedule.kt$AlarmSchedule$3</ID>
-    <ID>MagicNumber:AlarmSchedule.kt$AlarmSchedule$7</ID>
     <ID>MagicNumber:AlarmsScreen.kt$24</ID>
     <ID>MagicNumber:AlarmsScreen.kt$59</ID>
     <ID>MagicNumber:AppViewModel.kt$AppViewModel$60</ID>
-    <ID>MagicNumber:AutoUpdateSchedule.kt$AutoUpdateSchedule$15L</ID>
-    <ID>MagicNumber:AutoUpdateSchedule.kt$AutoUpdateSchedule$24L</ID>
-    <ID>MagicNumber:AutoUpdateSchedule.kt$AutoUpdateSchedule$5L</ID>
-    <ID>MagicNumber:AutoUpdateSchedule.kt$AutoUpdateSchedule$60</ID>
-    <ID>MagicNumber:AutoUpdateSchedule.kt$AutoUpdateSchedule$60L</ID>
-    <ID>MagicNumber:AutoUpdateSchedule.kt$AutoUpdateSchedule$60_000L</ID>
-    <ID>MagicNumber:AutoUpdateScheduler.kt$AutoUpdateScheduler$24</ID>
-    <ID>MagicNumber:AutoUpdateScheduler.kt$AutoUpdateScheduler$60</ID>
-    <ID>MagicNumber:AutoUpdateScheduler.kt$AutoUpdateScheduler$60_000L</ID>
-    <ID>MagicNumber:AutoUpdateWorker.kt$AutoUpdateWorker$1000L</ID>
-    <ID>MagicNumber:AutoUpdateWorker.kt$AutoUpdateWorker$12L</ID>
-    <ID>MagicNumber:AutoUpdateWorker.kt$AutoUpdateWorker$60</ID>
-    <ID>MagicNumber:AutoUpdateWorker.kt$AutoUpdateWorker$60L</ID>
-    <ID>MagicNumber:BleRetryPolicy.kt$BleRetryPolicy$2_000L</ID>
-    <ID>MagicNumber:BleRetryPolicy.kt$BleRetryPolicy$4_000L</ID>
     <ID>MagicNumber:ComplicationController.kt$ComplicationController$6</ID>
     <ID>MagicNumber:DevToolsReceiver.kt$DevToolsReceiver$16</ID>
     <ID>MagicNumber:DisplayFormatter.kt$DisplayFormatter$10</ID>
@@ -65,13 +45,7 @@
     <ID>MagicNumber:LcdReadout.kt$LcdSize.Lg$34</ID>
     <ID>MagicNumber:LcdReadout.kt$LcdSize.Md$22</ID>
     <ID>MagicNumber:LcdReadout.kt$LcdSize.Xl$56</ID>
-    <ID>MagicNumber:LocationFreshness.kt$24</ID>
-    <ID>MagicNumber:LocationFreshness.kt$60</ID>
-    <ID>MagicNumber:LocationFreshness.kt$60_000L</ID>
     <ID>MagicNumber:MainActivity.kt$60_000</ID>
-    <ID>MagicNumber:NotificationCount.kt$NotificationCount$11</ID>
-    <ID>MagicNumber:NotificationCount.kt$NotificationCount$7</ID>
-    <ID>MagicNumber:NotificationCount.kt$NotificationCount$9</ID>
     <ID>MagicNumber:NumberFormat.kt$10</ID>
     <ID>MagicNumber:NumberFormat.kt$3</ID>
     <ID>MagicNumber:Prefs.kt$Prefs$120</ID>
@@ -82,13 +56,9 @@
     <ID>MagicNumber:Prefs.kt$Prefs$6</ID>
     <ID>MagicNumber:Prefs.kt$Prefs$60</ID>
     <ID>MagicNumber:Prefs.kt$Prefs$7</ID>
-    <ID>MagicNumber:QuickAlarm.kt$QuickAlarm$3600</ID>
-    <ID>MagicNumber:QuickAlarm.kt$QuickAlarm$60</ID>
-    <ID>MagicNumber:QuickAlarm.kt$QuickAlarm$86_400</ID>
     <ID>MagicNumber:SettingsController.kt$SettingsController$500</ID>
     <ID>MagicNumber:SettingsScreen.kt$0.6f</ID>
     <ID>MagicNumber:SettingsScreen.kt$60</ID>
-    <ID>MagicNumber:Staleness.kt$60_000L</ID>
     <ID>MagicNumber:TimePickerDialog.kt$60</ID>
     <ID>MagicNumber:TimerController.kt$TimerController$10</ID>
     <ID>MagicNumber:TimerController.kt$TimerController$86_399</ID>
