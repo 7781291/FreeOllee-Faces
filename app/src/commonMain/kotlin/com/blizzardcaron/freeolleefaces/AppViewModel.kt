@@ -43,6 +43,8 @@ import kotlinx.datetime.toLocalDateTime
 
 private fun nowMs(): Long = Clock.System.now().toEpochMilliseconds()
 
+private const val MINUTES_PER_HOUR = 60
+
 class AppViewModel(
     private val prefs: Prefs,
     private val ble: BleClient,
@@ -200,7 +202,7 @@ class AppViewModel(
         val addr = prefs.watchAddress ?: return
         val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
         val desired = AutoSleepReconciler.desiredProfile(
-            prefs.autoSleepWindowConfig(), now.hour * 60 + now.minute,
+            prefs.autoSleepWindowConfig(), now.hour * MINUTES_PER_HOUR + now.minute,
         ) ?: return
         viewModelScope.launch { runCatching { AutoSleepApply.reconcile(ble, addr, desired) } }
     }

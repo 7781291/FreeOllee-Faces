@@ -40,6 +40,9 @@ import com.blizzardcaron.freeolleefaces.resources.Res
 import com.blizzardcaron.freeolleefaces.resources.wordmark_super_free
 import org.jetbrains.compose.resources.painterResource
 
+private const val MINUTES_PER_HOUR = 60
+private const val WORDMARK_WIDTH_FRACTION = 0.6f
+
 @Composable
 fun SettingsScreen(
     state: HomeState,
@@ -186,8 +189,8 @@ private fun SleepSection(state: HomeState, callbacks: SettingsCallbacks) {
 }
 
 private fun minutesToLabel(min: Int): String {
-    val h = min / 60
-    return "%d:%02d %s".format(hour12Of(h), min % 60, if (isPm(h)) "PM" else "AM")
+    val h = min / MINUTES_PER_HOUR
+    return "%d:%02d %s".format(hour12Of(h), min % MINUTES_PER_HOUR, if (isPm(h)) "PM" else "AM")
 }
 
 @Composable
@@ -299,7 +302,7 @@ private fun AboutSection(state: HomeState) {
                 painter = painterResource(Res.drawable.wordmark_super_free),
                 contentDescription = "Super FreeOllee",
                 contentScale = ContentScale.FillWidth,
-                modifier = Modifier.fillMaxWidth(0.6f),
+                modifier = Modifier.fillMaxWidth(WORDMARK_WIDTH_FRACTION),
             )
             Text(
                 state.versionLabel,

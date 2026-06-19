@@ -36,6 +36,9 @@ import com.blizzardcaron.freeolleefaces.alarm.AlarmsRepository
 import com.blizzardcaron.freeolleefaces.ble.ConnectionStatus
 import kotlinx.datetime.DayOfWeek
 
+private const val MAX_LABEL_LENGTH = 24
+private const val MAX_MINUTE = 59
+
 @Composable
 fun AlarmsScreen(
     alarms: List<Alarm>,
@@ -113,7 +116,7 @@ private fun AlarmCard(
                     val isPm = isPm(alarm.hour)
                     val hour12 = hour12Of(alarm.hour)
                     HourField(hour12) { onSave(alarm.copy(hour = hour24(it, isPm))) }
-                    NumberField("M", alarm.minute) { onSave(alarm.copy(minute = it.coerceIn(0, 59))) }
+                    NumberField("M", alarm.minute) { onSave(alarm.copy(minute = it.coerceIn(0, MAX_MINUTE))) }
                     TextButton(onClick = { onSave(alarm.copy(hour = hour24(hour12, !isPm))) }) {
                         Text(if (isPm) "PM" else "AM")
                     }
@@ -134,7 +137,7 @@ private fun AlarmCard(
 
             OutlinedTextField(
                 value = alarm.label,
-                onValueChange = { onSave(alarm.copy(label = it.take(24))) },
+                onValueChange = { onSave(alarm.copy(label = it.take(MAX_LABEL_LENGTH))) },
                 label = { Text("Label (optional)") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),

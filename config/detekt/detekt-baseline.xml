@@ -21,24 +21,6 @@
     <ID>LongParameterList:TimerSetEditScreen.kt$( index: Int, slot: TimerSlot, onLabelChange: (String) -&gt; Unit, onDurationChange: (Int) -&gt; Unit, onFillDown: () -&gt; Unit, onDuplicate: () -&gt; Unit, canMoveUp: Boolean, canMoveDown: Boolean, onMoveUp: () -&gt; Unit, onMoveDown: () -&gt; Unit, )</ID>
     <ID>LongParameterList:TimerSetsScreen.kt$( set: TimerSet, active: Boolean, sending: Boolean, canMoveUp: Boolean, canMoveDown: Boolean, onOpen: () -&gt; Unit, onDuplicate: () -&gt; Unit, onDelete: () -&gt; Unit, onSend: () -&gt; Unit, onStart: () -&gt; Unit, onMoveUp: () -&gt; Unit, onMoveDown: () -&gt; Unit, )</ID>
     <ID>LongParameterList:TimerSetsScreen.kt$( sets: List&lt;TimerSet&gt;, activeId: String?, sending: Boolean, quickTimerSeconds: Int, quickTimerStartFromApp: Boolean, quickTimerIntervalMode: Boolean, onSaveQuick: (Int) -&gt; Unit, onToggleStartFromApp: (Boolean) -&gt; Unit, onToggleIntervalMode: (Boolean) -&gt; Unit, quickTimerAlarmMode: Boolean, quickTimerAlarmHour: Int, quickTimerAlarmMinute: Int, onToggleAlarmMode: (Boolean) -&gt; Unit, onSaveAlarmTime: (Int, Int) -&gt; Unit, onSendAlarm: () -&gt; Unit, onSendQuick: () -&gt; Unit, onOpen: (TimerSet) -&gt; Unit, onNew: () -&gt; Unit, onDuplicate: (TimerSet) -&gt; Unit, onDelete: (TimerSet) -&gt; Unit, onSend: (TimerSet) -&gt; Unit, onStart: (TimerSet) -&gt; Unit, onMoveUp: (TimerSet) -&gt; Unit, onMoveDown: (TimerSet) -&gt; Unit, onBack: () -&gt; Unit, connectionStatus: ConnectionStatus, onReconnect: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
-    <ID>MagicNumber:AlarmsScreen.kt$24</ID>
-    <ID>MagicNumber:AlarmsScreen.kt$59</ID>
-    <ID>MagicNumber:AppViewModel.kt$AppViewModel$60</ID>
-    <ID>MagicNumber:LcdReadout.kt$LcdSize.Lg$34</ID>
-    <ID>MagicNumber:LcdReadout.kt$LcdSize.Md$22</ID>
-    <ID>MagicNumber:LcdReadout.kt$LcdSize.Xl$56</ID>
-    <ID>MagicNumber:SettingsScreen.kt$0.6f</ID>
-    <ID>MagicNumber:SettingsScreen.kt$60</ID>
-    <ID>MagicNumber:TimePickerDialog.kt$60</ID>
-    <ID>MagicNumber:TimerController.kt$TimerController$10</ID>
-    <ID>MagicNumber:TimerController.kt$TimerController$86_399</ID>
-    <ID>MagicNumber:TimerSetEditing.kt$TimerSetEditing$3600</ID>
-    <ID>MagicNumber:TimerSetEditing.kt$TimerSetEditing$60</ID>
-    <ID>MagicNumber:TimerSetsScreen.kt$3600</ID>
-    <ID>MagicNumber:TimerSetsScreen.kt$59</ID>
-    <ID>MagicNumber:TimerSetsScreen.kt$60</ID>
-    <ID>MagicNumber:TimerSetsScreen.kt$86_399</ID>
-    <ID>MagicNumber:TimerWidgets.kt$12</ID>
     <ID>MaxLineLength:AlarmRearm.kt$AlarmRearm$"Alarm send failed after several tries — long-press ALARM to wake the watch, then tap Retry in the notification"</ID>
     <ID>MaxLineLength:AppViewModel.kt$AppViewModel$fun</ID>
     <ID>MaxLineLength:ErrorNotifier.kt$ErrorNotifier$FailureKind.ALARM_UNREACHABLE -&gt; "Couldn't push your next alarm to the watch after several tries — it won't ring until this succeeds. Long-press the ALARM button to wake the watch, then tap Retry."</ID>

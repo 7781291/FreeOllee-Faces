@@ -8,6 +8,8 @@ import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 
+private const val MINUTES_PER_HOUR = 60
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimePickerDialog(
@@ -16,14 +18,14 @@ fun TimePickerDialog(
     onDismiss: () -> Unit,
 ) {
     val st = rememberTimePickerState(
-        initialHour = initialMinuteOfDay / 60,
-        initialMinute = initialMinuteOfDay % 60,
+        initialHour = initialMinuteOfDay / MINUTES_PER_HOUR,
+        initialMinute = initialMinuteOfDay % MINUTES_PER_HOUR,
         // 12h with AM/PM — matches the AM/PM button labels and the Alarm screen.
         is24Hour = false,
     )
     AlertDialog(
         onDismissRequest = onDismiss,
-        confirmButton = { TextButton(onClick = { onConfirm(st.hour * 60 + st.minute) }) { Text("OK") } },
+        confirmButton = { TextButton(onClick = { onConfirm(st.hour * MINUTES_PER_HOUR + st.minute) }) { Text("OK") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
         text = { TimePicker(state = st) },
     )

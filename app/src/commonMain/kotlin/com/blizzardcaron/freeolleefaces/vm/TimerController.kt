@@ -18,6 +18,9 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
+/** Cap for the alarm-mode quick timer's countdown: 23:59:59, the watch UI's own header-hours max. */
+private const val MAX_TIMER_SECONDS = 86_399
+
 /**
  * Owns the timer cluster extracted from [com.blizzardcaron.freeolleefaces.AppViewModel]: timer
  * sets CRUD/reorder, the quick-timer toggles, and the BLE push path (`pushTimerFrame`). Moved
@@ -162,8 +165,8 @@ class TimerController(
     fun sendQuickAlarm() {
         val now = clock.now().toLocalDateTime(TimeZone.currentSystemDefault()).time
         val seconds = QuickAlarm.countdownSeconds(now, quickTimerAlarmHour, quickTimerAlarmMinute)
-            .coerceAtMost(86_399)
-        val slots = timerActiveId?.let { timerRepo.get(it) }?.durations() ?: List(10) { 0 }
+            .coerceAtMost(MAX_TIMER_SECONDS)
+        val slots = timerActiveId?.let { timerRepo.get(it) }?.durations() ?: List(TimerSet.SLOT_COUNT) { 0 }
         val packet = OlleeProtocol.buildTimerPacket(
             slots,
             headerSeconds = seconds,
@@ -204,7 +207,7 @@ class TimerController(
      */
     fun sendQuickTimer() {
         val mode = OlleeProtocol.TimerStartMode.of(quickTimerStartFromApp, quickTimerIntervalMode)
-        val slots = timerActiveId?.let { timerRepo.get(it) }?.durations() ?: List(10) { 0 }
+        val slots = timerActiveId?.let { timerRepo.get(it) }?.durations() ?: List(TimerSet.SLOT_COUNT) { 0 }
         val packet = OlleeProtocol.buildTimerPacket(
             slots,
             headerSeconds = quickTimerSeconds,

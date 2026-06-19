@@ -32,6 +32,11 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
+private const val SECONDS_PER_HOUR = 3600
+private const val SECONDS_PER_MINUTE = 60
+private const val MAX_MINUTE = 59
+private const val MAX_TIMER_SECONDS = 86_399
+
 @Composable
 fun TimerSetsScreen(
     sets: List<TimerSet>,
@@ -88,7 +93,7 @@ fun TimerSetsScreen(
                             onSaveAlarmTime(hour24(it, pm), quickTimerAlarmMinute)
                         }
                         NumberField("M", quickTimerAlarmMinute) {
-                            onSaveAlarmTime(quickTimerAlarmHour, it.coerceIn(0, 59))
+                            onSaveAlarmTime(quickTimerAlarmHour, it.coerceIn(0, MAX_MINUTE))
                         }
                         TextButton(onClick = {
                             onSaveAlarmTime(hour24(hour12Of(quickTimerAlarmHour), !pm), quickTimerAlarmMinute)
@@ -251,10 +256,10 @@ private fun TimerSetRow(
 private fun alarmPreview(targetHour: Int, targetMinute: Int): String {
     val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).time
     val raw = QuickAlarm.countdownSeconds(now, targetHour, targetMinute)
-    val capped = raw > 86_399
-    val delta = raw.coerceAtMost(86_399)
+    val capped = raw > MAX_TIMER_SECONDS
+    val delta = raw.coerceAtMost(MAX_TIMER_SECONDS)
     val ampm = if (isPm(targetHour)) "PM" else "AM"
     val fires = "${hour12Of(targetHour)}:${targetMinute.toString().padStart(2, '0')} $ampm"
-    val span = "${delta / 3600}h ${(delta % 3600) / 60}m"
+    val span = "${delta / SECONDS_PER_HOUR}h ${(delta % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE}m"
     return "Fires $fires · in $span" + if (capped) " (capped)" else ""
 }
