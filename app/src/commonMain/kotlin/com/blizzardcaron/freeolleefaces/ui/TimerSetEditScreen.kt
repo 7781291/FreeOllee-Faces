@@ -84,7 +84,9 @@ fun TimerSetEditScreen(
                     onLabelChange = { newLabel -> updateSlot(index) { s -> s.copy(label = newLabel) } },
                     onDurationChange = { secs -> updateSlot(index) { s -> s.copy(durationSeconds = secs) } },
                     onFillDown = { working = working.copy(slots = TimerSetEditing.fillDown(working.slots, index)) },
-                    onDuplicate = { working = working.copy(slots = TimerSetEditing.duplicateToNext(working.slots, index)) },
+                    onDuplicate = {
+                        working = working.copy(slots = TimerSetEditing.duplicateToNext(working.slots, index))
+                    },
                     canMoveUp = index > 0,
                     canMoveDown = index < working.slots.lastIndex,
                     onMoveUp = { working = working.copy(slots = Reorder.moveUp(working.slots, index)) },

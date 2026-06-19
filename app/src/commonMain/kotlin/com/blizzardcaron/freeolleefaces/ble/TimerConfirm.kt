@@ -35,7 +35,9 @@ object TimerConfirm {
         val expectedActive = if (mode == OlleeProtocol.TimerStartMode.START_INTERVAL.byte3) slot0 else headerSeconds
         val expectedRunning = mode != OlleeProtocol.TimerStartMode.SAVE.byte3
 
-        val activeSeconds = (reply[0].toInt() and 0xFF) * 3600 + (reply[1].toInt() and 0xFF) * 60 + (reply[2].toInt() and 0xFF)
+        val activeSeconds = (reply[0].toInt() and 0xFF) * 3600 +
+            (reply[1].toInt() and 0xFF) * 60 +
+            (reply[2].toInt() and 0xFF)
         val running = (reply[3].toInt() and 0xFF) == RUN_FLAG_RUNNING
         return activeSeconds == expectedActive && running == expectedRunning
     }

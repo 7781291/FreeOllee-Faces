@@ -172,7 +172,8 @@ class AppViewModel(
     fun onBluetoothDenied() { showSnackbar("Bluetooth permission denied — can't list paired watches.") }
 
     /** Whether a background chain is active at startup — drives the POST_NOTIFICATIONS prompt. */
-    fun backgroundActive(): Boolean = prefs.activeComplication != ActiveComplication.CUSTOM && prefs.watchAddress != null
+    fun backgroundActive(): Boolean =
+        prefs.activeComplication != ActiveComplication.CUSTOM && prefs.watchAddress != null
 
     /** Initial re-arm of the auto-update chain; called once from a LaunchedEffect on start. */
     fun onStart() {

@@ -15,16 +15,6 @@
     <ID>LongParameterList:TimerSetEditScreen.kt$( index: Int, slot: TimerSlot, onLabelChange: (String) -&gt; Unit, onDurationChange: (Int) -&gt; Unit, onFillDown: () -&gt; Unit, onDuplicate: () -&gt; Unit, canMoveUp: Boolean, canMoveDown: Boolean, onMoveUp: () -&gt; Unit, onMoveDown: () -&gt; Unit, )</ID>
     <ID>LongParameterList:TimerSetsScreen.kt$( set: TimerSet, active: Boolean, sending: Boolean, canMoveUp: Boolean, canMoveDown: Boolean, onOpen: () -&gt; Unit, onDuplicate: () -&gt; Unit, onDelete: () -&gt; Unit, onSend: () -&gt; Unit, onStart: () -&gt; Unit, onMoveUp: () -&gt; Unit, onMoveDown: () -&gt; Unit, )</ID>
     <ID>LongParameterList:TimerSetsScreen.kt$( sets: List&lt;TimerSet&gt;, activeId: String?, sending: Boolean, quickTimerSeconds: Int, quickTimerStartFromApp: Boolean, quickTimerIntervalMode: Boolean, onSaveQuick: (Int) -&gt; Unit, onToggleStartFromApp: (Boolean) -&gt; Unit, onToggleIntervalMode: (Boolean) -&gt; Unit, quickTimerAlarmMode: Boolean, quickTimerAlarmHour: Int, quickTimerAlarmMinute: Int, onToggleAlarmMode: (Boolean) -&gt; Unit, onSaveAlarmTime: (Int, Int) -&gt; Unit, onSendAlarm: () -&gt; Unit, onSendQuick: () -&gt; Unit, onOpen: (TimerSet) -&gt; Unit, onNew: () -&gt; Unit, onDuplicate: (TimerSet) -&gt; Unit, onDelete: (TimerSet) -&gt; Unit, onSend: (TimerSet) -&gt; Unit, onStart: (TimerSet) -&gt; Unit, onMoveUp: (TimerSet) -&gt; Unit, onMoveDown: (TimerSet) -&gt; Unit, onBack: () -&gt; Unit, connectionStatus: ConnectionStatus, onReconnect: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
-    <ID>MaxLineLength:AppViewModel.kt$AppViewModel$fun</ID>
-    <ID>MaxLineLength:ErrorNotifier.kt$ErrorNotifier$FailureKind.ALARM_UNREACHABLE -&gt; "Couldn't push your next alarm to the watch after several tries — it won't ring until this succeeds. Long-press the ALARM button to wake the watch, then tap Retry."</ID>
-    <ID>MaxLineLength:ErrorNotifier.kt$ErrorNotifier$FailureKind.SUN_UNREACHABLE -&gt; "Couldn't deliver the next sunrise/sunset after several tries. Long-press the ALARM button to wake your watch, then tap Retry."</ID>
-    <ID>MaxLineLength:ErrorNotifier.kt$ErrorNotifier$FailureKind.WATCH_UNREACHABLE -&gt; "Couldn't reach your watch after several tries. Long-press the ALARM button to wake its Bluetooth, then tap Retry."</ID>
-    <ID>MaxLineLength:TimerConfirm.kt$TimerConfirm$val activeSeconds = (reply[0].toInt() and 0xFF) * 3600 + (reply[1].toInt() and 0xFF) * 60 + (reply[2].toInt() and 0xFF)</ID>
-    <ID>MaxLineLength:TimerSetEditScreen.kt$onDuplicate = { working = working.copy(slots = TimerSetEditing.duplicateToNext(working.slots, index)) }</ID>
-    <ID>MaximumLineLength:AppViewModel.kt$AppViewModel$ </ID>
-    <ID>MaximumLineLength:ErrorNotifier.kt$ErrorNotifier$ </ID>
-    <ID>MaximumLineLength:TimerConfirm.kt$TimerConfirm$ </ID>
-    <ID>MaximumLineLength:TimerSetEditScreen.kt$ </ID>
     <ID>NestedBlockDepth:WatchLink.kt$WatchLink.HeldCallback$override fun onServicesDiscovered(g: BluetoothGatt, status: Int)</ID>
     <ID>ReturnCount:AlarmConfirm.kt$AlarmConfirm$fun matches(enabled: Boolean, hour: Int, minute: Int, chimeIndex: Int, frame: OlleeProtocol.Frame): Boolean</ID>
     <ID>ReturnCount:AndroidStepsProvider.kt$AndroidStepsProvider$override suspend fun todaySteps(): Result&lt;Long&gt;</ID>
