@@ -11,6 +11,12 @@ complexity:
     active: true
     functionThreshold: 8
     constructorThreshold: 12
+  TooManyFunctions:
+    active: true
+    # Feature controllers (ComplicationController, TimerController, AppViewModel, ...)
+    # intentionally aggregate many small single-purpose methods extracted from the VM;
+    # 35 comfortably covers the largest of them without grandfathering the count via baseline.
+    thresholdInClasses: 35
 style:
   MaxLineLength:
     active: true

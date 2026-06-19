@@ -11,7 +11,6 @@ import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 import com.blizzardcaron.freeolleefaces.format.WeatherErrorCopy
 import com.blizzardcaron.freeolleefaces.format.formatDecimal
-import com.blizzardcaron.freeolleefaces.format.groupThousands
 import com.blizzardcaron.freeolleefaces.health.StepsProvider
 import com.blizzardcaron.freeolleefaces.location.LocationProvider
 import com.blizzardcaron.freeolleefaces.location.freshnessLabel
@@ -28,26 +27,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
-import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.format.DateTimeFormat
-import kotlinx.datetime.format.Padding
-import kotlinx.datetime.format.char
 import kotlinx.datetime.toLocalDateTime
-
-private val CLOCK: DateTimeFormat<LocalTime> = LocalTime.Format {
-    amPmHour(Padding.NONE); char(':'); minute(); char(' '); amPmMarker("AM", "PM")
-}
-
-private fun clockTime(ms: Long): String =
-    CLOCK.format(
-        Instant.fromEpochMilliseconds(ms)
-            .toLocalDateTime(TimeZone.currentSystemDefault())
-            .time
-    )
-
-private fun stepsHuman(count: Long): String = "Today: ${groupThousands(count)} steps"
 
 /**
  * Owns the complication cluster extracted from [com.blizzardcaron.freeolleefaces.AppViewModel]:
@@ -82,7 +63,7 @@ class ComplicationController(
 
     private fun validCoords(): Pair<Double, Double>? {
         val lat = state().lat.toDoubleOrNull(); val lng = state().lng.toDoubleOrNull()
-        return if (lat != null && lng != null && lat in -90.0..90.0 && lng in -180.0..180.0) {
+        return if (lat != null && lng != null && lat in -LAT_ABS_MAX..LAT_ABS_MAX && lng in -LNG_ABS_MAX..LNG_ABS_MAX) {
             lat to lng
         } else null
     }
@@ -408,7 +389,3 @@ class ComplicationController(
             .onFailure { err -> update { it.copy(sending = false) }; showSnackbar("Send failed: ${err.message}") }
     }
 }
-
-private fun locLabel(lat: Double?, lng: Double?): String =
-    if (lat != null && lng != null) "Location: ${formatDecimal(lat, 4)}, ${formatDecimal(lng, 4)}"
-    else "Location: not set"

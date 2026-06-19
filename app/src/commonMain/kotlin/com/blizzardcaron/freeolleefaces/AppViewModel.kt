@@ -16,8 +16,6 @@ import com.blizzardcaron.freeolleefaces.ble.ConnectionStatus
 import com.blizzardcaron.freeolleefaces.ble.NoopWatchConnection
 import com.blizzardcaron.freeolleefaces.ble.WatchConnection
 import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
-import com.blizzardcaron.freeolleefaces.format.formatDecimal
-import com.blizzardcaron.freeolleefaces.format.groupThousands
 import com.blizzardcaron.freeolleefaces.health.StepsProvider
 import com.blizzardcaron.freeolleefaces.location.LocationProvider
 import com.blizzardcaron.freeolleefaces.location.freshnessLabel
@@ -29,7 +27,12 @@ import com.blizzardcaron.freeolleefaces.ui.PreviewState
 import com.blizzardcaron.freeolleefaces.ui.Screen
 import com.blizzardcaron.freeolleefaces.vm.AlarmController
 import com.blizzardcaron.freeolleefaces.vm.ComplicationController
+import com.blizzardcaron.freeolleefaces.vm.LAT_ABS_MAX
+import com.blizzardcaron.freeolleefaces.vm.LNG_ABS_MAX
 import com.blizzardcaron.freeolleefaces.vm.TimerController
+import com.blizzardcaron.freeolleefaces.vm.clockTime
+import com.blizzardcaron.freeolleefaces.vm.locLabel
+import com.blizzardcaron.freeolleefaces.vm.stepsHuman
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -37,30 +40,8 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
-import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.format.DateTimeFormat
-import kotlinx.datetime.format.Padding
-import kotlinx.datetime.format.char
 import kotlinx.datetime.toLocalDateTime
-
-private val CLOCK: DateTimeFormat<LocalTime> = LocalTime.Format {
-    amPmHour(Padding.NONE); char(':'); minute(); char(' '); amPmMarker("AM", "PM")
-}
-
-private fun clockTime(ms: Long): String =
-    CLOCK.format(
-        Instant.fromEpochMilliseconds(ms)
-            .toLocalDateTime(TimeZone.currentSystemDefault())
-            .time
-    )
-
-private fun locLabel(lat: Double?, lng: Double?): String =
-    if (lat != null && lng != null) "Location: ${formatDecimal(lat, 4)}, ${formatDecimal(lng, 4)}"
-    else "Location: not set"
-
-private fun stepsHuman(count: Long): String = "Today: ${groupThousands(count)} steps"
 
 private fun nowMs(): Long = Clock.System.now().toEpochMilliseconds()
 
@@ -166,7 +147,7 @@ class AppViewModel(
     fun onCoordEdit(lat: String, lng: String) {
         update { it.copy(lat = lat, lng = lng) }
         val latD = lat.toDoubleOrNull(); val lngD = lng.toDoubleOrNull()
-        if (latD != null && lngD != null && latD in -90.0..90.0 && lngD in -180.0..180.0) {
+        if (latD != null && lngD != null && latD in -LAT_ABS_MAX..LAT_ABS_MAX && lngD in -LNG_ABS_MAX..LNG_ABS_MAX) {
             prefs.lastLat = latD; prefs.lastLng = lngD
             prefs.lastLocationFetchedMs = nowMs()
             update { it.copy(

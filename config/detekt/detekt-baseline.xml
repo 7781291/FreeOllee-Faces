@@ -40,8 +40,8 @@
     <ID>ArgumentListWrapping:TimerSetsScreen.kt$("No sets yet. Tap \"New set\" to create one.", style = MaterialTheme.typography.bodyMedium)</ID>
     <ID>ArgumentListWrapping:TimerSetsScreen.kt$(if (set.name.isBlank()) "(unnamed)" else set.name, style = MaterialTheme.typography.titleMedium)</ID>
     <ID>ArgumentListWrapping:WatchLink.kt$WatchLink$("OLLEE_BLE", "FreeOllee RX $address target=0x${f.target.toString(16)} " + "payload=${f.payload.toHex()} crcOk=${f.crcOk}")</ID>
-    <ID>ComplexCondition:AppViewModel.kt$AppViewModel$latD != null &amp;&amp; lngD != null &amp;&amp; latD in -90.0..90.0 &amp;&amp; lngD in -180.0..180.0</ID>
-    <ID>ComplexCondition:ComplicationController.kt$ComplicationController$lat != null &amp;&amp; lng != null &amp;&amp; lat in -90.0..90.0 &amp;&amp; lng in -180.0..180.0</ID>
+    <ID>ComplexCondition:AppViewModel.kt$AppViewModel$latD != null &amp;&amp; lngD != null &amp;&amp; latD in -LAT_ABS_MAX..LAT_ABS_MAX &amp;&amp; lngD in -LNG_ABS_MAX..LNG_ABS_MAX</ID>
+    <ID>ComplexCondition:ComplicationController.kt$ComplicationController$lat != null &amp;&amp; lng != null &amp;&amp; lat in -LAT_ABS_MAX..LAT_ABS_MAX &amp;&amp; lng in -LNG_ABS_MAX..LNG_ABS_MAX</ID>
     <ID>ComplexCondition:WatchLink.kt$WatchLink$g != null &amp;&amp; cb != null &amp;&amp; char != null &amp;&amp; heldAddress == address &amp;&amp; _status.value == ConnectionStatus.Connected</ID>
     <ID>CyclomaticComplexMethod:AlarmRearm.kt$AlarmRearm$fun rearm(context: Context, attempt: Int = 0, onComplete: () -&gt; Unit = {})</ID>
     <ID>CyclomaticComplexMethod:MainActivity.kt$@Composable private fun AppRoot()</ID>
@@ -113,11 +113,8 @@
     <ID>MagicNumber:AlarmSchedule.kt$AlarmSchedule$7</ID>
     <ID>MagicNumber:AlarmsScreen.kt$24</ID>
     <ID>MagicNumber:AlarmsScreen.kt$59</ID>
-    <ID>MagicNumber:AppViewModel.kt$4</ID>
-    <ID>MagicNumber:AppViewModel.kt$AppViewModel$180.0</ID>
     <ID>MagicNumber:AppViewModel.kt$AppViewModel$500</ID>
     <ID>MagicNumber:AppViewModel.kt$AppViewModel$60</ID>
-    <ID>MagicNumber:AppViewModel.kt$AppViewModel$90.0</ID>
     <ID>MagicNumber:AutoUpdateSchedule.kt$AutoUpdateSchedule$15L</ID>
     <ID>MagicNumber:AutoUpdateSchedule.kt$AutoUpdateSchedule$24L</ID>
     <ID>MagicNumber:AutoUpdateSchedule.kt$AutoUpdateSchedule$5L</ID>
@@ -152,10 +149,7 @@
     <ID>MagicNumber:Color.kt$Everforest$0xFFE67E80</ID>
     <ID>MagicNumber:Color.kt$Everforest$0xFFE8E0CC</ID>
     <ID>MagicNumber:Color.kt$Everforest$0xFFF85552</ID>
-    <ID>MagicNumber:ComplicationController.kt$4</ID>
-    <ID>MagicNumber:ComplicationController.kt$ComplicationController$180.0</ID>
     <ID>MagicNumber:ComplicationController.kt$ComplicationController$6</ID>
-    <ID>MagicNumber:ComplicationController.kt$ComplicationController$90.0</ID>
     <ID>MagicNumber:DevToolsReceiver.kt$DevToolsReceiver$16</ID>
     <ID>MagicNumber:DisplayFormatter.kt$DisplayFormatter$10</ID>
     <ID>MagicNumber:DisplayFormatter.kt$DisplayFormatter$1000</ID>
@@ -325,16 +319,12 @@
     <ID>MaximumLineLength:TimerSetEditScreen.kt$ </ID>
     <ID>MultiLineIfElse:AlarmRearm.kt$AlarmRearm$"push+confirm OK (${if (latest != null) "armed ${latest.dateTime}" else "disarm"}) [attempt $attempt]"</ID>
     <ID>MultiLineIfElse:AlarmRearm.kt$AlarmRearm$"push/confirm FAIL ${sent.exceptionOrNull()?.message ?: "read-back mismatch"} [attempt $attempt]"</ID>
-    <ID>MultiLineIfElse:AppViewModel.kt$"Location: ${formatDecimal(lat, 4)}, ${formatDecimal(lng, 4)}"</ID>
-    <ID>MultiLineIfElse:AppViewModel.kt$"Location: not set"</ID>
     <ID>MultiLineIfElse:AppViewModel.kt$AppViewModel$ConnectionStatus.Connecting</ID>
     <ID>MultiLineIfElse:AppViewModel.kt$AppViewModel$ConnectionStatus.NoWatch</ID>
     <ID>MultiLineIfElse:AutoSleepReconciler.kt$AutoSleepReconciler$config.inWindow</ID>
     <ID>MultiLineIfElse:AutoSleepReconciler.kt$AutoSleepReconciler$config.outWindow</ID>
     <ID>MultiLineIfElse:AutoUpdateScheduler.kt$AutoUpdateScheduler$null</ID>
     <ID>MultiLineIfElse:AutoUpdateWorker.kt$AutoUpdateWorker$null</ID>
-    <ID>MultiLineIfElse:ComplicationController.kt$"Location: ${formatDecimal(lat, 4)}, ${formatDecimal(lng, 4)}"</ID>
-    <ID>MultiLineIfElse:ComplicationController.kt$"Location: not set"</ID>
     <ID>MultiLineIfElse:ComplicationController.kt$ComplicationController$null</ID>
     <ID>MultiLineIfElse:ConnectionStatus.kt$"Wake the watch: long-press ALARM or triple-tap the Clock face, then tap Reconnect."</ID>
     <ID>MultiLineIfElse:ConnectionStatus.kt$null</ID>
@@ -415,12 +405,8 @@
     <ID>TooGenericExceptionCaught:DevToolsReceiver.kt$DevToolsReceiver$e: Exception</ID>
     <ID>TooGenericExceptionCaught:OpenMeteoClient.kt$OpenMeteoClient$e: Exception</ID>
     <ID>TooGenericExceptionCaught:WatchLink.kt$WatchLink$error: Exception</ID>
-    <ID>TooManyFunctions:AppViewModel.kt$AppViewModel : ViewModel</ID>
-    <ID>TooManyFunctions:AutoUpdateWorker.kt$AutoUpdateWorker : CoroutineWorker</ID>
-    <ID>TooManyFunctions:ComplicationController.kt$ComplicationController</ID>
     <ID>TooManyFunctions:OlleeProtocol.kt$OlleeProtocol</ID>
     <ID>TooManyFunctions:SunCalc.kt$SunCalc</ID>
-    <ID>TooManyFunctions:TimerController.kt$TimerController</ID>
     <ID>TooManyFunctions:WatchLink.kt$WatchLink</ID>
     <ID>UseCheckOrError:WatchLink.kt$WatchLink$throw IllegalStateException("read request write stayed busy")</ID>
     <ID>WildcardImport:BondedDevicesDialog.kt$import androidx.compose.foundation.layout.*</ID>
@@ -429,10 +415,8 @@
     <ID>Wrapping:AlarmsJson.kt$AlarmsJson$(</ID>
     <ID>Wrapping:AlarmsScreen.kt$(</ID>
     <ID>Wrapping:AlarmsScreen.kt$;</ID>
-    <ID>Wrapping:AppViewModel.kt$;</ID>
     <ID>Wrapping:AppViewModel.kt$AppViewModel$;</ID>
     <ID>Wrapping:AppViewModel.kt$AppViewModel$it.copy( locationLabel = locLabel(latD, lngD), locationFreshness = "just now", )</ID>
-    <ID>Wrapping:ComplicationController.kt$;</ID>
     <ID>Wrapping:ComplicationController.kt$ComplicationController$;</ID>
     <ID>Wrapping:ComplicationController.kt$ComplicationController$it.copy( lat = lat.toString(), lng = lng.toString(), locating = false, locationLabel = locLabel(lat, lng), locationFreshness = "just now", )</ID>
     <ID>Wrapping:ComplicationController.kt$ComplicationController$it.copy( locating = false, locationFreshness = (freshnessLabel(prefs.lastLocationFetchedMs, nowMs()) ?: "stale") + " · refresh failed", )</ID>
@@ -444,6 +428,7 @@
     <ID>Wrapping:ComplicationController.kt$ComplicationController$it.copy( sunPreview = PreviewState.Ready(payload, "$kindLabel at $pretty"), sunUpdated = "Updated ${clockTime(nowMs())}", sunNext = "Next: $kindLabel at $pretty", )</ID>
     <ID>Wrapping:ComplicationController.kt$ComplicationController$it.copy( tempPreview = PreviewState.Ready(payload, human), tempUpdated = "Updated ${clockTime(prefs.tempFetchedMs!!)}", tempNext = tempNextText(), )</ID>
     <ID>Wrapping:ComplicationController.kt$ComplicationController$it.copy( tempPreview = PreviewState.Ready(payload, human), tempUpdated = prefs.tempFetchedMs?.let { ms -&gt; "Updated ${clockTime(ms)}" }, )</ID>
+    <ID>Wrapping:Formatters.kt$;</ID>
     <ID>Wrapping:MainActivity.kt$;</ID>
     <ID>Wrapping:SettingsScreen.kt$;</ID>
     <ID>Wrapping:TimerController.kt$TimerController$(</ID>
