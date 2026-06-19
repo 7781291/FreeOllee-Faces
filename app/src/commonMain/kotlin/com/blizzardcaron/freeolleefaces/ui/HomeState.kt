@@ -23,6 +23,13 @@ data class HomeState(
     val sleepEnabled: Boolean = true,
     val sleepStartMin: Int = 22 * 60,
     val sleepEndMin: Int = 6 * 60,
+    val autoSleepScheduleEnabled: Boolean = false,
+    val autoSleepWindowStartMin: Int = 22 * 60,
+    val autoSleepWindowEndMin: Int = 7 * 60,
+    val autoSleepInWindowOn: Boolean = true,
+    val autoSleepInWindowPeriodSec: Int = 120,
+    val autoSleepOutWindowOn: Boolean = false,
+    val autoSleepOutWindowPeriodSec: Int = 120,
 
     val sunPreview: PreviewState = PreviewState.WaitingForCoords,
     val sunUpdated: String? = null,

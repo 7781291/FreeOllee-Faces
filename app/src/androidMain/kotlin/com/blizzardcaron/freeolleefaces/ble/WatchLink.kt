@@ -242,7 +242,15 @@ object WatchLink {
                         cont.invokeOnCancellation { cb.awaitCont = null; cb.awaitTarget = null }
                     }
                 }
-            }.getOrElse { Result.failure(it) }
+            }.getOrElse { Result.failure(it) }.also { r ->
+                // Debug builds: mirror the TX log — record the notify reply on the OLLEE_BLE tag.
+                if ((context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+                    r.onSuccess { f ->
+                        Log.i("OLLEE_BLE", "FreeOllee RX $address target=0x${f.target.toString(16)} " +
+                            "payload=${f.payload.toHex()} crcOk=${f.crcOk}")
+                    }
+                }
+            }
         }
     }
 

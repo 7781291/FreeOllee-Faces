@@ -57,6 +57,73 @@ object OlleeProtocol {
     const val TARGET_GET_TIMER = 0x2C
     const val RESPONSE_TARGET_OFFSET = 0x20
 
+    /** Config-register read/write (settings bitmask + autosleep period). Reply at 0x52. */
+    const val TARGET_GET_CONFIG = 0x32
+    const val TARGET_SET_CONFIG = 0x33
+
+    // Layout of the 0x52 config payload — confirmed on-device 2026-06-18 (see Task 1 note).
+    private const val CONFIG_BITMASK_OFFSET = 0   // 4-byte big-endian settings word
+    private const val CONFIG_PERIOD_OFFSET = 4    // autosleep_period, 4-byte big-endian uint32 (seconds)
+    private const val CONFIG_PERIOD_WIDTH = 4
+    private const val CONFIG_MIN_PAYLOAD = CONFIG_PERIOD_OFFSET + CONFIG_PERIOD_WIDTH  // 8
+    /** Bit position within the big-endian bitmask word. */
+    const val CONFIG_BIT_AUTOSLEEP = 6
+    /** Allowed autosleep_period values (seconds), from the official app's picker. */
+    val CONFIG_PERIOD_VALUES_SEC = listOf(5, 10, 30, 60, 120)
+
+    /**
+     * Parsed config register. Holds the raw 0x52 payload so a write is a true read-modify-write:
+     * [withAutoSleep] mutates only the auto-sleep bit and the period bytes, leaving every other
+     * byte (DND, gestures, pedometer, BLE-continuous, …) byte-for-byte intact.
+     */
+    class WatchConfig(val raw: ByteArray) {
+        private fun maskWord(): Int =
+            ((raw[CONFIG_BITMASK_OFFSET].toInt() and 0xFF) shl 24) or
+            ((raw[CONFIG_BITMASK_OFFSET + 1].toInt() and 0xFF) shl 16) or
+            ((raw[CONFIG_BITMASK_OFFSET + 2].toInt() and 0xFF) shl 8) or
+            (raw[CONFIG_BITMASK_OFFSET + 3].toInt() and 0xFF)
+
+        private fun bit(i: Int): Boolean = (maskWord() ushr i) and 1 == 1
+
+        val autoSleepOn: Boolean get() = bit(CONFIG_BIT_AUTOSLEEP)
+        val periodSec: Int get() =
+            ((raw[CONFIG_PERIOD_OFFSET].toInt() and 0xFF) shl 24) or
+            ((raw[CONFIG_PERIOD_OFFSET + 1].toInt() and 0xFF) shl 16) or
+            ((raw[CONFIG_PERIOD_OFFSET + 2].toInt() and 0xFF) shl 8) or
+            (raw[CONFIG_PERIOD_OFFSET + 3].toInt() and 0xFF)
+
+        fun withAutoSleep(on: Boolean, periodSec: Int): WatchConfig {
+            require(!on || periodSec in CONFIG_PERIOD_VALUES_SEC) {
+                "autosleep period must be one of $CONFIG_PERIOD_VALUES_SEC when enabling auto-sleep (got $periodSec)"
+            }
+            val copy = raw.copyOf()
+            var word = maskWord()
+            word = if (on) word or (1 shl CONFIG_BIT_AUTOSLEEP)
+                   else word and (1 shl CONFIG_BIT_AUTOSLEEP).inv()
+            copy[CONFIG_BITMASK_OFFSET] = ((word ushr 24) and 0xFF).toByte()
+            copy[CONFIG_BITMASK_OFFSET + 1] = ((word ushr 16) and 0xFF).toByte()
+            copy[CONFIG_BITMASK_OFFSET + 2] = ((word ushr 8) and 0xFF).toByte()
+            copy[CONFIG_BITMASK_OFFSET + 3] = (word and 0xFF).toByte()
+            copy[CONFIG_PERIOD_OFFSET] = ((periodSec ushr 24) and 0xFF).toByte()
+            copy[CONFIG_PERIOD_OFFSET + 1] = ((periodSec ushr 16) and 0xFF).toByte()
+            copy[CONFIG_PERIOD_OFFSET + 2] = ((periodSec ushr 8) and 0xFF).toByte()
+            copy[CONFIG_PERIOD_OFFSET + 3] = (periodSec and 0xFF).toByte()
+            return WatchConfig(copy)
+        }
+    }
+
+    /** Parses a 0x52 config reply into a [WatchConfig], or null if target/CRC/length is wrong. */
+    fun parseConfig(frame: Frame): WatchConfig? {
+        if (!frame.crcOk) return null
+        if (frame.target != TARGET_GET_CONFIG + RESPONSE_TARGET_OFFSET) return null
+        if (frame.payload.size < CONFIG_MIN_PAYLOAD) return null
+        return WatchConfig(frame.payload)
+    }
+
+    /** Builds the 0x33 config write from a (read-modified) [config]. */
+    fun buildConfigPacket(config: WatchConfig): ByteArray =
+        buildRawPacket(TARGET_SET_CONFIG, config.raw)
+
     fun crc16(data: ByteArray): Int {
         var crc = 0xFFFF
         for (b in data) {
