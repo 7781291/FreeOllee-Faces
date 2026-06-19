@@ -27,15 +27,13 @@ import com.blizzardcaron.freeolleefaces.ui.PreviewState
 import com.blizzardcaron.freeolleefaces.ui.Screen
 import com.blizzardcaron.freeolleefaces.vm.AlarmController
 import com.blizzardcaron.freeolleefaces.vm.ComplicationController
-import com.blizzardcaron.freeolleefaces.vm.LAT_ABS_MAX
-import com.blizzardcaron.freeolleefaces.vm.LNG_ABS_MAX
+import com.blizzardcaron.freeolleefaces.vm.SettingsController
 import com.blizzardcaron.freeolleefaces.vm.TimerController
 import com.blizzardcaron.freeolleefaces.vm.clockTime
 import com.blizzardcaron.freeolleefaces.vm.locLabel
 import com.blizzardcaron.freeolleefaces.vm.stepsHuman
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -96,10 +94,19 @@ class AppViewModel(
         clock = clock,
     )
 
+    val settings = SettingsController(
+        prefs = prefs,
+        scheduler = scheduler,
+        scope = viewModelScope,
+        update = { t -> state = t(state) },
+        tempNextText = { complications.tempNextText() },
+        refreshActive = { force, push -> complications.refreshActive(force, push) },
+        clock = clock,
+    )
+
     private val _events = Channel<String>(Channel.BUFFERED)   // snackbar messages
     val events = _events.receiveAsFlow()
 
-    private var debounceJob: Job? = null
     private var statusJob: Job? = null
 
     private fun update(transform: (HomeState) -> HomeState) { state = transform(state) }
@@ -143,83 +150,6 @@ class AppViewModel(
     )
 
     fun navigateTo(s: Screen) { screen = s }
-
-    fun onCoordEdit(lat: String, lng: String) {
-        update { it.copy(lat = lat, lng = lng) }
-        val latD = lat.toDoubleOrNull(); val lngD = lng.toDoubleOrNull()
-        if (latD != null && lngD != null && latD in -LAT_ABS_MAX..LAT_ABS_MAX && lngD in -LNG_ABS_MAX..LNG_ABS_MAX) {
-            prefs.lastLat = latD; prefs.lastLng = lngD
-            prefs.lastLocationFetchedMs = nowMs()
-            update { it.copy(
-                locationLabel = locLabel(latD, lngD),
-                locationFreshness = "just now",
-            ) }
-        }
-        debounceJob?.cancel()
-        debounceJob = viewModelScope.launch {
-            delay(500)
-            complications.refreshActive(force = false, push = false)
-        }
-    }
-
-    fun setInterval(mins: Int) {
-        prefs.updateIntervalMinutes = mins
-        update { it.copy(updateIntervalMinutes = prefs.updateIntervalMinutes, tempNext = complications.tempNextText()) }
-        scheduler.reschedule()
-    }
-
-    fun setSleepEnabled(enabled: Boolean) {
-        prefs.sleepEnabled = enabled
-        update { it.copy(sleepEnabled = enabled, tempNext = complications.tempNextText()) }
-        scheduler.reschedule()
-    }
-
-    fun setSleepStart(min: Int) {
-        prefs.sleepStartMin = min
-        update { it.copy(sleepStartMin = min, tempNext = complications.tempNextText()) }
-        scheduler.reschedule()
-    }
-
-    fun setSleepEnd(min: Int) {
-        prefs.sleepEndMin = min
-        update { it.copy(sleepEndMin = min, tempNext = complications.tempNextText()) }
-        scheduler.reschedule()
-    }
-
-    fun setAutoSleepScheduleEnabled(enabled: Boolean) {
-        prefs.autoSleepScheduleEnabled = enabled
-        update { it.copy(autoSleepScheduleEnabled = enabled) }
-    }
-
-    fun setAutoSleepWindowStart(min: Int) {
-        prefs.autoSleepWindowStartMin = min
-        update { it.copy(autoSleepWindowStartMin = min) }
-    }
-
-    fun setAutoSleepWindowEnd(min: Int) {
-        prefs.autoSleepWindowEndMin = min
-        update { it.copy(autoSleepWindowEndMin = min) }
-    }
-
-    fun setAutoSleepInWindowOn(on: Boolean) {
-        prefs.autoSleepInWindowOn = on
-        update { it.copy(autoSleepInWindowOn = on) }
-    }
-
-    fun setAutoSleepInWindowPeriod(sec: Int) {
-        prefs.autoSleepInWindowPeriodSec = sec
-        update { it.copy(autoSleepInWindowPeriodSec = prefs.autoSleepInWindowPeriodSec) }
-    }
-
-    fun setAutoSleepOutWindowOn(on: Boolean) {
-        prefs.autoSleepOutWindowOn = on
-        update { it.copy(autoSleepOutWindowOn = on) }
-    }
-
-    fun setAutoSleepOutWindowPeriod(sec: Int) {
-        prefs.autoSleepOutWindowPeriodSec = sec
-        update { it.copy(autoSleepOutWindowPeriodSec = prefs.autoSleepOutWindowPeriodSec) }
-    }
 
     fun onWatchPicked(address: String, label: String) {
         prefs.watchAddress = address
