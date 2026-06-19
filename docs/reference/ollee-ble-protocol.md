@@ -43,7 +43,7 @@ answered/acked at `target + 0x20`.
 | `02 2F` | W | ≤6 ASCII | **nameplate / "Name tag"** (hold ALARM on the Clock face); the field FreeOllee-Faces writes | capture-confirmed (2026-05-31) |
 | `02 30` → `50` | R | `0000138800` | (unknown) | capture-confirmed (2026-05-31) |
 | `02 32` → `52` | R | `0206 7182 0000 0078 FFFF 0000` | **TARGET_GET_CONFIG** — settings + autosleep config register (read): 4-byte BE settings bitmask (`CONFIG_BIT_AUTOSLEEP` = bit 6) followed by a 4-byte BE autosleep period in seconds | on-device-verified (2026-06-18) |
-| `02 33` | W | settings bitmask + autosleep period (same layout as `0x52`) | **TARGET_SET_CONFIG** — read-modify-write of the config register; FreeOllee-Faces only touches the autosleep bit/period, leaving other bytes intact | on-device-verified (2026-06-18) |
+| `02 33` → `53` | W | settings bitmask + autosleep period (same layout as `0x52`) | **TARGET_SET_CONFIG** — read-modify-write of the config register; FreeOllee-Faces only touches the autosleep bit/period, leaving other bytes intact | on-device-verified (2026-06-18) |
 | `02 34` | W | `00007E90` + `"MOTUWETHFRSASU"` | write weekday-name strings | capture-confirmed (2026-05-31) |
 | `02 35` → `55` | R | `00007E90` + `"MOTUWETHFRSASU"` | read weekday-name strings | capture-confirmed (2026-05-31) |
 | `02 36` | W | face-record table (below) | **write enabled-faces config** | capture-confirmed (2026-05-31) |
@@ -92,7 +92,7 @@ header: [HH, MM, SS, MODE]
 slots:  10 × uint32-LE seconds
 ```
 
-- Header byte 0 = **hours** (not a flags/mode byte — hardware-verified 2026-06-17 by capturing
+- Header byte 0 = **hours** (not a flags/mode byte — hardware-verified 2026-06-15 by capturing
   the official app sending 20h05m00s as `14 05 00 01`), byte 1 = minutes, byte 2 = seconds. This
   seeds the Timer face's standalone **Quick-timer**, independent of the 10 slot durations.
 - Header byte 3 is the **start mode**, `TimerStartMode`:
