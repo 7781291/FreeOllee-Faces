@@ -21,15 +21,15 @@ data class HomeState(
     val tempNext: String? = null,
     val updateIntervalMinutes: Int = 15,
     val sleepEnabled: Boolean = true,
-    val sleepStartMin: Int = 22 * 60,
-    val sleepEndMin: Int = 6 * 60,
+    val sleepStartMin: Int = DEFAULT_SLEEP_START_HOUR * MINUTES_PER_HOUR,
+    val sleepEndMin: Int = DEFAULT_SLEEP_END_HOUR * MINUTES_PER_HOUR,
     val autoSleepScheduleEnabled: Boolean = false,
-    val autoSleepWindowStartMin: Int = 22 * 60,
-    val autoSleepWindowEndMin: Int = 7 * 60,
+    val autoSleepWindowStartMin: Int = DEFAULT_SLEEP_START_HOUR * MINUTES_PER_HOUR,
+    val autoSleepWindowEndMin: Int = DEFAULT_AUTO_SLEEP_END_HOUR * MINUTES_PER_HOUR,
     val autoSleepInWindowOn: Boolean = true,
-    val autoSleepInWindowPeriodSec: Int = 120,
+    val autoSleepInWindowPeriodSec: Int = DEFAULT_AUTO_SLEEP_PERIOD_SEC,
     val autoSleepOutWindowOn: Boolean = false,
-    val autoSleepOutWindowPeriodSec: Int = 120,
+    val autoSleepOutWindowPeriodSec: Int = DEFAULT_AUTO_SLEEP_PERIOD_SEC,
 
     val sunPreview: PreviewState = PreviewState.WaitingForCoords,
     val sunUpdated: String? = null,
@@ -51,3 +51,9 @@ data class HomeState(
 
     val versionLabel: String = "",
 )
+
+private const val MINUTES_PER_HOUR = 60
+private const val DEFAULT_SLEEP_START_HOUR = 22
+private const val DEFAULT_SLEEP_END_HOUR = 6
+private const val DEFAULT_AUTO_SLEEP_END_HOUR = 7
+private const val DEFAULT_AUTO_SLEEP_PERIOD_SEC = 120

@@ -52,7 +52,7 @@ object TimerSetsJson {
                     val dur = so["dur"]?.jsonPrimitive?.intOrNull ?: 0
                     TimerSlot(label = label, durationSeconds = dur)
                 } ?: return@mapNotNull null
-                if (slots.size != 10) return@mapNotNull null
+                if (slots.size != TimerSet.SLOT_COUNT) return@mapNotNull null
                 TimerSet(id = id, name = name, slots = slots)
             }
         }.getOrDefault(emptyList())

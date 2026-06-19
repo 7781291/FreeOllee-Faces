@@ -33,6 +33,11 @@ class SettingsController(
 ) {
     private var debounceJob: Job? = null
 
+    companion object {
+        /** Coordinate-edit debounce before re-fetching the active complication. */
+        private const val COORD_DEBOUNCE_MS = 500L
+    }
+
     fun onCoordEdit(lat: String, lng: String) {
         update { it.copy(lat = lat, lng = lng) }
         val latD = lat.toDoubleOrNull()
@@ -50,7 +55,7 @@ class SettingsController(
         }
         debounceJob?.cancel()
         debounceJob = scope.launch {
-            delay(500)
+            delay(COORD_DEBOUNCE_MS)
             refreshActive(false, false)
         }
     }

@@ -59,6 +59,11 @@ class ComplicationController(
 ) {
     private var refreshJob: Job? = null
 
+    companion object {
+        /** Custom-text face is a 6-character watch display; longer input is truncated. */
+        private const val CUSTOM_TEXT_MAX_LENGTH = 6
+    }
+
     private fun nowMs(): Long = clock.now().toEpochMilliseconds()
 
     private fun validCoords(): Pair<Double, Double>? {
@@ -317,7 +322,7 @@ class ComplicationController(
     }
 
     fun setCustomText(text: String) {
-        val capped = text.take(6)
+        val capped = text.take(CUSTOM_TEXT_MAX_LENGTH)
         update { it.copy(custom = capped) }
         prefs.customText = capped
     }

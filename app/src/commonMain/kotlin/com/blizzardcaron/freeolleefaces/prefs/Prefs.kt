@@ -111,7 +111,7 @@ class Prefs(
         set(value) = settings.putString(KEY_CUSTOM_TEXT, value)
 
     var quickTimerSeconds: Int
-        get() = settings.getInt(KEY_QUICK_TIMER_SECONDS, 180)
+        get() = settings.getInt(KEY_QUICK_TIMER_SECONDS, DEFAULT_QUICK_TIMER_SECONDS)
         set(value) = settings.putInt(KEY_QUICK_TIMER_SECONDS, value.coerceAtLeast(0))
 
     /**
@@ -135,13 +135,13 @@ class Prefs(
 
     /** Alarm-mode target hour, 0..23 (24h; UI renders 12h + AM/PM). */
     var quickTimerAlarmHour: Int
-        get() = settings.getInt(KEY_QUICK_TIMER_ALARM_HOUR, 7)
-        set(value) = settings.putInt(KEY_QUICK_TIMER_ALARM_HOUR, value.coerceIn(0, 23))
+        get() = settings.getInt(KEY_QUICK_TIMER_ALARM_HOUR, DEFAULT_ALARM_HOUR)
+        set(value) = settings.putInt(KEY_QUICK_TIMER_ALARM_HOUR, value.coerceIn(0, MAX_HOUR))
 
     /** Alarm-mode target minute, 0..59. */
     var quickTimerAlarmMinute: Int
         get() = settings.getInt(KEY_QUICK_TIMER_ALARM_MINUTE, 0)
-        set(value) = settings.putInt(KEY_QUICK_TIMER_ALARM_MINUTE, value.coerceIn(0, 59))
+        set(value) = settings.putInt(KEY_QUICK_TIMER_ALARM_MINUTE, value.coerceIn(0, MAX_MINUTE))
 
     var customSentMs: Long?
         get() = if (settings.hasKey(KEY_CUSTOM_SENT_MS)) settings.getLong(KEY_CUSTOM_SENT_MS, 0L) else null
@@ -199,11 +199,11 @@ class Prefs(
         set(value) = settings.putBoolean(KEY_SLEEP_ENABLED, value)
 
     var sleepStartMin: Int
-        get() = settings.getInt(KEY_SLEEP_START, 22 * 60)
+        get() = settings.getInt(KEY_SLEEP_START, DEFAULT_SLEEP_START_HOUR * MINUTES_PER_HOUR)
         set(value) = settings.putInt(KEY_SLEEP_START, value)
 
     var sleepEndMin: Int
-        get() = settings.getInt(KEY_SLEEP_END, 6 * 60)
+        get() = settings.getInt(KEY_SLEEP_END, DEFAULT_SLEEP_END_HOUR * MINUTES_PER_HOUR)
         set(value) = settings.putInt(KEY_SLEEP_END, value)
 
     var lastAutoSendMs: Long?
@@ -246,11 +246,11 @@ class Prefs(
         set(value) = settings.putBoolean(KEY_AS_ENABLED, value)
 
     var autoSleepWindowStartMin: Int
-        get() = settings.getInt(KEY_AS_START, 22 * 60)
+        get() = settings.getInt(KEY_AS_START, DEFAULT_SLEEP_START_HOUR * MINUTES_PER_HOUR)
         set(value) = settings.putInt(KEY_AS_START, value)
 
     var autoSleepWindowEndMin: Int
-        get() = settings.getInt(KEY_AS_END, 7 * 60)
+        get() = settings.getInt(KEY_AS_END, DEFAULT_AUTO_SLEEP_END_HOUR * MINUTES_PER_HOUR)
         set(value) = settings.putInt(KEY_AS_END, value)
 
     var autoSleepInWindowOn: Boolean
@@ -258,7 +258,7 @@ class Prefs(
         set(value) = settings.putBoolean(KEY_AS_IN_ON, value)
 
     var autoSleepInWindowPeriodSec: Int
-        get() = settings.getInt(KEY_AS_IN_PERIOD, 120)
+        get() = settings.getInt(KEY_AS_IN_PERIOD, DEFAULT_AUTO_SLEEP_PERIOD_SEC)
         set(value) = settings.putInt(KEY_AS_IN_PERIOD, value.coerceAtLeast(1))
 
     var autoSleepOutWindowOn: Boolean
@@ -266,7 +266,7 @@ class Prefs(
         set(value) = settings.putBoolean(KEY_AS_OUT_ON, value)
 
     var autoSleepOutWindowPeriodSec: Int
-        get() = settings.getInt(KEY_AS_OUT_PERIOD, 120)
+        get() = settings.getInt(KEY_AS_OUT_PERIOD, DEFAULT_AUTO_SLEEP_PERIOD_SEC)
         set(value) = settings.putInt(KEY_AS_OUT_PERIOD, value.coerceAtLeast(1))
 
     /** Assemble the schedule from the flat-keyed vars above. */
@@ -318,5 +318,15 @@ class Prefs(
         private const val KEY_AS_IN_PERIOD = "auto_sleep_in_period_sec"
         private const val KEY_AS_OUT_ON = "auto_sleep_out_on"
         private const val KEY_AS_OUT_PERIOD = "auto_sleep_out_period_sec"
+
+        private const val MINUTES_PER_HOUR = 60
+        private const val MAX_HOUR = 23
+        private const val MAX_MINUTE = 59
+        private const val DEFAULT_ALARM_HOUR = 7
+        private const val DEFAULT_QUICK_TIMER_SECONDS = 180
+        private const val DEFAULT_SLEEP_START_HOUR = 22
+        private const val DEFAULT_SLEEP_END_HOUR = 6
+        private const val DEFAULT_AUTO_SLEEP_END_HOUR = 7
+        private const val DEFAULT_AUTO_SLEEP_PERIOD_SEC = 120
     }
 }

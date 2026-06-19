@@ -60,6 +60,9 @@ import com.blizzardcaron.freeolleefaces.ui.theme.FreeOlleeFacesTheme
 import com.blizzardcaron.freeolleefaces.ui.versionLabel
 import kotlinx.coroutines.delay
 
+/** Dashboard preview refresh cadence while Home is visible. */
+private const val DASHBOARD_POLL_INTERVAL_MS = 60_000L
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -151,7 +154,7 @@ private fun AppRoot() {
         if (screen == Screen.Home) {
             while (true) {
                 viewModel.complications.refreshAllPreviews()
-                delay(60_000)
+                delay(DASHBOARD_POLL_INTERVAL_MS)
             }
         }
     }

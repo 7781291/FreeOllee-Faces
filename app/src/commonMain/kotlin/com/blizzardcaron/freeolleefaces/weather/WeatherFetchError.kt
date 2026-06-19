@@ -38,10 +38,15 @@ sealed class WeatherFetchError(message: String) : Exception(message) {
     }
 
     companion object {
+        private const val HTTP_SUCCESS_MIN = 200
+        private const val HTTP_SUCCESS_MAX = 299
+        private const val HTTP_SERVER_ERROR_MIN = 500
+        private const val HTTP_SERVER_ERROR_MAX = 599
+
         /** Maps an HTTP status to an error, or null for 2xx. */
         fun fromHttpStatus(code: Int): WeatherFetchError? = when {
-            code in 200..299 -> null
-            code in 500..599 -> ServerError(code)
+            code in HTTP_SUCCESS_MIN..HTTP_SUCCESS_MAX -> null
+            code in HTTP_SERVER_ERROR_MIN..HTTP_SERVER_ERROR_MAX -> ServerError(code)
             else -> ClientError(code)
         }
     }

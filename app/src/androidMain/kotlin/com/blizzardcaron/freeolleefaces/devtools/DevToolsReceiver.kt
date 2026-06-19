@@ -86,7 +86,7 @@ class DevToolsReceiver : BroadcastReceiver() {
             intent.getStringExtra("frame")!!.hexToBytes()
 
         intent.hasExtra("payload") -> {
-            val target = (intent.getStringExtra("target") ?: "25").toInt(16)
+            val target = (intent.getStringExtra("target") ?: "25").toInt(HEX_RADIX)
             OlleeProtocol.buildRawPacket(target, intent.getStringExtra("payload")!!.hexToBytes())
         }
 
@@ -105,7 +105,7 @@ class DevToolsReceiver : BroadcastReceiver() {
     private fun String.hexToBytes(): ByteArray {
         val clean = filterNot { it.isWhitespace() }
         require(clean.length % 2 == 0) { "hex must have an even length" }
-        return clean.chunked(2).map { it.toInt(16).toByte() }.toByteArray()
+        return clean.chunked(2).map { it.toInt(HEX_RADIX).toByte() }.toByteArray()
     }
 
     private fun ByteArray.toHex(): String = joinToString("") { "%02X".format(it) }
@@ -113,5 +113,6 @@ class DevToolsReceiver : BroadcastReceiver() {
     companion object {
         const val TAG = "OLLEE_DEV"
         const val ACTION = "com.blizzardcaron.freeolleefaces.DEV_SEND"
+        private const val HEX_RADIX = 16
     }
 }
