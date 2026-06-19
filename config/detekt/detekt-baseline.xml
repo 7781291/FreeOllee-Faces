@@ -1,0 +1,456 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>AnnotationOnSeparateLine:WatchLink.kt$WatchLink$@Suppress("DEPRECATION") run { char.value = bytes char.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT g.writeCharacteristic(char) }</ID>
+    <ID>AnnotationOnSeparateLine:WatchLink.kt$WatchLink.HeldCallback$@Suppress("DEPRECATION") run { d.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE g.writeDescriptor(d) }</ID>
+    <ID>ArgumentListWrapping:AlarmRearm.kt$AlarmRearm$( ctx, BACKSTOP_REQUEST_CODE, Intent(ctx, AlarmRearmReceiver::class.java).putExtra(EXTRA_ATTEMPT, nextAttempt), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE, )</ID>
+    <ID>ArgumentListWrapping:AlarmRearm.kt$AlarmRearm$( ctx, REQUEST_CODE, Intent(ctx, AlarmRearmReceiver::class.java), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE, )</ID>
+    <ID>ArgumentListWrapping:AlarmSchedule.kt$AlarmSchedule$( hour = next.hour, minute = next.minute, chimeIndex = next.chimeIndex, playNow = false, enabled = true, )</ID>
+    <ID>ArgumentListWrapping:AlarmsScreen.kt$("No alarms yet. Tap \"Add alarm\" to create one.", style = MaterialTheme.typography.bodyMedium)</ID>
+    <ID>ArgumentListWrapping:AppViewModel.kt$AppViewModel$( Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()), prefs.updateIntervalMinutes, sleep, )</ID>
+    <ID>ArgumentListWrapping:AppViewModel.kt$AppViewModel$( lat = lat.toString(), lng = lng.toString(), locating = false, locationLabel = locLabel(lat, lng), locationFreshness = "just now", )</ID>
+    <ID>ArgumentListWrapping:AppViewModel.kt$AppViewModel$( set.durations(), headerSeconds = quickTimerSeconds, startMode = OlleeProtocol.TimerStartMode.SAVE)</ID>
+    <ID>ArgumentListWrapping:AppViewModel.kt$AppViewModel$( set.durations(), headerSeconds = quickTimerSeconds, startMode = OlleeProtocol.TimerStartMode.START_INTERVAL)</ID>
+    <ID>ArgumentListWrapping:AppViewModel.kt$AppViewModel$( slots, headerSeconds = quickTimerSeconds, startMode = mode)</ID>
+    <ID>ArgumentListWrapping:AppViewModel.kt$AppViewModel$( slots, headerSeconds = seconds, startMode = OlleeProtocol.TimerStartMode.START_SINGLE)</ID>
+    <ID>ArgumentListWrapping:AutoUpdateWorker.kt$AutoUpdateWorker$( ctx, AutoUpdateSchedule.backstopDelayMs(attempt), sendAttempt = attempt + 1, )</ID>
+    <ID>ArgumentListWrapping:AutoUpdateWorker.kt$AutoUpdateWorker$( now.toInstant(TimeZone.currentSystemDefault()), lat, lng, TimeZone.currentSystemDefault(), )</ID>
+    <ID>ArgumentListWrapping:ErrorNotifier.kt$ErrorNotifier$( ctx, 0, intent, PendingIntent.FLAG_IMMUTABLE, )</ID>
+    <ID>ArgumentListWrapping:ErrorNotifier.kt$ErrorNotifier$( ctx, retryRequestCodeFor(kind), retryIntent, PendingIntent.FLAG_IMMUTABLE, )</ID>
+    <ID>ArgumentListWrapping:HomeScreen.kt$("Waiting for coordinates…", style = MaterialTheme.typography.bodyMedium)</ID>
+    <ID>ArgumentListWrapping:MainActivity.kt$(Screen.TimerSets)</ID>
+    <ID>ArgumentListWrapping:MainActivity.kt$(s)</ID>
+    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_CUSTOM_SENT_MS)</ID>
+    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_CUSTOM_SENT_MS, value)</ID>
+    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_LAST_NOTIFIED_KIND)</ID>
+    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_LAST_NOTIFIED_KIND, value.name)</ID>
+    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_LAST_SEND_SUMMARY)</ID>
+    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_LAST_SEND_SUMMARY, value)</ID>
+    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_LOCATION_FETCHED_MS)</ID>
+    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_LOCATION_FETCHED_MS, value)</ID>
+    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_STEPS_FETCHED_MS)</ID>
+    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_STEPS_FETCHED_MS, value)</ID>
+    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_TEMP_CACHE_UNIT)</ID>
+    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_TEMP_CACHE_UNIT, value.name)</ID>
+    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_TEMP_FETCHED_MS)</ID>
+    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_TEMP_FETCHED_MS, value)</ID>
+    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_TEMP_VALUE)</ID>
+    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_TEMP_VALUE, value.toFloat())</ID>
+    <ID>ArgumentListWrapping:TimerSetEditScreen.kt$(text = { Text("Duplicate to next") }, onClick = { menu = false; onDuplicate() })</ID>
+    <ID>ArgumentListWrapping:TimerSetEditScreen.kt$(text = { Text("Fill down") }, onClick = { menu = false; onFillDown() })</ID>
+    <ID>ArgumentListWrapping:TimerSetsScreen.kt$("No sets yet. Tap \"New set\" to create one.", style = MaterialTheme.typography.bodyMedium)</ID>
+    <ID>ArgumentListWrapping:TimerSetsScreen.kt$(if (set.name.isBlank()) "(unnamed)" else set.name, style = MaterialTheme.typography.titleMedium)</ID>
+    <ID>ArgumentListWrapping:WatchLink.kt$WatchLink$("OLLEE_BLE", "FreeOllee RX $address target=0x${f.target.toString(16)} " + "payload=${f.payload.toHex()} crcOk=${f.crcOk}")</ID>
+    <ID>ComplexCondition:AppViewModel.kt$AppViewModel$lat != null &amp;&amp; lng != null &amp;&amp; lat in -90.0..90.0 &amp;&amp; lng in -180.0..180.0</ID>
+    <ID>ComplexCondition:AppViewModel.kt$AppViewModel$latD != null &amp;&amp; lngD != null &amp;&amp; latD in -90.0..90.0 &amp;&amp; lngD in -180.0..180.0</ID>
+    <ID>ComplexCondition:WatchLink.kt$WatchLink$g != null &amp;&amp; cb != null &amp;&amp; char != null &amp;&amp; heldAddress == address &amp;&amp; _status.value == ConnectionStatus.Connected</ID>
+    <ID>CyclomaticComplexMethod:AlarmRearm.kt$AlarmRearm$fun rearm(context: Context, attempt: Int = 0, onComplete: () -&gt; Unit = {})</ID>
+    <ID>CyclomaticComplexMethod:MainActivity.kt$@Composable private fun AppRoot()</ID>
+    <ID>EmptyFunctionBlock:WatchConnection.kt$NoopWatchConnection${}</ID>
+    <ID>FunctionNaming:AlarmsScreen.kt$@Composable fun AlarmsScreen( alarms: List&lt;Alarm&gt;, nextSummary: String, onAdd: () -&gt; Unit, onSave: (Alarm) -&gt; Unit, onToggle: (String, Boolean) -&gt; Unit, onDelete: (String) -&gt; Unit, onBack: () -&gt; Unit, connectionStatus: ConnectionStatus, onReconnect: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>FunctionNaming:AlarmsScreen.kt$@Composable private fun AlarmCard( alarm: Alarm, onSave: (Alarm) -&gt; Unit, onToggle: (Boolean) -&gt; Unit, onDelete: () -&gt; Unit, )</ID>
+    <ID>FunctionNaming:AlarmsScreen.kt$@Composable private fun ChimePicker(index: Int, onChange: (Int) -&gt; Unit)</ID>
+    <ID>FunctionNaming:AlarmsScreen.kt$@Composable private fun DayChips(mask: Int, onChange: (Int) -&gt; Unit)</ID>
+    <ID>FunctionNaming:AppBar.kt$@Composable fun AppBar( title: String, modifier: Modifier = Modifier, onBack: (() -&gt; Unit)? = null, connectionStatus: ConnectionStatus? = null, onReconnect: (() -&gt; Unit)? = null, actions: @Composable () -&gt; Unit = {}, )</ID>
+    <ID>FunctionNaming:AppBar.kt$@Composable private fun ConnectionChipCompact(status: ConnectionStatus, onReconnect: (() -&gt; Unit)?)</ID>
+    <ID>FunctionNaming:BondedDevicesDialog.kt$@Composable fun BondedDevicesDialog( devices: List&lt;BondedDevice&gt;, onPick: (BondedDevice) -&gt; Unit, onDismiss: () -&gt; Unit, )</ID>
+    <ID>FunctionNaming:HomeScreen.kt$@Composable private fun ComplicationCard( title: String, active: Boolean, onActivate: () -&gt; Unit, preview: PreviewState, updated: String?, next: String?, expanded: Boolean, onToggle: (() -&gt; Unit)?, expandedContent: (@Composable () -&gt; Unit)? = null, )</ID>
+    <ID>FunctionNaming:HomeScreen.kt$@Composable private fun ConnectionRow(status: ConnectionStatus, onReconnect: () -&gt; Unit)</ID>
+    <ID>FunctionNaming:HomeScreen.kt$@Composable private fun FaceValue(preview: PreviewState, updated: String?, next: String?)</ID>
+    <ID>FunctionNaming:HomeScreen.kt$@Composable private fun NotificationsCard( state: HomeState, expanded: Boolean, onToggle: () -&gt; Unit, onToggleEnabled: (Boolean) -&gt; Unit, onGrantAccess: () -&gt; Unit, onUpdateNow: () -&gt; Unit, )</ID>
+    <ID>FunctionNaming:HomeScreen.kt$@Composable private fun SectionLabel(text: String)</ID>
+    <ID>FunctionNaming:HomeScreen.kt$@Composable private fun SettingsHint(text: String)</ID>
+    <ID>FunctionNaming:HomeScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun HomeScreen( state: HomeState, callbacks: HomeCallbacks, modifier: Modifier = Modifier, )</ID>
+    <ID>FunctionNaming:LcdReadout.kt$@Composable fun LcdReadout( value: String, modifier: Modifier = Modifier, size: LcdSize = LcdSize.Lg, tone: LcdTone = LcdTone.Green, )</ID>
+    <ID>FunctionNaming:MainActivity.kt$@Composable private fun AppRoot()</ID>
+    <ID>FunctionNaming:SettingsScreen.kt$@Composable fun SettingsScreen( state: HomeState, callbacks: SettingsCallbacks, onReconnect: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>FunctionNaming:SettingsScreen.kt$@Composable private fun AboutSection(state: HomeState)</ID>
+    <ID>FunctionNaming:SettingsScreen.kt$@Composable private fun AutoSleepSection(state: HomeState, callbacks: SettingsCallbacks)</ID>
+    <ID>FunctionNaming:SettingsScreen.kt$@Composable private fun LocationSection(state: HomeState, callbacks: SettingsCallbacks)</ID>
+    <ID>FunctionNaming:SettingsScreen.kt$@Composable private fun PeriodRow(periods: List&lt;Int&gt;, selected: Int, onChange: (Int) -&gt; Unit)</ID>
+    <ID>FunctionNaming:SettingsScreen.kt$@Composable private fun SleepSection(state: HomeState, callbacks: SettingsCallbacks)</ID>
+    <ID>FunctionNaming:SettingsScreen.kt$@Composable private fun WatchSection(state: HomeState, callbacks: SettingsCallbacks)</ID>
+    <ID>FunctionNaming:SettingsScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable private fun IntervalSection(state: HomeState, callbacks: SettingsCallbacks)</ID>
+    <ID>FunctionNaming:Theme.kt$@Composable fun FreeOlleeFacesTheme(content: @Composable () -&gt; Unit)</ID>
+    <ID>FunctionNaming:TimePickerDialog.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun TimePickerDialog( initialMinuteOfDay: Int, onConfirm: (Int) -&gt; Unit, onDismiss: () -&gt; Unit, )</ID>
+    <ID>FunctionNaming:TimerSetEditScreen.kt$@Composable fun TimerSetEditScreen( set: TimerSet, onSave: (TimerSet) -&gt; Unit, onSend: (TimerSet) -&gt; Unit, onBack: () -&gt; Unit, connectionStatus: ConnectionStatus, onReconnect: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>FunctionNaming:TimerSetEditScreen.kt$@Composable private fun SlotEditor( index: Int, slot: TimerSlot, onLabelChange: (String) -&gt; Unit, onDurationChange: (Int) -&gt; Unit, onFillDown: () -&gt; Unit, onDuplicate: () -&gt; Unit, canMoveUp: Boolean, canMoveDown: Boolean, onMoveUp: () -&gt; Unit, onMoveDown: () -&gt; Unit, )</ID>
+    <ID>FunctionNaming:TimerSetsScreen.kt$@Composable fun TimerSetsScreen( sets: List&lt;TimerSet&gt;, activeId: String?, sending: Boolean, quickTimerSeconds: Int, quickTimerStartFromApp: Boolean, quickTimerIntervalMode: Boolean, onSaveQuick: (Int) -&gt; Unit, onToggleStartFromApp: (Boolean) -&gt; Unit, onToggleIntervalMode: (Boolean) -&gt; Unit, quickTimerAlarmMode: Boolean, quickTimerAlarmHour: Int, quickTimerAlarmMinute: Int, onToggleAlarmMode: (Boolean) -&gt; Unit, onSaveAlarmTime: (Int, Int) -&gt; Unit, onSendAlarm: () -&gt; Unit, onSendQuick: () -&gt; Unit, onOpen: (TimerSet) -&gt; Unit, onNew: () -&gt; Unit, onDuplicate: (TimerSet) -&gt; Unit, onDelete: (TimerSet) -&gt; Unit, onSend: (TimerSet) -&gt; Unit, onStart: (TimerSet) -&gt; Unit, onMoveUp: (TimerSet) -&gt; Unit, onMoveDown: (TimerSet) -&gt; Unit, onBack: () -&gt; Unit, connectionStatus: ConnectionStatus, onReconnect: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>FunctionNaming:TimerSetsScreen.kt$@Composable private fun TimerSetRow( set: TimerSet, active: Boolean, sending: Boolean, canMoveUp: Boolean, canMoveDown: Boolean, onOpen: () -&gt; Unit, onDuplicate: () -&gt; Unit, onDelete: () -&gt; Unit, onSend: () -&gt; Unit, onStart: () -&gt; Unit, onMoveUp: () -&gt; Unit, onMoveDown: () -&gt; Unit, )</ID>
+    <ID>FunctionNaming:TimerSetsScreen.kt$@Composable private fun ToggleRow( label: String, checked: Boolean, onCheckedChange: (Boolean) -&gt; Unit, enabled: Boolean = true, )</ID>
+    <ID>FunctionNaming:TimerWidgets.kt$@Composable internal fun HourField(value: Int, onCommit: (Int) -&gt; Unit)</ID>
+    <ID>FunctionNaming:TimerWidgets.kt$@Composable internal fun NumberField(label: String, value: Int, onChange: (Int) -&gt; Unit)</ID>
+    <ID>FunctionOnlyReturningConstant:BleRetryPolicy.kt$BleRetryPolicy$@Suppress("UNUSED_PARAMETER") fun isRetryable(error: Throwable): Boolean</ID>
+    <ID>ImportOrdering:AppViewModel.kt$import androidx.compose.runtime.getValue import androidx.compose.runtime.mutableStateOf import androidx.compose.runtime.setValue import androidx.lifecycle.ViewModel import androidx.lifecycle.viewModelScope import com.blizzardcaron.freeolleefaces.alarm.Alarm import com.blizzardcaron.freeolleefaces.alarm.AlarmSchedule import com.blizzardcaron.freeolleefaces.alarm.AlarmsRepository import com.blizzardcaron.freeolleefaces.auto.ActiveComplication import com.blizzardcaron.freeolleefaces.auto.AlarmScheduler import com.blizzardcaron.freeolleefaces.auto.AutoSleepReconciler import com.blizzardcaron.freeolleefaces.auto.AutoUpdateSchedule import com.blizzardcaron.freeolleefaces.auto.Scheduler import com.blizzardcaron.freeolleefaces.auto.SleepWindow import com.blizzardcaron.freeolleefaces.auto.isTempCacheFresh import com.blizzardcaron.freeolleefaces.ble.AutoSleepApply import com.blizzardcaron.freeolleefaces.ble.BleClient import com.blizzardcaron.freeolleefaces.ble.ConnectionStatus import com.blizzardcaron.freeolleefaces.ble.NoopWatchConnection import com.blizzardcaron.freeolleefaces.ble.OlleeProtocol import com.blizzardcaron.freeolleefaces.ble.TimerReadback import com.blizzardcaron.freeolleefaces.ble.WatchConnection import com.blizzardcaron.freeolleefaces.format.DisplayFormatter import com.blizzardcaron.freeolleefaces.format.formatDecimal import com.blizzardcaron.freeolleefaces.format.groupThousands import com.blizzardcaron.freeolleefaces.format.WeatherErrorCopy import com.blizzardcaron.freeolleefaces.health.StepsProvider import com.blizzardcaron.freeolleefaces.location.LocationProvider import com.blizzardcaron.freeolleefaces.location.freshnessLabel import com.blizzardcaron.freeolleefaces.notifications.NotificationAccessChecker import com.blizzardcaron.freeolleefaces.notifications.NotificationCount import com.blizzardcaron.freeolleefaces.prefs.Prefs import com.blizzardcaron.freeolleefaces.sun.SunCalc import com.blizzardcaron.freeolleefaces.timer.QuickAlarm import com.blizzardcaron.freeolleefaces.timer.Reorder import com.blizzardcaron.freeolleefaces.timer.TimerSet import com.blizzardcaron.freeolleefaces.timer.TimerSetsRepository import com.blizzardcaron.freeolleefaces.ui.HomeState import com.blizzardcaron.freeolleefaces.ui.PreviewState import com.blizzardcaron.freeolleefaces.ui.Screen import com.blizzardcaron.freeolleefaces.weather.OpenMeteoClient import com.blizzardcaron.freeolleefaces.weather.RetryPolicy import kotlinx.coroutines.Job import kotlinx.coroutines.channels.Channel import kotlinx.coroutines.delay import kotlinx.coroutines.flow.collect import kotlinx.coroutines.flow.receiveAsFlow import kotlinx.coroutines.launch import kotlinx.datetime.Clock import kotlinx.datetime.Instant import kotlinx.datetime.LocalTime import kotlinx.datetime.TimeZone import kotlinx.datetime.format.DateTimeFormat import kotlinx.datetime.format.Padding import kotlinx.datetime.format.char import kotlinx.datetime.toLocalDateTime import kotlin.uuid.ExperimentalUuidApi import kotlin.uuid.Uuid</ID>
+    <ID>ImportOrdering:HomeScreen.kt$import androidx.compose.foundation.BorderStroke import androidx.compose.foundation.clickable import androidx.compose.foundation.layout.Arrangement import androidx.compose.foundation.layout.Column import androidx.compose.foundation.layout.Row import androidx.compose.foundation.layout.Spacer import androidx.compose.foundation.layout.fillMaxSize import androidx.compose.foundation.layout.fillMaxWidth import androidx.compose.foundation.layout.padding import androidx.compose.foundation.layout.size import androidx.compose.foundation.layout.width import androidx.compose.foundation.rememberScrollState import androidx.compose.foundation.verticalScroll import androidx.compose.material3.Button import androidx.compose.material3.Card import androidx.compose.material3.CircularProgressIndicator import androidx.compose.material3.CardDefaults import androidx.compose.material3.ExperimentalMaterial3Api import androidx.compose.material3.HorizontalDivider import androidx.compose.material3.MaterialTheme import androidx.compose.material3.OutlinedTextField import androidx.compose.material3.RadioButton import androidx.compose.material3.SegmentedButton import androidx.compose.material3.SegmentedButtonDefaults import androidx.compose.material3.SingleChoiceSegmentedButtonRow import androidx.compose.material3.Switch import androidx.compose.material3.Text import androidx.compose.material3.TextButton import androidx.compose.runtime.Composable import androidx.compose.runtime.getValue import androidx.compose.runtime.mutableStateOf import androidx.compose.runtime.remember import androidx.compose.runtime.setValue import androidx.compose.ui.Alignment import androidx.compose.ui.Modifier import androidx.compose.ui.unit.dp import androidx.compose.ui.unit.em import com.blizzardcaron.freeolleefaces.auto.ActiveComplication import com.blizzardcaron.freeolleefaces.auto.displayLabel import com.blizzardcaron.freeolleefaces.ble.ConnectionStatus import com.blizzardcaron.freeolleefaces.ble.connectionChip import com.blizzardcaron.freeolleefaces.ble.wakeHint import com.blizzardcaron.freeolleefaces.format.DisplayFormatter import com.blizzardcaron.freeolleefaces.format.TempUnit</ID>
+    <ID>ImportOrdering:MainActivity.kt$import android.Manifest import android.annotation.SuppressLint import android.bluetooth.BluetoothManager import android.content.Context import android.content.Intent import android.content.pm.PackageManager import android.provider.Settings import android.os.Build import android.os.Bundle import androidx.activity.ComponentActivity import androidx.activity.compose.rememberLauncherForActivityResult import androidx.activity.compose.setContent import androidx.activity.result.contract.ActivityResultContracts import androidx.compose.foundation.layout.padding import androidx.compose.material3.MaterialTheme import androidx.compose.material3.NavigationBar import androidx.compose.material3.NavigationBarItem import androidx.compose.material3.Scaffold import androidx.compose.material3.SnackbarHost import androidx.compose.material3.SnackbarHostState import androidx.compose.material3.Text import androidx.compose.runtime.* import androidx.compose.ui.Modifier import androidx.compose.ui.platform.LocalContext import androidx.lifecycle.Lifecycle import androidx.lifecycle.LifecycleEventObserver import androidx.lifecycle.compose.LocalLifecycleOwner import androidx.core.content.ContextCompat import androidx.health.connect.client.PermissionController import com.blizzardcaron.freeolleefaces.alarm.AlarmsRepository import com.blizzardcaron.freeolleefaces.auto.AlarmRearm import com.blizzardcaron.freeolleefaces.auto.AndroidAlarmScheduler import com.blizzardcaron.freeolleefaces.auto.AndroidScheduler import com.blizzardcaron.freeolleefaces.ble.AndroidBleClient import com.blizzardcaron.freeolleefaces.ble.AndroidWatchConnection import com.blizzardcaron.freeolleefaces.health.AndroidStepsProvider import com.blizzardcaron.freeolleefaces.health.StepsProvider import com.blizzardcaron.freeolleefaces.location.AndroidLocationProvider import com.blizzardcaron.freeolleefaces.notifications.AndroidNotificationAccess import com.blizzardcaron.freeolleefaces.prefs.Prefs import com.blizzardcaron.freeolleefaces.prefs.alarmSettings import com.blizzardcaron.freeolleefaces.prefs.appSettings import com.blizzardcaron.freeolleefaces.prefs.timerSettings import com.blizzardcaron.freeolleefaces.timer.TimerSetsRepository import com.blizzardcaron.freeolleefaces.ui.BondedDevice import com.blizzardcaron.freeolleefaces.ui.BondedDevicesDialog import com.blizzardcaron.freeolleefaces.ui.BottomNavTab import com.blizzardcaron.freeolleefaces.ui.AlarmsScreen import com.blizzardcaron.freeolleefaces.ui.HomeCallbacks import com.blizzardcaron.freeolleefaces.ui.HomeScreen import com.blizzardcaron.freeolleefaces.ui.Screen import com.blizzardcaron.freeolleefaces.ui.SettingsCallbacks import com.blizzardcaron.freeolleefaces.ui.SettingsScreen import com.blizzardcaron.freeolleefaces.ui.TimerSetEditScreen import com.blizzardcaron.freeolleefaces.ui.TimerSetsScreen import com.blizzardcaron.freeolleefaces.ui.theme.FreeOlleeFacesTheme import com.blizzardcaron.freeolleefaces.ui.versionLabel import kotlinx.coroutines.delay import kotlinx.coroutines.launch</ID>
+    <ID>ImportOrdering:OpenMeteoClient.kt$import com.blizzardcaron.freeolleefaces.format.TempUnit import io.ktor.client.HttpClient import io.ktor.client.network.sockets.ConnectTimeoutException import io.ktor.client.network.sockets.SocketTimeoutException import io.ktor.client.plugins.HttpTimeout import io.ktor.client.request.get import io.ktor.client.statement.bodyAsText import kotlinx.io.IOException import kotlinx.coroutines.TimeoutCancellationException import kotlinx.serialization.SerialName import kotlinx.serialization.Serializable import kotlinx.serialization.json.Json</ID>
+    <ID>Indentation:AppViewModel.kt$AppViewModel$ </ID>
+    <ID>Indentation:MainActivity.kt$ </ID>
+    <ID>Indentation:OlleeProtocol.kt$OlleeProtocol.WatchConfig$ </ID>
+    <ID>LongMethod:AlarmRearm.kt$AlarmRearm$fun rearm(context: Context, attempt: Int = 0, onComplete: () -&gt; Unit = {})</ID>
+    <ID>LongMethod:HomeScreen.kt$@Composable private fun NotificationsCard( state: HomeState, expanded: Boolean, onToggle: () -&gt; Unit, onToggleEnabled: (Boolean) -&gt; Unit, onGrantAccess: () -&gt; Unit, onUpdateNow: () -&gt; Unit, )</ID>
+    <ID>LongMethod:HomeScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun HomeScreen( state: HomeState, callbacks: HomeCallbacks, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:MainActivity.kt$@Composable private fun AppRoot()</ID>
+    <ID>LongMethod:SettingsScreen.kt$@Composable private fun AutoSleepSection(state: HomeState, callbacks: SettingsCallbacks)</ID>
+    <ID>LongMethod:TimerSetsScreen.kt$@Composable fun TimerSetsScreen( sets: List&lt;TimerSet&gt;, activeId: String?, sending: Boolean, quickTimerSeconds: Int, quickTimerStartFromApp: Boolean, quickTimerIntervalMode: Boolean, onSaveQuick: (Int) -&gt; Unit, onToggleStartFromApp: (Boolean) -&gt; Unit, onToggleIntervalMode: (Boolean) -&gt; Unit, quickTimerAlarmMode: Boolean, quickTimerAlarmHour: Int, quickTimerAlarmMinute: Int, onToggleAlarmMode: (Boolean) -&gt; Unit, onSaveAlarmTime: (Int, Int) -&gt; Unit, onSendAlarm: () -&gt; Unit, onSendQuick: () -&gt; Unit, onOpen: (TimerSet) -&gt; Unit, onNew: () -&gt; Unit, onDuplicate: (TimerSet) -&gt; Unit, onDelete: (TimerSet) -&gt; Unit, onSend: (TimerSet) -&gt; Unit, onStart: (TimerSet) -&gt; Unit, onMoveUp: (TimerSet) -&gt; Unit, onMoveDown: (TimerSet) -&gt; Unit, onBack: () -&gt; Unit, connectionStatus: ConnectionStatus, onReconnect: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongParameterList:AlarmsScreen.kt$( alarms: List&lt;Alarm&gt;, nextSummary: String, onAdd: () -&gt; Unit, onSave: (Alarm) -&gt; Unit, onToggle: (String, Boolean) -&gt; Unit, onDelete: (String) -&gt; Unit, onBack: () -&gt; Unit, connectionStatus: ConnectionStatus, onReconnect: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongParameterList:AppViewModel.kt$AppViewModel$( private val prefs: Prefs, private val ble: BleClient, private val steps: StepsProvider, private val location: LocationProvider, private val notificationAccess: NotificationAccessChecker, private val timerRepo: TimerSetsRepository, private val scheduler: Scheduler, private val alarmRepo: AlarmsRepository, private val alarmScheduler: AlarmScheduler, private val versionLabel: String = "", private val watchConnection: WatchConnection = NoopWatchConnection, private val clock: Clock = Clock.System, )</ID>
+    <ID>LongParameterList:HomeScreen.kt$( title: String, active: Boolean, onActivate: () -&gt; Unit, preview: PreviewState, updated: String?, next: String?, expanded: Boolean, onToggle: (() -&gt; Unit)?, expandedContent: (@Composable () -&gt; Unit)? = null, )</ID>
+    <ID>LongParameterList:TimerSetEditScreen.kt$( index: Int, slot: TimerSlot, onLabelChange: (String) -&gt; Unit, onDurationChange: (Int) -&gt; Unit, onFillDown: () -&gt; Unit, onDuplicate: () -&gt; Unit, canMoveUp: Boolean, canMoveDown: Boolean, onMoveUp: () -&gt; Unit, onMoveDown: () -&gt; Unit, )</ID>
+    <ID>LongParameterList:TimerSetsScreen.kt$( set: TimerSet, active: Boolean, sending: Boolean, canMoveUp: Boolean, canMoveDown: Boolean, onOpen: () -&gt; Unit, onDuplicate: () -&gt; Unit, onDelete: () -&gt; Unit, onSend: () -&gt; Unit, onStart: () -&gt; Unit, onMoveUp: () -&gt; Unit, onMoveDown: () -&gt; Unit, )</ID>
+    <ID>LongParameterList:TimerSetsScreen.kt$( sets: List&lt;TimerSet&gt;, activeId: String?, sending: Boolean, quickTimerSeconds: Int, quickTimerStartFromApp: Boolean, quickTimerIntervalMode: Boolean, onSaveQuick: (Int) -&gt; Unit, onToggleStartFromApp: (Boolean) -&gt; Unit, onToggleIntervalMode: (Boolean) -&gt; Unit, quickTimerAlarmMode: Boolean, quickTimerAlarmHour: Int, quickTimerAlarmMinute: Int, onToggleAlarmMode: (Boolean) -&gt; Unit, onSaveAlarmTime: (Int, Int) -&gt; Unit, onSendAlarm: () -&gt; Unit, onSendQuick: () -&gt; Unit, onOpen: (TimerSet) -&gt; Unit, onNew: () -&gt; Unit, onDuplicate: (TimerSet) -&gt; Unit, onDelete: (TimerSet) -&gt; Unit, onSend: (TimerSet) -&gt; Unit, onStart: (TimerSet) -&gt; Unit, onMoveUp: (TimerSet) -&gt; Unit, onMoveDown: (TimerSet) -&gt; Unit, onBack: () -&gt; Unit, connectionStatus: ConnectionStatus, onReconnect: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>MagicNumber:Alarm.kt$Alarm$0x7F</ID>
+    <ID>MagicNumber:Alarm.kt$Alarm$23</ID>
+    <ID>MagicNumber:Alarm.kt$Alarm$59</ID>
+    <ID>MagicNumber:AlarmConfirm.kt$AlarmConfirm$0xFF</ID>
+    <ID>MagicNumber:AlarmConfirm.kt$AlarmConfirm$3</ID>
+    <ID>MagicNumber:AlarmConfirm.kt$AlarmConfirm$4</ID>
+    <ID>MagicNumber:AlarmConfirm.kt$AlarmConfirm$6</ID>
+    <ID>MagicNumber:AlarmConfirm.kt$AlarmConfirm$7</ID>
+    <ID>MagicNumber:AlarmRearm.kt$AlarmRearm$1000</ID>
+    <ID>MagicNumber:AlarmRearm.kt$AlarmRearm$60_000L</ID>
+    <ID>MagicNumber:AlarmSchedule.kt$AlarmSchedule$12</ID>
+    <ID>MagicNumber:AlarmSchedule.kt$AlarmSchedule$3</ID>
+    <ID>MagicNumber:AlarmSchedule.kt$AlarmSchedule$7</ID>
+    <ID>MagicNumber:AlarmsScreen.kt$24</ID>
+    <ID>MagicNumber:AlarmsScreen.kt$59</ID>
+    <ID>MagicNumber:AppViewModel.kt$4</ID>
+    <ID>MagicNumber:AppViewModel.kt$AppViewModel$10</ID>
+    <ID>MagicNumber:AppViewModel.kt$AppViewModel$180.0</ID>
+    <ID>MagicNumber:AppViewModel.kt$AppViewModel$500</ID>
+    <ID>MagicNumber:AppViewModel.kt$AppViewModel$6</ID>
+    <ID>MagicNumber:AppViewModel.kt$AppViewModel$60</ID>
+    <ID>MagicNumber:AppViewModel.kt$AppViewModel$86_399</ID>
+    <ID>MagicNumber:AppViewModel.kt$AppViewModel$90.0</ID>
+    <ID>MagicNumber:AutoUpdateSchedule.kt$AutoUpdateSchedule$15L</ID>
+    <ID>MagicNumber:AutoUpdateSchedule.kt$AutoUpdateSchedule$24L</ID>
+    <ID>MagicNumber:AutoUpdateSchedule.kt$AutoUpdateSchedule$5L</ID>
+    <ID>MagicNumber:AutoUpdateSchedule.kt$AutoUpdateSchedule$60</ID>
+    <ID>MagicNumber:AutoUpdateSchedule.kt$AutoUpdateSchedule$60L</ID>
+    <ID>MagicNumber:AutoUpdateSchedule.kt$AutoUpdateSchedule$60_000L</ID>
+    <ID>MagicNumber:AutoUpdateScheduler.kt$AutoUpdateScheduler$24</ID>
+    <ID>MagicNumber:AutoUpdateScheduler.kt$AutoUpdateScheduler$60</ID>
+    <ID>MagicNumber:AutoUpdateScheduler.kt$AutoUpdateScheduler$60_000L</ID>
+    <ID>MagicNumber:AutoUpdateWorker.kt$AutoUpdateWorker$1000L</ID>
+    <ID>MagicNumber:AutoUpdateWorker.kt$AutoUpdateWorker$12L</ID>
+    <ID>MagicNumber:AutoUpdateWorker.kt$AutoUpdateWorker$60</ID>
+    <ID>MagicNumber:AutoUpdateWorker.kt$AutoUpdateWorker$60L</ID>
+    <ID>MagicNumber:BleRetryPolicy.kt$BleRetryPolicy$2_000L</ID>
+    <ID>MagicNumber:BleRetryPolicy.kt$BleRetryPolicy$4_000L</ID>
+    <ID>MagicNumber:Color.kt$BrandColors$0xFF1A1F1C</ID>
+    <ID>MagicNumber:Color.kt$Everforest$0xFF232A2E</ID>
+    <ID>MagicNumber:Color.kt$Everforest$0xFF2D353B</ID>
+    <ID>MagicNumber:Color.kt$Everforest$0xFF343F44</ID>
+    <ID>MagicNumber:Color.kt$Everforest$0xFF3C4841</ID>
+    <ID>MagicNumber:Color.kt$Everforest$0xFF3D484D</ID>
+    <ID>MagicNumber:Color.kt$Everforest$0xFF475258</ID>
+    <ID>MagicNumber:Color.kt$Everforest$0xFF4F585E</ID>
+    <ID>MagicNumber:Color.kt$Everforest$0xFF543A48</ID>
+    <ID>MagicNumber:Color.kt$Everforest$0xFF7FBBB3</ID>
+    <ID>MagicNumber:Color.kt$Everforest$0xFF83C092</ID>
+    <ID>MagicNumber:Color.kt$Everforest$0xFF9DA9A0</ID>
+    <ID>MagicNumber:Color.kt$Everforest$0xFFA7C080</ID>
+    <ID>MagicNumber:Color.kt$Everforest$0xFFCBE0A6</ID>
+    <ID>MagicNumber:Color.kt$Everforest$0xFFD3C6AA</ID>
+    <ID>MagicNumber:Color.kt$Everforest$0xFFDBBC7F</ID>
+    <ID>MagicNumber:Color.kt$Everforest$0xFFE67E80</ID>
+    <ID>MagicNumber:Color.kt$Everforest$0xFFE8E0CC</ID>
+    <ID>MagicNumber:Color.kt$Everforest$0xFFF85552</ID>
+    <ID>MagicNumber:DevToolsReceiver.kt$DevToolsReceiver$16</ID>
+    <ID>MagicNumber:DisplayFormatter.kt$DisplayFormatter$10</ID>
+    <ID>MagicNumber:DisplayFormatter.kt$DisplayFormatter$1000</ID>
+    <ID>MagicNumber:DisplayFormatter.kt$DisplayFormatter$12</ID>
+    <ID>MagicNumber:DisplayFormatter.kt$DisplayFormatter$4</ID>
+    <ID>MagicNumber:DisplayFormatter.kt$DisplayFormatter$999_999L</ID>
+    <ID>MagicNumber:HomeState.kt$HomeState$22</ID>
+    <ID>MagicNumber:HomeState.kt$HomeState$6</ID>
+    <ID>MagicNumber:HomeState.kt$HomeState$60</ID>
+    <ID>MagicNumber:HomeState.kt$HomeState$7</ID>
+    <ID>MagicNumber:IntervalOptions.kt$IntervalOptions$15</ID>
+    <ID>MagicNumber:IntervalOptions.kt$IntervalOptions$30</ID>
+    <ID>MagicNumber:IntervalOptions.kt$IntervalOptions$45</ID>
+    <ID>MagicNumber:IntervalOptions.kt$IntervalOptions$60</ID>
+    <ID>MagicNumber:LcdReadout.kt$LcdSize.Lg$34</ID>
+    <ID>MagicNumber:LcdReadout.kt$LcdSize.Md$22</ID>
+    <ID>MagicNumber:LcdReadout.kt$LcdSize.Xl$56</ID>
+    <ID>MagicNumber:LocationFreshness.kt$24</ID>
+    <ID>MagicNumber:LocationFreshness.kt$60</ID>
+    <ID>MagicNumber:LocationFreshness.kt$60_000L</ID>
+    <ID>MagicNumber:MainActivity.kt$60_000</ID>
+    <ID>MagicNumber:NotificationCount.kt$NotificationCount$11</ID>
+    <ID>MagicNumber:NotificationCount.kt$NotificationCount$7</ID>
+    <ID>MagicNumber:NotificationCount.kt$NotificationCount$9</ID>
+    <ID>MagicNumber:NotifyFrameReassembler.kt$NotifyFrameReassembler$0xFF</ID>
+    <ID>MagicNumber:NotifyFrameReassembler.kt$NotifyFrameReassembler$3</ID>
+    <ID>MagicNumber:NotifyFrameReassembler.kt$NotifyFrameReassembler$4</ID>
+    <ID>MagicNumber:NumberFormat.kt$10</ID>
+    <ID>MagicNumber:NumberFormat.kt$3</ID>
+    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$0x05</ID>
+    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$0x1021</ID>
+    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$0x55</ID>
+    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$0x7E</ID>
+    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$0x8000</ID>
+    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$0xFF</ID>
+    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$0xFFFF</ID>
+    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$10</ID>
+    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$120</ID>
+    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$127</ID>
+    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$16</ID>
+    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$23</ID>
+    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$24</ID>
+    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$3</ID>
+    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$30</ID>
+    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$359_999</ID>
+    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$3600</ID>
+    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$4</ID>
+    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$5</ID>
+    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$59</ID>
+    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$6</ID>
+    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$60</ID>
+    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$7</ID>
+    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$8</ID>
+    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol.WatchConfig$0xFF</ID>
+    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol.WatchConfig$16</ID>
+    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol.WatchConfig$24</ID>
+    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol.WatchConfig$3</ID>
+    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol.WatchConfig$8</ID>
+    <ID>MagicNumber:Prefs.kt$Prefs$120</ID>
+    <ID>MagicNumber:Prefs.kt$Prefs$180</ID>
+    <ID>MagicNumber:Prefs.kt$Prefs$22</ID>
+    <ID>MagicNumber:Prefs.kt$Prefs$23</ID>
+    <ID>MagicNumber:Prefs.kt$Prefs$59</ID>
+    <ID>MagicNumber:Prefs.kt$Prefs$6</ID>
+    <ID>MagicNumber:Prefs.kt$Prefs$60</ID>
+    <ID>MagicNumber:Prefs.kt$Prefs$7</ID>
+    <ID>MagicNumber:QuickAlarm.kt$QuickAlarm$3600</ID>
+    <ID>MagicNumber:QuickAlarm.kt$QuickAlarm$60</ID>
+    <ID>MagicNumber:QuickAlarm.kt$QuickAlarm$86_400</ID>
+    <ID>MagicNumber:SettingsScreen.kt$0.6f</ID>
+    <ID>MagicNumber:SettingsScreen.kt$60</ID>
+    <ID>MagicNumber:Staleness.kt$60_000L</ID>
+    <ID>MagicNumber:SunCalc.kt$SunCalc$0.020</ID>
+    <ID>MagicNumber:SunCalc.kt$SunCalc$0.06571</ID>
+    <ID>MagicNumber:SunCalc.kt$SunCalc$0.39782</ID>
+    <ID>MagicNumber:SunCalc.kt$SunCalc$0.91764</ID>
+    <ID>MagicNumber:SunCalc.kt$SunCalc$0.9856</ID>
+    <ID>MagicNumber:SunCalc.kt$SunCalc$1.916</ID>
+    <ID>MagicNumber:SunCalc.kt$SunCalc$15.0</ID>
+    <ID>MagicNumber:SunCalc.kt$SunCalc$18.0</ID>
+    <ID>MagicNumber:SunCalc.kt$SunCalc$180.0</ID>
+    <ID>MagicNumber:SunCalc.kt$SunCalc$24</ID>
+    <ID>MagicNumber:SunCalc.kt$SunCalc$24.0</ID>
+    <ID>MagicNumber:SunCalc.kt$SunCalc$282.634</ID>
+    <ID>MagicNumber:SunCalc.kt$SunCalc$3.289</ID>
+    <ID>MagicNumber:SunCalc.kt$SunCalc$360.0</ID>
+    <ID>MagicNumber:SunCalc.kt$SunCalc$3600</ID>
+    <ID>MagicNumber:SunCalc.kt$SunCalc$3600.0</ID>
+    <ID>MagicNumber:SunCalc.kt$SunCalc$6.0</ID>
+    <ID>MagicNumber:SunCalc.kt$SunCalc$6.622</ID>
+    <ID>MagicNumber:SunCalc.kt$SunCalc$60</ID>
+    <ID>MagicNumber:SunCalc.kt$SunCalc$90</ID>
+    <ID>MagicNumber:SunCalc.kt$SunCalc$90.0</ID>
+    <ID>MagicNumber:TimePickerDialog.kt$60</ID>
+    <ID>MagicNumber:TimerConfirm.kt$TimerConfirm$0xFF</ID>
+    <ID>MagicNumber:TimerConfirm.kt$TimerConfirm$16</ID>
+    <ID>MagicNumber:TimerConfirm.kt$TimerConfirm$24</ID>
+    <ID>MagicNumber:TimerConfirm.kt$TimerConfirm$3</ID>
+    <ID>MagicNumber:TimerConfirm.kt$TimerConfirm$3600</ID>
+    <ID>MagicNumber:TimerConfirm.kt$TimerConfirm$4</ID>
+    <ID>MagicNumber:TimerConfirm.kt$TimerConfirm$5</ID>
+    <ID>MagicNumber:TimerConfirm.kt$TimerConfirm$6</ID>
+    <ID>MagicNumber:TimerConfirm.kt$TimerConfirm$60</ID>
+    <ID>MagicNumber:TimerConfirm.kt$TimerConfirm$7</ID>
+    <ID>MagicNumber:TimerConfirm.kt$TimerConfirm$8</ID>
+    <ID>MagicNumber:TimerModels.kt$TimerSet$10</ID>
+    <ID>MagicNumber:TimerModels.kt$TimerSet.Companion$10</ID>
+    <ID>MagicNumber:TimerSetEditing.kt$TimerSetEditing$3600</ID>
+    <ID>MagicNumber:TimerSetEditing.kt$TimerSetEditing$60</ID>
+    <ID>MagicNumber:TimerSetsJson.kt$TimerSetsJson$10</ID>
+    <ID>MagicNumber:TimerSetsScreen.kt$3600</ID>
+    <ID>MagicNumber:TimerSetsScreen.kt$59</ID>
+    <ID>MagicNumber:TimerSetsScreen.kt$60</ID>
+    <ID>MagicNumber:TimerSetsScreen.kt$86_399</ID>
+    <ID>MagicNumber:TimerWidgets.kt$12</ID>
+    <ID>MagicNumber:Type.kt$11</ID>
+    <ID>MagicNumber:Type.kt$12</ID>
+    <ID>MagicNumber:Type.kt$13</ID>
+    <ID>MagicNumber:Type.kt$14</ID>
+    <ID>MagicNumber:Type.kt$15</ID>
+    <ID>MagicNumber:Type.kt$16</ID>
+    <ID>MagicNumber:Type.kt$18</ID>
+    <ID>MagicNumber:Type.kt$20</ID>
+    <ID>MagicNumber:Type.kt$22</ID>
+    <ID>MagicNumber:Type.kt$24</ID>
+    <ID>MagicNumber:Type.kt$28</ID>
+    <ID>MagicNumber:Type.kt$30</ID>
+    <ID>MagicNumber:Type.kt$32</ID>
+    <ID>MagicNumber:Type.kt$34</ID>
+    <ID>MagicNumber:Type.kt$38</ID>
+    <ID>MagicNumber:Type.kt$40</ID>
+    <ID>MagicNumber:Type.kt$44</ID>
+    <ID>MagicNumber:WatchLink.kt$WatchLink$0xFF</ID>
+    <ID>MagicNumber:WatchLink.kt$WatchLink$16</ID>
+    <ID>MagicNumber:WeatherFetchError.kt$WeatherFetchError.Companion$200</ID>
+    <ID>MagicNumber:WeatherFetchError.kt$WeatherFetchError.Companion$299</ID>
+    <ID>MagicNumber:WeatherFetchError.kt$WeatherFetchError.Companion$500</ID>
+    <ID>MagicNumber:WeatherFetchError.kt$WeatherFetchError.Companion$599</ID>
+    <ID>MatchingDeclarationName:BondedDevicesDialog.kt$BondedDevice</ID>
+    <ID>MatchingDeclarationName:Retry.kt$RetryPolicy</ID>
+    <ID>MaxLineLength:AlarmRearm.kt$AlarmRearm$"Alarm send failed after several tries — long-press ALARM to wake the watch, then tap Retry in the notification"</ID>
+    <ID>MaxLineLength:AlarmRearm.kt$AlarmRearm$else</ID>
+    <ID>MaxLineLength:AlarmRearm.kt$AlarmRearm$if</ID>
+    <ID>MaxLineLength:AppViewModel.kt$AppViewModel$fun</ID>
+    <ID>MaxLineLength:ErrorNotifier.kt$ErrorNotifier$FailureKind.ALARM_UNREACHABLE -&gt; "Couldn't push your next alarm to the watch after several tries — it won't ring until this succeeds. Long-press the ALARM button to wake the watch, then tap Retry."</ID>
+    <ID>MaxLineLength:ErrorNotifier.kt$ErrorNotifier$FailureKind.SUN_UNREACHABLE -&gt; "Couldn't deliver the next sunrise/sunset after several tries. Long-press the ALARM button to wake your watch, then tap Retry."</ID>
+    <ID>MaxLineLength:ErrorNotifier.kt$ErrorNotifier$FailureKind.WATCH_UNREACHABLE -&gt; "Couldn't reach your watch after several tries. Long-press the ALARM button to wake its Bluetooth, then tap Retry."</ID>
+    <ID>MaxLineLength:HomeScreen.kt$is PreviewState.WaitingForCoords -&gt; Text("Waiting for coordinates…", style = MaterialTheme.typography.bodyMedium)</ID>
+    <ID>MaxLineLength:MainActivity.kt$onSend = { s -&gt; viewModel.saveTimerSet(s); viewModel.sendTimerSet(s); viewModel.navigateTo(Screen.TimerSets) }</ID>
+    <ID>MaxLineLength:Prefs.kt$Prefs$set(value) = if (value == null) settings.remove(KEY_CUSTOM_SENT_MS) else settings.putLong(KEY_CUSTOM_SENT_MS, value)</ID>
+    <ID>MaxLineLength:Prefs.kt$Prefs$set(value) = if (value == null) settings.remove(KEY_LAST_NOTIFIED_KIND) else settings.putString(KEY_LAST_NOTIFIED_KIND, value.name)</ID>
+    <ID>MaxLineLength:Prefs.kt$Prefs$set(value) = if (value == null) settings.remove(KEY_LAST_SEND_SUMMARY) else settings.putString(KEY_LAST_SEND_SUMMARY, value)</ID>
+    <ID>MaxLineLength:Prefs.kt$Prefs$set(value) = if (value == null) settings.remove(KEY_LOCATION_FETCHED_MS) else settings.putLong(KEY_LOCATION_FETCHED_MS, value)</ID>
+    <ID>MaxLineLength:Prefs.kt$Prefs$set(value) = if (value == null) settings.remove(KEY_STEPS_FETCHED_MS) else settings.putLong(KEY_STEPS_FETCHED_MS, value)</ID>
+    <ID>MaxLineLength:Prefs.kt$Prefs$set(value) = if (value == null) settings.remove(KEY_TEMP_CACHE_UNIT) else settings.putString(KEY_TEMP_CACHE_UNIT, value.name)</ID>
+    <ID>MaxLineLength:Prefs.kt$Prefs$set(value) = if (value == null) settings.remove(KEY_TEMP_FETCHED_MS) else settings.putLong(KEY_TEMP_FETCHED_MS, value)</ID>
+    <ID>MaxLineLength:Prefs.kt$Prefs$set(value) = if (value == null) settings.remove(KEY_TEMP_VALUE) else settings.putFloat(KEY_TEMP_VALUE, value.toFloat())</ID>
+    <ID>MaxLineLength:TimerConfirm.kt$TimerConfirm$val activeSeconds = (reply[0].toInt() and 0xFF) * 3600 + (reply[1].toInt() and 0xFF) * 60 + (reply[2].toInt() and 0xFF)</ID>
+    <ID>MaxLineLength:TimerSetEditScreen.kt$onDuplicate = { working = working.copy(slots = TimerSetEditing.duplicateToNext(working.slots, index)) }</ID>
+    <ID>MaximumLineLength:AlarmRearm.kt$AlarmRearm$ </ID>
+    <ID>MaximumLineLength:AppViewModel.kt$AppViewModel$ </ID>
+    <ID>MaximumLineLength:ErrorNotifier.kt$ErrorNotifier$ </ID>
+    <ID>MaximumLineLength:HomeScreen.kt$ </ID>
+    <ID>MaximumLineLength:MainActivity.kt$ </ID>
+    <ID>MaximumLineLength:Prefs.kt$Prefs$ </ID>
+    <ID>MaximumLineLength:TimerConfirm.kt$TimerConfirm$ </ID>
+    <ID>MaximumLineLength:TimerSetEditScreen.kt$ </ID>
+    <ID>MultiLineIfElse:AlarmRearm.kt$AlarmRearm$"push+confirm OK (${if (latest != null) "armed ${latest.dateTime}" else "disarm"}) [attempt $attempt]"</ID>
+    <ID>MultiLineIfElse:AlarmRearm.kt$AlarmRearm$"push/confirm FAIL ${sent.exceptionOrNull()?.message ?: "read-back mismatch"} [attempt $attempt]"</ID>
+    <ID>MultiLineIfElse:AppViewModel.kt$"Location: ${formatDecimal(lat, 4)}, ${formatDecimal(lng, 4)}"</ID>
+    <ID>MultiLineIfElse:AppViewModel.kt$"Location: not set"</ID>
+    <ID>MultiLineIfElse:AppViewModel.kt$AppViewModel$ConnectionStatus.Connecting</ID>
+    <ID>MultiLineIfElse:AppViewModel.kt$AppViewModel$ConnectionStatus.NoWatch</ID>
+    <ID>MultiLineIfElse:AppViewModel.kt$AppViewModel$null</ID>
+    <ID>MultiLineIfElse:AutoSleepReconciler.kt$AutoSleepReconciler$config.inWindow</ID>
+    <ID>MultiLineIfElse:AutoSleepReconciler.kt$AutoSleepReconciler$config.outWindow</ID>
+    <ID>MultiLineIfElse:AutoUpdateScheduler.kt$AutoUpdateScheduler$null</ID>
+    <ID>MultiLineIfElse:AutoUpdateWorker.kt$AutoUpdateWorker$null</ID>
+    <ID>MultiLineIfElse:ConnectionStatus.kt$"Wake the watch: long-press ALARM or triple-tap the Clock face, then tap Reconnect."</ID>
+    <ID>MultiLineIfElse:ConnectionStatus.kt$null</ID>
+    <ID>MultiLineIfElse:DevToolsReceiver.kt$DevToolsReceiver$"result: FAIL ${result.exceptionOrNull()?.message}"</ID>
+    <ID>MultiLineIfElse:DevToolsReceiver.kt$DevToolsReceiver$"result: OK"</ID>
+    <ID>MultiLineIfElse:DisplayFormatter.kt$DisplayFormatter$"E " + abbreviateThousands(clamped)</ID>
+    <ID>MultiLineIfElse:DisplayFormatter.kt$DisplayFormatter$markStale(plain, stale = true)</ID>
+    <ID>MultiLineIfElse:ErrorNotifier.kt$ErrorNotifier$return false</ID>
+    <ID>MultiLineIfElse:MainActivity.kt$btPermissionLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT)</ID>
+    <ID>MultiLineIfElse:MainActivity.kt$showPicker = true</ID>
+    <ID>MultiLineIfElse:MainActivity.kt$viewModel.onBluetoothDenied()</ID>
+    <ID>MultiLineIfElse:OlleeProtocol.kt$OlleeProtocol$(crc shl 1) xor 0x1021</ID>
+    <ID>MultiLineIfElse:OlleeProtocol.kt$OlleeProtocol$crc shl 1</ID>
+    <ID>MultiLineIfElse:OlleeProtocol.kt$OlleeProtocol.WatchConfig$word and (1 shl CONFIG_BIT_AUTOSLEEP).inv()</ID>
+    <ID>MultiLineIfElse:OlleeProtocol.kt$OlleeProtocol.WatchConfig$word or (1 shl CONFIG_BIT_AUTOSLEEP)</ID>
+    <ID>MultiLineIfElse:SettingsScreen.kt$"Locating…"</ID>
+    <ID>MultiLineIfElse:SettingsScreen.kt$state.locationLabel + (state.locationFreshness?.let { " · $it" } ?: "")</ID>
+    <ID>MultiLineIfElse:TimerSetsScreen.kt$"all blank"</ID>
+    <ID>NestedBlockDepth:WatchLink.kt$WatchLink.HeldCallback$override fun onServicesDiscovered(g: BluetoothGatt, status: Int)</ID>
+    <ID>NoConsecutiveBlankLines:TimerSetEditScreen.kt$ </ID>
+    <ID>NoMultipleSpaces:AlarmReadback.kt$AlarmReadback$ </ID>
+    <ID>NoMultipleSpaces:AlarmRearm.kt$AlarmRearm$ </ID>
+    <ID>NoMultipleSpaces:AlarmsJson.kt$AlarmsJson$ </ID>
+    <ID>NoMultipleSpaces:AppViewModel.kt$AppViewModel$ </ID>
+    <ID>NoMultipleSpaces:Color.kt$Everforest$ </ID>
+    <ID>NoMultipleSpaces:NotifyFrameReassembler.kt$NotifyFrameReassembler$ </ID>
+    <ID>NoMultipleSpaces:OlleeProtocol.kt$OlleeProtocol$ </ID>
+    <ID>NoMultipleSpaces:TimerConfirm.kt$TimerConfirm$ </ID>
+    <ID>NoMultipleSpaces:WatchLink.kt$WatchLink$ </ID>
+    <ID>NoWildcardImports:BondedDevicesDialog.kt$import androidx.compose.foundation.layout.*</ID>
+    <ID>NoWildcardImports:MainActivity.kt$import androidx.compose.runtime.*</ID>
+    <ID>ParameterListWrapping:AlarmReadback.kt$AlarmReadback$( ble: BleClient, address: String, packet: ByteArray, enabled: Boolean, hour: Int, minute: Int, chimeIndex: Int, )</ID>
+    <ID>ParameterListWrapping:AndroidBleClient.kt$AndroidBleClient$( deviceAddress: String, requestPacket: ByteArray, expectedTarget: Int, timeoutMs: Long, )</ID>
+    <ID>ParameterListWrapping:Prefs.kt$Prefs$value</ID>
+    <ID>ParameterListWrapping:WatchLink.kt$WatchLink$( context: Context, address: String, requestPacket: ByteArray, expectedTarget: Int, timeoutMs: Long = READ_TIMEOUT_MS, )</ID>
+    <ID>ParameterListWrapping:WatchLink.kt$WatchLink.&lt;no name provided&gt;$( g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int, )</ID>
+    <ID>ParameterListWrapping:WatchLink.kt$WatchLink.HeldCallback$( g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int, )</ID>
+    <ID>ParameterListWrapping:WatchLink.kt$WatchLink.HeldCallback$( g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, value: ByteArray, )</ID>
+    <ID>ReturnCount:AlarmConfirm.kt$AlarmConfirm$fun matches(enabled: Boolean, hour: Int, minute: Int, chimeIndex: Int, frame: OlleeProtocol.Frame): Boolean</ID>
+    <ID>ReturnCount:AndroidStepsProvider.kt$AndroidStepsProvider$override suspend fun todaySteps(): Result&lt;Long&gt;</ID>
+    <ID>ReturnCount:AutoSleepApply.kt$AutoSleepApply$suspend fun reconcile(ble: BleClient, address: String, desired: AutoSleepProfile): Boolean</ID>
+    <ID>ReturnCount:AutoUpdateSchedule.kt$AutoUpdateSchedule$fun nextTemperatureFire( now: LocalDateTime, intervalMinutes: Int, sleep: SleepWindow?, ): LocalDateTime</ID>
+    <ID>ReturnCount:AutoUpdateWorker.kt$AutoUpdateWorker$override suspend fun doWork(): Result</ID>
+    <ID>ReturnCount:DevToolsReceiver.kt$DevToolsReceiver$override fun onReceive(context: Context, intent: Intent)</ID>
+    <ID>ReturnCount:MainActivity.kt$@SuppressLint("MissingPermission") private fun bondedDevices(context: Context): List&lt;BondedDevice&gt;</ID>
+    <ID>ReturnCount:NotifyDecision.kt$NotifyDecision$fun decide(current: FailureKind?, lastNotified: FailureKind?, inSleep: Boolean): NotifyAction</ID>
+    <ID>ReturnCount:NotifyFrameReassembler.kt$NotifyFrameReassembler$fun offer(fragment: ByteArray): OlleeProtocol.Frame?</ID>
+    <ID>ReturnCount:OlleeProtocol.kt$OlleeProtocol$fun parseConfig(frame: Frame): WatchConfig?</ID>
+    <ID>ReturnCount:OlleeProtocol.kt$OlleeProtocol$fun parseFrame(bytes: ByteArray): Frame?</ID>
+    <ID>ReturnCount:Retry.kt$suspend fun &lt;T&gt; withRetry( policy: RetryPolicy, isTransient: (Throwable) -&gt; Boolean, delayFn: suspend (Long) -&gt; Unit = { delay(it) }, block: suspend () -&gt; T, ): Result&lt;T&gt;</ID>
+    <ID>ReturnCount:Staleness.kt$fun isTempCacheFresh( fetchedMs: Long?, cacheUnit: TempUnit?, currentUnit: TempUnit, intervalMin: Int, nowMs: Long, ): Boolean</ID>
+    <ID>ReturnCount:TimerConfirm.kt$TimerConfirm$fun matches(writePacket: ByteArray, frame: OlleeProtocol.Frame): Boolean</ID>
+    <ID>ReturnCount:WatchLink.kt$WatchLink.&lt;no name provided&gt;$override fun onServicesDiscovered(g: BluetoothGatt, status: Int)</ID>
+    <ID>ReturnCount:WatchLink.kt$WatchLink.HeldCallback$private fun handleNotify(uuid: UUID, value: ByteArray?)</ID>
+    <ID>SpacingBetweenDeclarationsWithAnnotations:WatchLink.kt$WatchLink.HeldCallback$// Written under [lock] in writeHeld, read/incremented from the (serialized) GATT callback // thread in onCharacteristicWrite — @Volatile makes those cross-thread reads well-defined. @Volatile var writeChunks: List&lt;ByteArray&gt; = emptyList()</ID>
+    <ID>SpacingBetweenDeclarationsWithAnnotations:WatchLink.kt$WatchLink.HeldCallback$@Volatile var awaitCont: CancellableContinuation&lt;Result&lt;OlleeProtocol.Frame&gt;&gt;? = null</ID>
+    <ID>SpacingBetweenDeclarationsWithAnnotations:WatchLink.kt$WatchLink.HeldCallback$@Volatile var awaitTarget: Int? = null</ID>
+    <ID>SpacingBetweenDeclarationsWithAnnotations:WatchLink.kt$WatchLink.HeldCallback$@Volatile var writeChar: BluetoothGattCharacteristic? = null</ID>
+    <ID>SpacingBetweenDeclarationsWithAnnotations:WatchLink.kt$WatchLink.HeldCallback$@Volatile var writeCont: CancellableContinuation&lt;Result&lt;Unit&gt;&gt;? = null</ID>
+    <ID>SpacingBetweenDeclarationsWithAnnotations:WatchLink.kt$WatchLink.HeldCallback$@Volatile var writeIndex: Int = 0</ID>
+    <ID>SpacingBetweenDeclarationsWithComments:Alarm.kt$Alarm.Companion$/** The single-bit mask for [day] (Mon=bit0 … Sun=bit6). */</ID>
+    <ID>SpacingBetweenDeclarationsWithComments:OlleeProtocol.kt$OlleeProtocol$/** Allowed autosleep_period values (seconds), from the official app's picker. */</ID>
+    <ID>SpacingBetweenDeclarationsWithComments:OlleeProtocol.kt$OlleeProtocol$/** Bit position within the big-endian bitmask word. */</ID>
+    <ID>SpacingBetweenDeclarationsWithComments:OlleeProtocol.kt$OlleeProtocol$// Experimental: the Temperature face's field. The official app *reads* it at 0x2E</ID>
+    <ID>SpacingBetweenDeclarationsWithComments:Prefs.kt$Prefs.Companion$/** Legacy `active_face` value from when notifications was a mutually-exclusive face. */</ID>
+    <ID>SpacingBetweenDeclarationsWithComments:WatchLink.kt$WatchLink$// ATT payload for the watch's default 23-byte MTU (MTU - 3). Longer frames are fragmented across</ID>
+    <ID>SpacingBetweenDeclarationsWithComments:WatchLink.kt$WatchLink$// The Android GATT stack allows one outstanding op; a read-request write can be transiently</ID>
+    <ID>SpacingBetweenDeclarationsWithComments:WatchLink.kt$WatchLink.HeldCallback$// Written under [lock] in writeHeld, read/incremented from the (serialized) GATT callback</ID>
+    <ID>SwallowedException:OpenMeteoClient.kt$OpenMeteoClient$e: ConnectTimeoutException</ID>
+    <ID>SwallowedException:OpenMeteoClient.kt$OpenMeteoClient$e: Exception</ID>
+    <ID>SwallowedException:OpenMeteoClient.kt$OpenMeteoClient$e: IOException</ID>
+    <ID>SwallowedException:OpenMeteoClient.kt$OpenMeteoClient$e: SocketTimeoutException</ID>
+    <ID>SwallowedException:OpenMeteoClient.kt$OpenMeteoClient$e: TimeoutCancellationException</ID>
+    <ID>ThrowsCount:OpenMeteoClient.kt$OpenMeteoClient$fun parseCurrentTemperatureF(json: String): Double</ID>
+    <ID>ThrowsCount:OpenMeteoClient.kt$OpenMeteoClient$private suspend fun fetchOnce(lat: Double, lng: Double, unit: TempUnit): Double</ID>
+    <ID>TooGenericExceptionCaught:DevToolsReceiver.kt$DevToolsReceiver$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:OpenMeteoClient.kt$OpenMeteoClient$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:WatchLink.kt$WatchLink$error: Exception</ID>
+    <ID>TooManyFunctions:AppViewModel.kt$AppViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:AutoUpdateWorker.kt$AutoUpdateWorker : CoroutineWorker</ID>
+    <ID>TooManyFunctions:OlleeProtocol.kt$OlleeProtocol</ID>
+    <ID>TooManyFunctions:SunCalc.kt$SunCalc</ID>
+    <ID>TooManyFunctions:WatchLink.kt$WatchLink</ID>
+    <ID>UseCheckOrError:WatchLink.kt$WatchLink$throw IllegalStateException("read request write stayed busy")</ID>
+    <ID>WildcardImport:BondedDevicesDialog.kt$import androidx.compose.foundation.layout.*</ID>
+    <ID>WildcardImport:MainActivity.kt$import androidx.compose.runtime.*</ID>
+    <ID>Wrapping:AlarmSchedule.kt$AlarmSchedule$;</ID>
+    <ID>Wrapping:AlarmsJson.kt$AlarmsJson$(</ID>
+    <ID>Wrapping:AlarmsScreen.kt$(</ID>
+    <ID>Wrapping:AlarmsScreen.kt$;</ID>
+    <ID>Wrapping:AppViewModel.kt$;</ID>
+    <ID>Wrapping:AppViewModel.kt$AppViewModel$(</ID>
+    <ID>Wrapping:AppViewModel.kt$AppViewModel$;</ID>
+    <ID>Wrapping:AppViewModel.kt$AppViewModel$it.copy( lat = lat.toString(), lng = lng.toString(), locating = false, locationLabel = locLabel(lat, lng), locationFreshness = "just now", )</ID>
+    <ID>Wrapping:AppViewModel.kt$AppViewModel$it.copy( locating = false, locationFreshness = (freshnessLabel(prefs.lastLocationFetchedMs, nowMs()) ?: "stale") + " · refresh failed", )</ID>
+    <ID>Wrapping:AppViewModel.kt$AppViewModel$it.copy( locationLabel = locLabel(latD, lngD), locationFreshness = "just now", )</ID>
+    <ID>Wrapping:AppViewModel.kt$AppViewModel$it.copy( notificationCount = prefs.notificationCount, notificationAccessGranted = notificationAccess.isGranted(), notificationsEnabled = prefs.notificationsEnabled, )</ID>
+    <ID>Wrapping:AppViewModel.kt$AppViewModel$it.copy( stepsHealthGranted = false, stepsPreview = PreviewState.Error("Grant Health access to read steps"), )</ID>
+    <ID>Wrapping:AppViewModel.kt$AppViewModel$it.copy( stepsPreview = PreviewState.Error("Couldn't read steps from Health Connect"), )</ID>
+    <ID>Wrapping:AppViewModel.kt$AppViewModel$it.copy( stepsPreview = PreviewState.Ready(payload, stepsHuman(cached) + " (stale)"), stepsUpdated = prefs.stepsFetchedMs?.let { ms -&gt; "Updated ${clockTime(ms)}" }, )</ID>
+    <ID>Wrapping:AppViewModel.kt$AppViewModel$it.copy( stepsPreview = PreviewState.Ready(payload, stepsHuman(count)), stepsUpdated = "Updated ${clockTime(prefs.stepsFetchedMs!!)}", )</ID>
+    <ID>Wrapping:AppViewModel.kt$AppViewModel$it.copy( sunPreview = PreviewState.Ready(payload, "$kindLabel at $pretty"), sunUpdated = "Updated ${clockTime(nowMs())}", sunNext = "Next: $kindLabel at $pretty", )</ID>
+    <ID>Wrapping:AppViewModel.kt$AppViewModel$it.copy( tempPreview = PreviewState.Ready(payload, human), tempUpdated = "Updated ${clockTime(prefs.tempFetchedMs!!)}", tempNext = tempNextText(), )</ID>
+    <ID>Wrapping:AppViewModel.kt$AppViewModel$it.copy( tempPreview = PreviewState.Ready(payload, human), tempUpdated = prefs.tempFetchedMs?.let { ms -&gt; "Updated ${clockTime(ms)}" }, )</ID>
+    <ID>Wrapping:MainActivity.kt$;</ID>
+    <ID>Wrapping:SettingsScreen.kt$;</ID>
+    <ID>Wrapping:TimerSetEditScreen.kt$(</ID>
+    <ID>Wrapping:TimerSetEditScreen.kt$;</ID>
+    <ID>Wrapping:TimerSetsJson.kt$TimerSetsJson$(</ID>
+    <ID>Wrapping:TimerSetsJson.kt$TimerSetsJson$("slots", buildJsonArray { for (slot in set.slots) add(buildJsonObject { put("label", JsonPrimitive(slot.label)) put("dur", JsonPrimitive(slot.durationSeconds)) }) })</ID>
+    <ID>Wrapping:TimerSetsScreen.kt$(</ID>
+    <ID>Wrapping:WatchLink.kt$WatchLink$(</ID>
+    <ID>Wrapping:WatchLink.kt$WatchLink$("OLLEE_BLE", "FreeOllee RX $address target=0x${f.target.toString(16)} " + "payload=${f.payload.toHex()} crcOk=${f.crcOk}")</ID>
+    <ID>Wrapping:WatchLink.kt$WatchLink$;</ID>
+    <ID>Wrapping:WatchLink.kt$WatchLink${ closeHeldLocked(); _status.value = ConnectionStatus.NotReachable return@withLock Result.failure(IllegalStateException("connect failed")) }</ID>
+    <ID>Wrapping:WatchLink.kt$WatchLink.&lt;no name provided&gt;$;</ID>
+    <ID>Wrapping:WatchLink.kt$WatchLink.HeldCallback$;</ID>
+  </CurrentIssues>
+</SmellBaseline>

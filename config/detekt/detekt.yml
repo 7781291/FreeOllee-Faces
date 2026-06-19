@@ -1,0 +1,17 @@
+build:
+  maxIssues: 0
+formatting:
+  active: true
+  android: true
+  autoCorrect: false
+complexity:
+  LongMethod:
+    active: true
+  LongParameterList:
+    active: true
+    functionThreshold: 8
+    constructorThreshold: 12
+style:
+  MaxLineLength:
+    active: true
+    maxLineLength: 120
