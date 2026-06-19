@@ -42,7 +42,7 @@ class SettingsController(
         update { it.copy(lat = lat, lng = lng) }
         val latD = lat.toDoubleOrNull()
         val lngD = lng.toDoubleOrNull()
-        if (latD != null && lngD != null && latD in -LAT_ABS_MAX..LAT_ABS_MAX && lngD in -LNG_ABS_MAX..LNG_ABS_MAX) {
+        if (latD != null && lngD != null && coordsInRange(latD, lngD)) {
             prefs.lastLat = latD
             prefs.lastLng = lngD
             prefs.lastLocationFetchedMs = clock.now().toEpochMilliseconds()

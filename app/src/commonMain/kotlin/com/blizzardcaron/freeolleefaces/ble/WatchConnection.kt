@@ -22,6 +22,14 @@ interface WatchConnection {
 object NoopWatchConnection : WatchConnection {
     private val _status = MutableStateFlow(ConnectionStatus.NoWatch)
     override val status: StateFlow<ConnectionStatus> = _status
-    override suspend fun connect(address: String) {}
-    override fun disconnect() {}
+
+    // No-op: previews/tests hold a dead connection, so a "connect" attempt leaves status at NoWatch.
+    override suspend fun connect(address: String) {
+        _status.value = ConnectionStatus.NoWatch
+    }
+
+    // No-op: there is no held link to release.
+    override fun disconnect() {
+        _status.value = ConnectionStatus.NoWatch
+    }
 }

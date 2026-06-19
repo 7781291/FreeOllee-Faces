@@ -28,6 +28,6 @@ object BleRetryPolicy {
      * is preferable to a false "watch unreachable". (Kept as a predicate for symmetry with
      * `weather/Retry.kt` and to localize any future non-retryable cases.)
      */
-    @Suppress("UNUSED_PARAMETER")
+    @Suppress("UNUSED_PARAMETER", "FunctionOnlyReturningConstant")
     fun isRetryable(error: Throwable): Boolean = true
 }

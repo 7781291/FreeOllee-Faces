@@ -2,13 +2,9 @@
 <SmellBaseline>
   <ManuallySuppressedIssues></ManuallySuppressedIssues>
   <CurrentIssues>
-    <ID>ComplexCondition:ComplicationController.kt$ComplicationController$lat != null &amp;&amp; lng != null &amp;&amp; lat in -LAT_ABS_MAX..LAT_ABS_MAX &amp;&amp; lng in -LNG_ABS_MAX..LNG_ABS_MAX</ID>
-    <ID>ComplexCondition:SettingsController.kt$SettingsController$latD != null &amp;&amp; lngD != null &amp;&amp; latD in -LAT_ABS_MAX..LAT_ABS_MAX &amp;&amp; lngD in -LNG_ABS_MAX..LNG_ABS_MAX</ID>
     <ID>ComplexCondition:WatchLink.kt$WatchLink$g != null &amp;&amp; cb != null &amp;&amp; char != null &amp;&amp; heldAddress == address &amp;&amp; _status.value == ConnectionStatus.Connected</ID>
     <ID>CyclomaticComplexMethod:AlarmRearm.kt$AlarmRearm$fun rearm(context: Context, attempt: Int = 0, onComplete: () -&gt; Unit = {})</ID>
     <ID>CyclomaticComplexMethod:MainActivity.kt$@Composable private fun AppRoot()</ID>
-    <ID>EmptyFunctionBlock:WatchConnection.kt$NoopWatchConnection${}</ID>
-    <ID>FunctionOnlyReturningConstant:BleRetryPolicy.kt$BleRetryPolicy$@Suppress("UNUSED_PARAMETER") fun isRetryable(error: Throwable): Boolean</ID>
     <ID>LongMethod:AlarmRearm.kt$AlarmRearm$fun rearm(context: Context, attempt: Int = 0, onComplete: () -&gt; Unit = {})</ID>
     <ID>LongMethod:HomeScreen.kt$@Composable private fun NotificationsCard( state: HomeState, expanded: Boolean, onToggle: () -&gt; Unit, onToggleEnabled: (Boolean) -&gt; Unit, onGrantAccess: () -&gt; Unit, onUpdateNow: () -&gt; Unit, )</ID>
     <ID>LongMethod:HomeScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun HomeScreen( state: HomeState, callbacks: HomeCallbacks, modifier: Modifier = Modifier, )</ID>

@@ -69,11 +69,7 @@ class ComplicationController(
     private fun validCoords(): Pair<Double, Double>? {
         val lat = state().lat.toDoubleOrNull()
         val lng = state().lng.toDoubleOrNull()
-        return if (lat != null && lng != null && lat in -LAT_ABS_MAX..LAT_ABS_MAX && lng in -LNG_ABS_MAX..LNG_ABS_MAX) {
-            lat to lng
-        } else {
-            null
-        }
+        return if (lat != null && lng != null && coordsInRange(lat, lng)) lat to lng else null
     }
 
     private fun pushIfWatch(payload: String) {
