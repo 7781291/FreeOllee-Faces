@@ -6,13 +6,10 @@ import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.provider.Settings
-import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -24,11 +21,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.core.content.ContextCompat
-import androidx.health.connect.client.PermissionController
 import com.blizzardcaron.freeolleefaces.alarm.AlarmsRepository
 import com.blizzardcaron.freeolleefaces.auto.AlarmRearm
 import com.blizzardcaron.freeolleefaces.auto.AndroidAlarmScheduler
@@ -36,7 +32,6 @@ import com.blizzardcaron.freeolleefaces.auto.AndroidScheduler
 import com.blizzardcaron.freeolleefaces.ble.AndroidBleClient
 import com.blizzardcaron.freeolleefaces.ble.AndroidWatchConnection
 import com.blizzardcaron.freeolleefaces.health.AndroidStepsProvider
-import com.blizzardcaron.freeolleefaces.health.StepsProvider
 import com.blizzardcaron.freeolleefaces.location.AndroidLocationProvider
 import com.blizzardcaron.freeolleefaces.notifications.AndroidNotificationAccess
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
@@ -44,10 +39,10 @@ import com.blizzardcaron.freeolleefaces.prefs.alarmSettings
 import com.blizzardcaron.freeolleefaces.prefs.appSettings
 import com.blizzardcaron.freeolleefaces.prefs.timerSettings
 import com.blizzardcaron.freeolleefaces.timer.TimerSetsRepository
+import com.blizzardcaron.freeolleefaces.ui.AlarmsScreen
 import com.blizzardcaron.freeolleefaces.ui.BondedDevice
 import com.blizzardcaron.freeolleefaces.ui.BondedDevicesDialog
 import com.blizzardcaron.freeolleefaces.ui.BottomNavTab
-import com.blizzardcaron.freeolleefaces.ui.AlarmsScreen
 import com.blizzardcaron.freeolleefaces.ui.HomeCallbacks
 import com.blizzardcaron.freeolleefaces.ui.HomeScreen
 import com.blizzardcaron.freeolleefaces.ui.Screen
@@ -58,7 +53,6 @@ import com.blizzardcaron.freeolleefaces.ui.TimerSetsScreen
 import com.blizzardcaron.freeolleefaces.ui.theme.FreeOlleeFacesTheme
 import com.blizzardcaron.freeolleefaces.ui.versionLabel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -95,7 +89,6 @@ private fun AppRoot() {
     }
     val state = viewModel.state
     val screen = viewModel.screen
-    val kotlinScope = rememberCoroutineScope()
 
     var showPicker by remember { mutableStateOf(false) }
 
@@ -157,27 +150,6 @@ private fun AppRoot() {
         }
     }
 
-    val btPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) showPicker = true
-        else viewModel.onBluetoothDenied()
-    }
-
-    val notificationPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { /* granted or not — errors still record in-app either way */ }
-
-    LaunchedEffect(Unit) {
-        val backgroundActive = viewModel.backgroundActive()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && backgroundActive &&
-            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
-    }
-
     // Re-check notification access/count when the activity resumes — e.g. returning from the
     // system notification-access settings page. The 60 s dashboard poll alone would lag here.
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -194,61 +166,24 @@ private fun AppRoot() {
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    val locationPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { results ->
-        if (results.values.any { it }) {
-            viewModel.complications.setLocating(true)
-            kotlinScope.launch {
-                viewModel.complications.fetchLocation()
-                    .onSuccess { coords -> viewModel.complications.onLocationFetched(coords.lat, coords.lng) }
-                    .onFailure { err -> viewModel.complications.onLocationFailed(err.message) }
-            }
-        } else {
-            viewModel.complications.onLocationDenied()
-        }
-    }
-
-    val healthPermissionLauncher = rememberLauncherForActivityResult(
-        PermissionController.createRequestPermissionResultContract()
-    ) { granted ->
-        // The read permission alone is enough to show steps; background read just lets the
-        // worker keep updating while the app is closed.
-        viewModel.complications.refreshSteps(push = viewModel.complications.activeIsSteps())
-        if (!granted.containsAll(AndroidStepsProvider.PERMISSIONS)) {
-            viewModel.complications.onPartialHealthGrant()
-        }
-    }
-
-    fun selectWatch() {
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT)
-            == PackageManager.PERMISSION_GRANTED
-        ) showPicker = true
-        else btPermissionLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT)
-    }
-
-    fun useMyLocation() {
-        val hasAny =
-            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
-                PackageManager.PERMISSION_GRANTED ||
-                ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) ==
-                PackageManager.PERMISSION_GRANTED
-        if (hasAny) {
-            viewModel.complications.setLocating(true)
-            kotlinScope.launch {
-                viewModel.complications.fetchLocation()
-                    .onSuccess { coords -> viewModel.complications.onLocationFetched(coords.lat, coords.lng) }
-                    .onFailure { err -> viewModel.complications.onLocationFailed(err.message) }
-            }
-        } else {
-            locationPermissionLauncher.launch(
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION,
-                )
-            )
-        }
-    }
+    val perms = rememberPermissionsCoordinator(
+        PermissionsCallbacks(
+            backgroundActive = { viewModel.backgroundActive() },
+            onBluetoothGranted = { showPicker = true },
+            onBluetoothDenied = { viewModel.onBluetoothDenied() },
+            setLocating = { viewModel.complications.setLocating(it) },
+            onLocationFetched = { lat, lng -> viewModel.complications.onLocationFetched(lat, lng) },
+            onLocationFailed = { msg -> viewModel.complications.onLocationFailed(msg) },
+            onLocationDenied = { viewModel.complications.onLocationDenied() },
+            fetchLocation = { viewModel.complications.fetchLocation() },
+            refreshSteps = { push -> viewModel.complications.refreshSteps(push) },
+            activeIsSteps = { viewModel.complications.activeIsSteps() },
+            onPartialHealthGrant = { viewModel.complications.onPartialHealthGrant() },
+            healthAvailability = { viewModel.complications.healthAvailability() },
+            onHealthUpdateRequired = { viewModel.complications.onHealthUpdateRequired() },
+            onHealthUnavailable = { viewModel.complications.onHealthUnavailable() },
+        )
+    )
 
     val homeCallbacks = HomeCallbacks(
         onActivate = { viewModel.complications.activate(it) },
@@ -256,16 +191,7 @@ private fun AppRoot() {
         onTempUnitChange = { newUnit -> viewModel.complications.setTempUnit(newUnit) },
         onCustomChange = { text -> viewModel.complications.setCustomText(text) },
         onSendCustom = { viewModel.complications.sendCustom(state.custom) },
-        onGrantHealth = {
-            when (viewModel.complications.healthAvailability()) {
-                StepsProvider.Availability.AVAILABLE ->
-                    healthPermissionLauncher.launch(AndroidStepsProvider.PERMISSIONS)
-                StepsProvider.Availability.UPDATE_REQUIRED ->
-                    viewModel.complications.onHealthUpdateRequired()
-                StepsProvider.Availability.UNAVAILABLE ->
-                    viewModel.complications.onHealthUnavailable()
-            }
-        },
+        onGrantHealth = { perms.requestHealth() },
         onGrantNotificationAccess = { openNotificationAccessSettings(context) },
         onToggleNotifications = { viewModel.complications.setNotificationsEnabled(it) },
         onNotificationsUpdateNow = { viewModel.complications.pushCountIfWatch() },
@@ -274,7 +200,7 @@ private fun AppRoot() {
 
     val settingsCallbacks = SettingsCallbacks(
         onBack = { viewModel.navigateTo(Screen.Home) },
-        onSelectWatch = ::selectWatch,
+        onSelectWatch = perms::selectWatch,
         onIntervalChange = { mins -> viewModel.settings.setInterval(mins) },
         onSleepEnabledChange = { enabled -> viewModel.settings.setSleepEnabled(enabled) },
         onSleepStartChange = { min -> viewModel.settings.setSleepStart(min) },
@@ -288,7 +214,7 @@ private fun AppRoot() {
         onAutoSleepOutWindowPeriodChange = { sec -> viewModel.settings.setAutoSleepOutWindowPeriod(sec) },
         onLatChange = { viewModel.settings.onCoordEdit(it, state.lng) },
         onLngChange = { viewModel.settings.onCoordEdit(state.lat, it) },
-        onUseMyLocation = ::useMyLocation,
+        onUseMyLocation = perms::useMyLocation,
     )
 
     Scaffold(
