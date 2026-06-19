@@ -52,10 +52,12 @@ import com.blizzardcaron.freeolleefaces.ui.BottomNavTab
 import com.blizzardcaron.freeolleefaces.ui.HomeCallbacks
 import com.blizzardcaron.freeolleefaces.ui.HomeScreen
 import com.blizzardcaron.freeolleefaces.ui.HomeState
+import com.blizzardcaron.freeolleefaces.ui.QuickTimerState
 import com.blizzardcaron.freeolleefaces.ui.Screen
 import com.blizzardcaron.freeolleefaces.ui.SettingsCallbacks
 import com.blizzardcaron.freeolleefaces.ui.SettingsScreen
 import com.blizzardcaron.freeolleefaces.ui.TimerSetEditScreen
+import com.blizzardcaron.freeolleefaces.ui.TimerSetsCallbacks
 import com.blizzardcaron.freeolleefaces.ui.TimerSetsScreen
 import com.blizzardcaron.freeolleefaces.ui.theme.FreeOlleeFacesTheme
 import com.blizzardcaron.freeolleefaces.ui.versionLabel
@@ -309,36 +311,40 @@ private fun AppTimerSetsScreen(viewModel: AppViewModel, state: HomeState, modifi
         sets = viewModel.timers.timerSets,
         activeId = viewModel.timers.timerActiveId,
         sending = state.sending,
-        quickTimerSeconds = viewModel.timers.quickTimerSeconds,
-        quickTimerStartFromApp = viewModel.timers.quickTimerStartFromApp,
-        quickTimerIntervalMode = viewModel.timers.quickTimerIntervalMode,
-        onSaveQuick = { viewModel.timers.saveQuickTimer(it) },
-        onToggleStartFromApp = { viewModel.timers.toggleQuickTimerStartFromApp(it) },
-        onToggleIntervalMode = { viewModel.timers.toggleQuickTimerIntervalMode(it) },
-        onSendQuick = { viewModel.timers.sendQuickTimer() },
-        quickTimerAlarmMode = viewModel.timers.quickTimerAlarmMode,
-        quickTimerAlarmHour = viewModel.timers.quickTimerAlarmHour,
-        quickTimerAlarmMinute = viewModel.timers.quickTimerAlarmMinute,
-        onToggleAlarmMode = { viewModel.timers.toggleQuickTimerAlarmMode(it) },
-        onSaveAlarmTime = { h, m -> viewModel.timers.saveQuickTimerAlarmTime(h, m) },
-        onSendAlarm = { viewModel.timers.sendQuickAlarm() },
-        onOpen = {
-            viewModel.timers.editTimerSet(it)
-            viewModel.navigateTo(Screen.TimerSetEdit)
-        },
-        onNew = {
-            viewModel.timers.newTimerSet()
-            viewModel.navigateTo(Screen.TimerSetEdit)
-        },
-        onDuplicate = { src -> viewModel.timers.duplicateTimerSet(src) },
-        onDelete = { viewModel.timers.deleteTimerSet(it) },
-        onSend = { viewModel.timers.sendTimerSet(it) },
-        onStart = { viewModel.timers.startTimerSet(it) },
-        onMoveUp = { viewModel.timers.moveTimerSetUp(it) },
-        onMoveDown = { viewModel.timers.moveTimerSetDown(it) },
-        onBack = { viewModel.navigateTo(Screen.Home) },
+        quickTimer = QuickTimerState(
+            seconds = viewModel.timers.quickTimerSeconds,
+            startFromApp = viewModel.timers.quickTimerStartFromApp,
+            intervalMode = viewModel.timers.quickTimerIntervalMode,
+            alarmMode = viewModel.timers.quickTimerAlarmMode,
+            alarmHour = viewModel.timers.quickTimerAlarmHour,
+            alarmMinute = viewModel.timers.quickTimerAlarmMinute,
+        ),
+        callbacks = TimerSetsCallbacks(
+            onSaveQuick = { viewModel.timers.saveQuickTimer(it) },
+            onToggleStartFromApp = { viewModel.timers.toggleQuickTimerStartFromApp(it) },
+            onToggleIntervalMode = { viewModel.timers.toggleQuickTimerIntervalMode(it) },
+            onToggleAlarmMode = { viewModel.timers.toggleQuickTimerAlarmMode(it) },
+            onSaveAlarmTime = { h, m -> viewModel.timers.saveQuickTimerAlarmTime(h, m) },
+            onSendAlarm = { viewModel.timers.sendQuickAlarm() },
+            onSendQuick = { viewModel.timers.sendQuickTimer() },
+            onOpen = {
+                viewModel.timers.editTimerSet(it)
+                viewModel.navigateTo(Screen.TimerSetEdit)
+            },
+            onNew = {
+                viewModel.timers.newTimerSet()
+                viewModel.navigateTo(Screen.TimerSetEdit)
+            },
+            onDuplicate = { src -> viewModel.timers.duplicateTimerSet(src) },
+            onDelete = { viewModel.timers.deleteTimerSet(it) },
+            onSend = { viewModel.timers.sendTimerSet(it) },
+            onStart = { viewModel.timers.startTimerSet(it) },
+            onMoveUp = { viewModel.timers.moveTimerSetUp(it) },
+            onMoveDown = { viewModel.timers.moveTimerSetDown(it) },
+            onBack = { viewModel.navigateTo(Screen.Home) },
+            onReconnect = { viewModel.onReconnect() },
+        ),
         connectionStatus = state.connectionStatus,
-        onReconnect = { viewModel.onReconnect() },
         modifier = modifier,
     )
 }
