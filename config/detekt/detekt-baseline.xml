@@ -416,10 +416,6 @@
     <ID>TooManyFunctions:SunCalc.kt$SunCalc</ID>
     <ID>TooManyFunctions:TimerController.kt$TimerController</ID>
     <ID>TooManyFunctions:WatchLink.kt$WatchLink</ID>
-    <ID>UnusedPrivateProperty:AlarmController.kt$AlarmController$private val ble: BleClient</ID>
-    <ID>UnusedPrivateProperty:AlarmController.kt$AlarmController$private val prefs: Prefs</ID>
-    <ID>UnusedPrivateProperty:AlarmController.kt$AlarmController$private val scope: CoroutineScope</ID>
-    <ID>UnusedPrivateProperty:AlarmController.kt$AlarmController$private val showSnackbar: (String) -&gt; Unit</ID>
     <ID>UseCheckOrError:WatchLink.kt$WatchLink$throw IllegalStateException("read request write stayed busy")</ID>
     <ID>WildcardImport:BondedDevicesDialog.kt$import androidx.compose.foundation.layout.*</ID>
     <ID>WildcardImport:MainActivity.kt$import androidx.compose.runtime.*</ID>

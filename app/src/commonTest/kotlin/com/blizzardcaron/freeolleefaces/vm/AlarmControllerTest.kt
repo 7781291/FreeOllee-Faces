@@ -2,12 +2,9 @@ package com.blizzardcaron.freeolleefaces.vm
 
 import com.blizzardcaron.freeolleefaces.alarm.AlarmsRepository
 import com.blizzardcaron.freeolleefaces.fakes.FakeAlarmScheduler
-import com.blizzardcaron.freeolleefaces.fakes.FakeBleClient
-import com.blizzardcaron.freeolleefaces.prefs.Prefs
 import com.russhwolf.settings.MapSettings
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import kotlin.test.AfterTest
@@ -20,8 +17,8 @@ import kotlin.test.assertTrue
 
 /**
  * Moved from AppViewModelTest's "Test D1/D2" — the alarm cluster now lives in [AlarmController],
- * constructed directly against the real [AlarmsRepository]/[Prefs] (backed by [MapSettings], same
- * pattern AppViewModelTest used) and the existing [FakeBleClient]/[FakeAlarmScheduler] fakes.
+ * constructed directly against the real [AlarmsRepository] (backed by [MapSettings], same pattern
+ * AppViewModelTest used) and the existing [FakeAlarmScheduler] fake.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class AlarmControllerTest {
@@ -42,10 +39,6 @@ class AlarmControllerTest {
     ) = AlarmController(
         alarmRepo = AlarmsRepository(settings),
         alarmScheduler = FakeAlarmScheduler(callLog),
-        ble = FakeBleClient(callLog),
-        prefs = Prefs(MapSettings()),
-        scope = TestScope(),
-        showSnackbar = {},
     )
 
     // ---------------------------------------------------------------------------

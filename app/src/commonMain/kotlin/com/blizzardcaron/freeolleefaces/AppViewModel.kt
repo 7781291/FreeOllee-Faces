@@ -95,10 +95,6 @@ class AppViewModel(
     val alarms = AlarmController(
         alarmRepo = alarmRepo,
         alarmScheduler = alarmScheduler,
-        ble = ble,
-        prefs = prefs,
-        scope = viewModelScope,
-        showSnackbar = ::emitEvent,
         clock = clock,
     )
 

@@ -7,9 +7,6 @@ import com.blizzardcaron.freeolleefaces.alarm.Alarm
 import com.blizzardcaron.freeolleefaces.alarm.AlarmSchedule
 import com.blizzardcaron.freeolleefaces.alarm.AlarmsRepository
 import com.blizzardcaron.freeolleefaces.auto.AlarmScheduler
-import com.blizzardcaron.freeolleefaces.ble.BleClient
-import com.blizzardcaron.freeolleefaces.prefs.Prefs
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -19,16 +16,12 @@ import kotlinx.datetime.toLocalDateTime
  * alarm list (here [items] — renamed from the VM's old `alarms` to avoid
  * `viewModel.alarms.alarms`), the next-fire summary, and the 5 CRUD operations. Moved verbatim;
  * the only renames are `alarms` -> `items` and the injected [clock] (was `Clock.System` directly
- * in the VM); `viewModelScope` -> `scope` and `showSnackbar` becoming an injected callback (the
- * VM's own snackbar channel, via `emitEvent`) are constructor-level, not method-body renames.
+ * in the VM). The alarm cluster needs only the repo and scheduler — it never touches BLE, prefs,
+ * a coroutine scope, or the snackbar channel.
  */
 class AlarmController(
     private val alarmRepo: AlarmsRepository,
     private val alarmScheduler: AlarmScheduler,
-    private val ble: BleClient,
-    private val prefs: Prefs,
-    private val scope: CoroutineScope,
-    private val showSnackbar: (String) -> Unit,
     private val clock: Clock = Clock.System,
 ) {
     var items by mutableStateOf(alarmRepo.getAll())
