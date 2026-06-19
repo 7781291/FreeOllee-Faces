@@ -15,8 +15,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -359,7 +359,10 @@ private fun NotificationsCard(
 @Composable
 private fun FaceValue(preview: PreviewState, updated: String?, next: String?) {
     when (preview) {
-        is PreviewState.WaitingForCoords -> Text("Waiting for coordinates…", style = MaterialTheme.typography.bodyMedium)
+        is PreviewState.WaitingForCoords -> Text(
+            "Waiting for coordinates…",
+            style = MaterialTheme.typography.bodyMedium
+        )
         is PreviewState.Loading -> Text("Loading…", style = MaterialTheme.typography.bodyMedium)
         is PreviewState.Ready -> {
             Text(preview.human, style = MaterialTheme.typography.headlineMedium)

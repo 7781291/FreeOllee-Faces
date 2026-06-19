@@ -20,6 +20,8 @@ fun connectionChip(status: ConnectionStatus): ConnectionChip = when (status) {
 
 /** The wake-instruction hint, shown only when a reconnect attempt has failed. */
 fun wakeHint(status: ConnectionStatus): String? =
-    if (status == ConnectionStatus.NotReachable)
+    if (status == ConnectionStatus.NotReachable) {
         "Wake the watch: long-press ALARM or triple-tap the Clock face, then tap Reconnect."
-    else null
+    } else {
+        null
+    }

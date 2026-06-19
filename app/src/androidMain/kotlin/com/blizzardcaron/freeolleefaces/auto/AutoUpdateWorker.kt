@@ -119,7 +119,9 @@ class AutoUpdateWorker(
     ): Result {
         val sleep = if (prefs.sleepEnabled) {
             SleepWindow(prefs.sleepStartMin, prefs.sleepEndMin)
-        } else null
+        } else {
+            null
+        }
         val nowMinOfDay = now.hour * 60 + now.minute
         val inSleep = sleep != null &&
             AutoUpdateSchedule.isInSleepWindow(nowMinOfDay, sleep.startMin, sleep.endMin)
@@ -186,7 +188,9 @@ class AutoUpdateWorker(
     ): Result {
         val sleep = if (prefs.sleepEnabled) {
             SleepWindow(prefs.sleepStartMin, prefs.sleepEndMin)
-        } else null
+        } else {
+            null
+        }
         val nowMinOfDay = now.hour * 60 + now.minute
 
         // Guard: if we somehow fired inside the sleep window, skip the send.
@@ -259,7 +263,10 @@ class AutoUpdateWorker(
     ): Result {
         val inSleep = inSleepNow(prefs)
         val event = SunCalc.nextEvent(
-            now.toInstant(TimeZone.currentSystemDefault()), lat, lng, TimeZone.currentSystemDefault(),
+            now.toInstant(TimeZone.currentSystemDefault()),
+            lat,
+            lng,
+            TimeZone.currentSystemDefault(),
         )
         if (event == null) {
             prefs.recordAutoSend("Skipped: no sun event (polar)")
@@ -303,7 +310,9 @@ class AutoUpdateWorker(
         return if (AutoUpdateSchedule.hasBackstopBudget(attempt)) {
             prefs.recordAutoSend("Retry ${attempt + 1}: watch unreachable")
             AutoUpdateScheduler.enqueueNext(
-                ctx, AutoUpdateSchedule.backstopDelayMs(attempt), sendAttempt = attempt + 1,
+                ctx,
+                AutoUpdateSchedule.backstopDelayMs(attempt),
+                sendAttempt = attempt + 1,
             )
             true
         } else {

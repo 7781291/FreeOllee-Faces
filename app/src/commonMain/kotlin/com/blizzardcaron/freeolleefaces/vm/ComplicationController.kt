@@ -62,10 +62,13 @@ class ComplicationController(
     private fun nowMs(): Long = clock.now().toEpochMilliseconds()
 
     private fun validCoords(): Pair<Double, Double>? {
-        val lat = state().lat.toDoubleOrNull(); val lng = state().lng.toDoubleOrNull()
+        val lat = state().lat.toDoubleOrNull()
+        val lng = state().lng.toDoubleOrNull()
         return if (lat != null && lng != null && lat in -LAT_ABS_MAX..LAT_ABS_MAX && lng in -LNG_ABS_MAX..LNG_ABS_MAX) {
             lat to lng
-        } else null
+        } else {
+            null
+        }
     }
 
     private fun pushIfWatch(payload: String) {
@@ -103,7 +106,8 @@ class ComplicationController(
         val sleep = if (prefs.sleepEnabled) SleepWindow(prefs.sleepStartMin, prefs.sleepEndMin) else null
         val fire = AutoUpdateSchedule.nextTemperatureFire(
             clock.now().toLocalDateTime(TimeZone.currentSystemDefault()),
-            prefs.updateIntervalMinutes, sleep,
+            prefs.updateIntervalMinutes,
+            sleep,
         )
         return "Next update ${CLOCK.format(fire.time)}"
     }
@@ -122,11 +126,13 @@ class ComplicationController(
             val cached = prefs.tempValue!!
             val payload = DisplayFormatter.temperature(cached, state().tempUnit)
             val human = "Currently: ${formatDecimal(cached, 1)}°${state().tempUnit.symbol}"
-            update { it.copy(
-                tempPreview = PreviewState.Ready(payload, human),
-                tempUpdated = "Updated ${clockTime(prefs.tempFetchedMs!!)}",
-                tempNext = tempNextText(),
-            ) }
+            update {
+                it.copy(
+                    tempPreview = PreviewState.Ready(payload, human),
+                    tempUpdated = "Updated ${clockTime(prefs.tempFetchedMs!!)}",
+                    tempNext = tempNextText(),
+                )
+            }
             if (push) pushIfWatch(payload)
             return
         }
@@ -138,11 +144,13 @@ class ComplicationController(
                     prefs.recordTempFetch(temp, state().tempUnit)
                     val payload = DisplayFormatter.temperature(temp, state().tempUnit)
                     val human = "Currently: ${formatDecimal(temp, 1)}°${state().tempUnit.symbol}"
-                    update { it.copy(
-                        tempPreview = PreviewState.Ready(payload, human),
-                        tempUpdated = "Updated ${clockTime(prefs.tempFetchedMs!!)}",
-                        tempNext = tempNextText(),
-                    ) }
+                    update {
+                        it.copy(
+                            tempPreview = PreviewState.Ready(payload, human),
+                            tempUpdated = "Updated ${clockTime(prefs.tempFetchedMs!!)}",
+                            tempNext = tempNextText(),
+                        )
+                    }
                     if (push) pushIfWatch(payload)
                 }
                 .onFailure { err ->
@@ -152,10 +160,12 @@ class ComplicationController(
                     if (cached != null && prefs.tempCacheUnit == state().tempUnit) {
                         val payload = DisplayFormatter.temperature(cached, state().tempUnit, stale = true)
                         val human = "Currently: ${formatDecimal(cached, 1)}°${state().tempUnit.symbol} (stale)"
-                        update { it.copy(
-                            tempPreview = PreviewState.Ready(payload, human),
-                            tempUpdated = prefs.tempFetchedMs?.let { ms -> "Updated ${clockTime(ms)}" },
-                        ) }
+                        update {
+                            it.copy(
+                                tempPreview = PreviewState.Ready(payload, human),
+                                tempUpdated = prefs.tempFetchedMs?.let { ms -> "Updated ${clockTime(ms)}" },
+                            )
+                        }
                         if (push) pushIfWatch(payload)
                     } else {
                         update { it.copy(tempPreview = PreviewState.Error(WeatherErrorCopy.describe(err))) }
@@ -179,21 +189,25 @@ class ComplicationController(
         val payload = DisplayFormatter.sunTime(event.kind, event.time.time)
         val pretty = CLOCK.format(event.time.time)
         val kindLabel = event.kind.name.lowercase().replaceFirstChar { it.uppercase() }
-        update { it.copy(
-            sunPreview = PreviewState.Ready(payload, "$kindLabel at $pretty"),
-            sunUpdated = "Updated ${clockTime(nowMs())}",
-            sunNext = "Next: $kindLabel at $pretty",
-        ) }
+        update {
+            it.copy(
+                sunPreview = PreviewState.Ready(payload, "$kindLabel at $pretty"),
+                sunUpdated = "Updated ${clockTime(nowMs())}",
+                sunNext = "Next: $kindLabel at $pretty",
+            )
+        }
         if (push) pushIfWatch(payload)
     }
 
     fun refreshSteps(push: Boolean) {
         scope.launch {
             if (!steps.hasReadPermission()) {
-                update { it.copy(
-                    stepsHealthGranted = false,
-                    stepsPreview = PreviewState.Error("Grant Health access to read steps"),
-                ) }
+                update {
+                    it.copy(
+                        stepsHealthGranted = false,
+                        stepsPreview = PreviewState.Error("Grant Health access to read steps"),
+                    )
+                }
                 return@launch
             }
             update { it.copy(stepsHealthGranted = true, stepsPreview = PreviewState.Loading) }
@@ -201,10 +215,12 @@ class ComplicationController(
                 .onSuccess { count ->
                     prefs.recordStepsFetch(count)
                     val payload = DisplayFormatter.steps(count)
-                    update { it.copy(
-                        stepsPreview = PreviewState.Ready(payload, stepsHuman(count)),
-                        stepsUpdated = "Updated ${clockTime(prefs.stepsFetchedMs!!)}",
-                    ) }
+                    update {
+                        it.copy(
+                            stepsPreview = PreviewState.Ready(payload, stepsHuman(count)),
+                            stepsUpdated = "Updated ${clockTime(prefs.stepsFetchedMs!!)}",
+                        )
+                    }
                     if (push) pushIfWatch(payload)
                 }
                 .onFailure {
@@ -212,15 +228,19 @@ class ComplicationController(
                     val cached = prefs.lastStepCount
                     if (cached != null) {
                         val payload = DisplayFormatter.steps(cached, stale = true)
-                        update { it.copy(
-                            stepsPreview = PreviewState.Ready(payload, stepsHuman(cached) + " (stale)"),
-                            stepsUpdated = prefs.stepsFetchedMs?.let { ms -> "Updated ${clockTime(ms)}" },
-                        ) }
+                        update {
+                            it.copy(
+                                stepsPreview = PreviewState.Ready(payload, stepsHuman(cached) + " (stale)"),
+                                stepsUpdated = prefs.stepsFetchedMs?.let { ms -> "Updated ${clockTime(ms)}" },
+                            )
+                        }
                         if (push) pushIfWatch(payload)
                     } else {
-                        update { it.copy(
-                            stepsPreview = PreviewState.Error("Couldn't read steps from Health Connect"),
-                        ) }
+                        update {
+                            it.copy(
+                                stepsPreview = PreviewState.Error("Couldn't read steps from Health Connect"),
+                            )
+                        }
                     }
                 }
         }
@@ -244,11 +264,13 @@ class ComplicationController(
         refreshTemp(force = false, push = false)
         refreshSun(push = false)
         refreshSteps(push = false)
-        update { it.copy(
-            notificationCount = prefs.notificationCount,
-            notificationAccessGranted = notificationAccess.isGranted(),
-            notificationsEnabled = prefs.notificationsEnabled,
-        ) }
+        update {
+            it.copy(
+                notificationCount = prefs.notificationCount,
+                notificationAccessGranted = notificationAccess.isGranted(),
+                notificationsEnabled = prefs.notificationsEnabled,
+            )
+        }
     }
 
     fun activate(complication: ActiveComplication) {
@@ -317,15 +339,21 @@ class ComplicationController(
 
     fun setLocating(v: Boolean) { update { it.copy(locating = v) } }
 
-    suspend fun fetchLocation() = location.fetch()  // Activity calls when it holds permission
+    suspend fun fetchLocation() = location.fetch() // Activity calls when it holds permission
 
     fun onLocationFetched(lat: Double, lng: Double) {
-        prefs.lastLat = lat; prefs.lastLng = lng
+        prefs.lastLat = lat
+        prefs.lastLng = lng
         prefs.lastLocationFetchedMs = nowMs()
-        update { it.copy(
-            lat = lat.toString(), lng = lng.toString(), locating = false,
-            locationLabel = locLabel(lat, lng), locationFreshness = "just now",
-        ) }
+        update {
+            it.copy(
+                lat = lat.toString(),
+                lng = lng.toString(),
+                locating = false,
+                locationLabel = locLabel(lat, lng),
+                locationFreshness = "just now",
+            )
+        }
         refreshActive(force = true, push = false)
     }
 
@@ -335,21 +363,29 @@ class ComplicationController(
      * face once at the end).
      */
     fun onLocationFetchedSilent(lat: Double, lng: Double) {
-        prefs.lastLat = lat; prefs.lastLng = lng
+        prefs.lastLat = lat
+        prefs.lastLng = lng
         prefs.lastLocationFetchedMs = nowMs()
-        update { it.copy(
-            lat = lat.toString(), lng = lng.toString(), locating = false,
-            locationLabel = locLabel(lat, lng), locationFreshness = "just now",
-        ) }
+        update {
+            it.copy(
+                lat = lat.toString(),
+                lng = lng.toString(),
+                locating = false,
+                locationLabel = locLabel(lat, lng),
+                locationFreshness = "just now",
+            )
+        }
     }
 
     /** Bootstrap-refresh failure where saved coords exist: mark "refresh failed" and warn. */
     fun onLocationRefreshFailed() {
-        update { it.copy(
-            locating = false,
-            locationFreshness = (freshnessLabel(prefs.lastLocationFetchedMs, nowMs()) ?: "stale") +
-                " · refresh failed",
-        ) }
+        update {
+            it.copy(
+                locating = false,
+                locationFreshness = (freshnessLabel(prefs.lastLocationFetchedMs, nowMs()) ?: "stale") +
+                    " · refresh failed",
+            )
+        }
         showSnackbar("Couldn't refresh location — using saved coordinates")
     }
 
@@ -361,11 +397,13 @@ class ComplicationController(
     }
 
     fun onResumeNotifications() {
-        update { it.copy(
-            notificationCount = prefs.notificationCount,
-            notificationAccessGranted = notificationAccess.isGranted(),
-            notificationsEnabled = prefs.notificationsEnabled,
-        ) }
+        update {
+            it.copy(
+                notificationCount = prefs.notificationCount,
+                notificationAccessGranted = notificationAccess.isGranted(),
+                notificationsEnabled = prefs.notificationsEnabled,
+            )
+        }
     }
 
     /** Convenience: whether the active face is the steps face (Activity uses this when arming reads). */
@@ -385,7 +423,13 @@ class ComplicationController(
     ): Result<Unit> {
         update { it.copy(sending = true) }
         return ble.send(address, value, target)
-            .onSuccess { update { it.copy(sending = false) }; showSnackbar("Sent '$value'") }
-            .onFailure { err -> update { it.copy(sending = false) }; showSnackbar("Send failed: ${err.message}") }
+            .onSuccess {
+                update { it.copy(sending = false) }
+                showSnackbar("Sent '$value'")
+            }
+            .onFailure { err ->
+                update { it.copy(sending = false) }
+                showSnackbar("Send failed: ${err.message}")
+            }
     }
 }

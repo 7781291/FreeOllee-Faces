@@ -68,8 +68,11 @@ class DevToolsReceiver : BroadcastReceiver() {
                 val result = AndroidBleClient(ctx).sendPacket(address, packet)
                 Log.i(
                     TAG,
-                    if (result.isSuccess) "result: OK"
-                    else "result: FAIL ${result.exceptionOrNull()?.message}",
+                    if (result.isSuccess) {
+                        "result: OK"
+                    } else {
+                        "result: FAIL ${result.exceptionOrNull()?.message}"
+                    },
                 )
             } finally {
                 pending.finish()

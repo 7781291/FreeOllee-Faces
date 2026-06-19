@@ -2,44 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues></ManuallySuppressedIssues>
   <CurrentIssues>
-    <ID>AnnotationOnSeparateLine:WatchLink.kt$WatchLink$@Suppress("DEPRECATION") run { char.value = bytes char.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT g.writeCharacteristic(char) }</ID>
-    <ID>AnnotationOnSeparateLine:WatchLink.kt$WatchLink.HeldCallback$@Suppress("DEPRECATION") run { d.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE g.writeDescriptor(d) }</ID>
-    <ID>ArgumentListWrapping:AlarmRearm.kt$AlarmRearm$( ctx, BACKSTOP_REQUEST_CODE, Intent(ctx, AlarmRearmReceiver::class.java).putExtra(EXTRA_ATTEMPT, nextAttempt), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE, )</ID>
-    <ID>ArgumentListWrapping:AlarmRearm.kt$AlarmRearm$( ctx, REQUEST_CODE, Intent(ctx, AlarmRearmReceiver::class.java), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE, )</ID>
-    <ID>ArgumentListWrapping:AlarmSchedule.kt$AlarmSchedule$( hour = next.hour, minute = next.minute, chimeIndex = next.chimeIndex, playNow = false, enabled = true, )</ID>
-    <ID>ArgumentListWrapping:AlarmsScreen.kt$("No alarms yet. Tap \"Add alarm\" to create one.", style = MaterialTheme.typography.bodyMedium)</ID>
-    <ID>ArgumentListWrapping:AutoUpdateWorker.kt$AutoUpdateWorker$( ctx, AutoUpdateSchedule.backstopDelayMs(attempt), sendAttempt = attempt + 1, )</ID>
-    <ID>ArgumentListWrapping:AutoUpdateWorker.kt$AutoUpdateWorker$( now.toInstant(TimeZone.currentSystemDefault()), lat, lng, TimeZone.currentSystemDefault(), )</ID>
-    <ID>ArgumentListWrapping:ComplicationController.kt$ComplicationController$( clock.now().toLocalDateTime(TimeZone.currentSystemDefault()), prefs.updateIntervalMinutes, sleep, )</ID>
-    <ID>ArgumentListWrapping:ComplicationController.kt$ComplicationController$( lat = lat.toString(), lng = lng.toString(), locating = false, locationLabel = locLabel(lat, lng), locationFreshness = "just now", )</ID>
-    <ID>ArgumentListWrapping:ErrorNotifier.kt$ErrorNotifier$( ctx, 0, intent, PendingIntent.FLAG_IMMUTABLE, )</ID>
-    <ID>ArgumentListWrapping:ErrorNotifier.kt$ErrorNotifier$( ctx, retryRequestCodeFor(kind), retryIntent, PendingIntent.FLAG_IMMUTABLE, )</ID>
-    <ID>ArgumentListWrapping:HomeScreen.kt$("Waiting for coordinates…", style = MaterialTheme.typography.bodyMedium)</ID>
-    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_CUSTOM_SENT_MS)</ID>
-    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_CUSTOM_SENT_MS, value)</ID>
-    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_LAST_NOTIFIED_KIND)</ID>
-    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_LAST_NOTIFIED_KIND, value.name)</ID>
-    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_LAST_SEND_SUMMARY)</ID>
-    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_LAST_SEND_SUMMARY, value)</ID>
-    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_LOCATION_FETCHED_MS)</ID>
-    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_LOCATION_FETCHED_MS, value)</ID>
-    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_STEPS_FETCHED_MS)</ID>
-    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_STEPS_FETCHED_MS, value)</ID>
-    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_TEMP_CACHE_UNIT)</ID>
-    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_TEMP_CACHE_UNIT, value.name)</ID>
-    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_TEMP_FETCHED_MS)</ID>
-    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_TEMP_FETCHED_MS, value)</ID>
-    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_TEMP_VALUE)</ID>
-    <ID>ArgumentListWrapping:Prefs.kt$Prefs$(KEY_TEMP_VALUE, value.toFloat())</ID>
-    <ID>ArgumentListWrapping:TimerController.kt$TimerController$( set.durations(), headerSeconds = quickTimerSeconds, startMode = OlleeProtocol.TimerStartMode.SAVE)</ID>
-    <ID>ArgumentListWrapping:TimerController.kt$TimerController$( set.durations(), headerSeconds = quickTimerSeconds, startMode = OlleeProtocol.TimerStartMode.START_INTERVAL)</ID>
-    <ID>ArgumentListWrapping:TimerController.kt$TimerController$( slots, headerSeconds = quickTimerSeconds, startMode = mode)</ID>
-    <ID>ArgumentListWrapping:TimerController.kt$TimerController$( slots, headerSeconds = seconds, startMode = OlleeProtocol.TimerStartMode.START_SINGLE)</ID>
-    <ID>ArgumentListWrapping:TimerSetEditScreen.kt$(text = { Text("Duplicate to next") }, onClick = { menu = false; onDuplicate() })</ID>
-    <ID>ArgumentListWrapping:TimerSetEditScreen.kt$(text = { Text("Fill down") }, onClick = { menu = false; onFillDown() })</ID>
-    <ID>ArgumentListWrapping:TimerSetsScreen.kt$("No sets yet. Tap \"New set\" to create one.", style = MaterialTheme.typography.bodyMedium)</ID>
-    <ID>ArgumentListWrapping:TimerSetsScreen.kt$(if (set.name.isBlank()) "(unnamed)" else set.name, style = MaterialTheme.typography.titleMedium)</ID>
-    <ID>ArgumentListWrapping:WatchLink.kt$WatchLink$("OLLEE_BLE", "FreeOllee RX $address target=0x${f.target.toString(16)} " + "payload=${f.payload.toHex()} crcOk=${f.crcOk}")</ID>
     <ID>ComplexCondition:ComplicationController.kt$ComplicationController$lat != null &amp;&amp; lng != null &amp;&amp; lat in -LAT_ABS_MAX..LAT_ABS_MAX &amp;&amp; lng in -LNG_ABS_MAX..LNG_ABS_MAX</ID>
     <ID>ComplexCondition:SettingsController.kt$SettingsController$latD != null &amp;&amp; lngD != null &amp;&amp; latD in -LAT_ABS_MAX..LAT_ABS_MAX &amp;&amp; lngD in -LNG_ABS_MAX..LNG_ABS_MAX</ID>
     <ID>ComplexCondition:WatchLink.kt$WatchLink$g != null &amp;&amp; cb != null &amp;&amp; char != null &amp;&amp; heldAddress == address &amp;&amp; _status.value == ConnectionStatus.Connected</ID>
@@ -80,11 +42,6 @@
     <ID>FunctionNaming:TimerWidgets.kt$@Composable internal fun HourField(value: Int, onCommit: (Int) -&gt; Unit)</ID>
     <ID>FunctionNaming:TimerWidgets.kt$@Composable internal fun NumberField(label: String, value: Int, onChange: (Int) -&gt; Unit)</ID>
     <ID>FunctionOnlyReturningConstant:BleRetryPolicy.kt$BleRetryPolicy$@Suppress("UNUSED_PARAMETER") fun isRetryable(error: Throwable): Boolean</ID>
-    <ID>ImportOrdering:HomeScreen.kt$import androidx.compose.foundation.BorderStroke import androidx.compose.foundation.clickable import androidx.compose.foundation.layout.Arrangement import androidx.compose.foundation.layout.Column import androidx.compose.foundation.layout.Row import androidx.compose.foundation.layout.Spacer import androidx.compose.foundation.layout.fillMaxSize import androidx.compose.foundation.layout.fillMaxWidth import androidx.compose.foundation.layout.padding import androidx.compose.foundation.layout.size import androidx.compose.foundation.layout.width import androidx.compose.foundation.rememberScrollState import androidx.compose.foundation.verticalScroll import androidx.compose.material3.Button import androidx.compose.material3.Card import androidx.compose.material3.CircularProgressIndicator import androidx.compose.material3.CardDefaults import androidx.compose.material3.ExperimentalMaterial3Api import androidx.compose.material3.HorizontalDivider import androidx.compose.material3.MaterialTheme import androidx.compose.material3.OutlinedTextField import androidx.compose.material3.RadioButton import androidx.compose.material3.SegmentedButton import androidx.compose.material3.SegmentedButtonDefaults import androidx.compose.material3.SingleChoiceSegmentedButtonRow import androidx.compose.material3.Switch import androidx.compose.material3.Text import androidx.compose.material3.TextButton import androidx.compose.runtime.Composable import androidx.compose.runtime.getValue import androidx.compose.runtime.mutableStateOf import androidx.compose.runtime.remember import androidx.compose.runtime.setValue import androidx.compose.ui.Alignment import androidx.compose.ui.Modifier import androidx.compose.ui.unit.dp import androidx.compose.ui.unit.em import com.blizzardcaron.freeolleefaces.auto.ActiveComplication import com.blizzardcaron.freeolleefaces.auto.displayLabel import com.blizzardcaron.freeolleefaces.ble.ConnectionStatus import com.blizzardcaron.freeolleefaces.ble.connectionChip import com.blizzardcaron.freeolleefaces.ble.wakeHint import com.blizzardcaron.freeolleefaces.format.DisplayFormatter import com.blizzardcaron.freeolleefaces.format.TempUnit</ID>
-    <ID>ImportOrdering:OpenMeteoClient.kt$import com.blizzardcaron.freeolleefaces.format.TempUnit import io.ktor.client.HttpClient import io.ktor.client.network.sockets.ConnectTimeoutException import io.ktor.client.network.sockets.SocketTimeoutException import io.ktor.client.plugins.HttpTimeout import io.ktor.client.request.get import io.ktor.client.statement.bodyAsText import kotlinx.io.IOException import kotlinx.coroutines.TimeoutCancellationException import kotlinx.serialization.SerialName import kotlinx.serialization.Serializable import kotlinx.serialization.json.Json</ID>
-    <ID>Indentation:AppViewModel.kt$AppViewModel$ </ID>
-    <ID>Indentation:MainActivity.kt$ </ID>
-    <ID>Indentation:OlleeProtocol.kt$OlleeProtocol.WatchConfig$ </ID>
     <ID>LongMethod:AlarmRearm.kt$AlarmRearm$fun rearm(context: Context, attempt: Int = 0, onComplete: () -&gt; Unit = {})</ID>
     <ID>LongMethod:HomeScreen.kt$@Composable private fun NotificationsCard( state: HomeState, expanded: Boolean, onToggle: () -&gt; Unit, onToggleEnabled: (Boolean) -&gt; Unit, onGrantAccess: () -&gt; Unit, onUpdateNow: () -&gt; Unit, )</ID>
     <ID>LongMethod:HomeScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun HomeScreen( state: HomeState, callbacks: HomeCallbacks, modifier: Modifier = Modifier, )</ID>
@@ -292,75 +249,20 @@
     <ID>MatchingDeclarationName:BondedDevicesDialog.kt$BondedDevice</ID>
     <ID>MatchingDeclarationName:Retry.kt$RetryPolicy</ID>
     <ID>MaxLineLength:AlarmRearm.kt$AlarmRearm$"Alarm send failed after several tries — long-press ALARM to wake the watch, then tap Retry in the notification"</ID>
-    <ID>MaxLineLength:AlarmRearm.kt$AlarmRearm$else</ID>
-    <ID>MaxLineLength:AlarmRearm.kt$AlarmRearm$if</ID>
     <ID>MaxLineLength:AppViewModel.kt$AppViewModel$fun</ID>
     <ID>MaxLineLength:ErrorNotifier.kt$ErrorNotifier$FailureKind.ALARM_UNREACHABLE -&gt; "Couldn't push your next alarm to the watch after several tries — it won't ring until this succeeds. Long-press the ALARM button to wake the watch, then tap Retry."</ID>
     <ID>MaxLineLength:ErrorNotifier.kt$ErrorNotifier$FailureKind.SUN_UNREACHABLE -&gt; "Couldn't deliver the next sunrise/sunset after several tries. Long-press the ALARM button to wake your watch, then tap Retry."</ID>
     <ID>MaxLineLength:ErrorNotifier.kt$ErrorNotifier$FailureKind.WATCH_UNREACHABLE -&gt; "Couldn't reach your watch after several tries. Long-press the ALARM button to wake its Bluetooth, then tap Retry."</ID>
-    <ID>MaxLineLength:HomeScreen.kt$is PreviewState.WaitingForCoords -&gt; Text("Waiting for coordinates…", style = MaterialTheme.typography.bodyMedium)</ID>
-    <ID>MaxLineLength:Prefs.kt$Prefs$set(value) = if (value == null) settings.remove(KEY_CUSTOM_SENT_MS) else settings.putLong(KEY_CUSTOM_SENT_MS, value)</ID>
-    <ID>MaxLineLength:Prefs.kt$Prefs$set(value) = if (value == null) settings.remove(KEY_LAST_NOTIFIED_KIND) else settings.putString(KEY_LAST_NOTIFIED_KIND, value.name)</ID>
-    <ID>MaxLineLength:Prefs.kt$Prefs$set(value) = if (value == null) settings.remove(KEY_LAST_SEND_SUMMARY) else settings.putString(KEY_LAST_SEND_SUMMARY, value)</ID>
-    <ID>MaxLineLength:Prefs.kt$Prefs$set(value) = if (value == null) settings.remove(KEY_LOCATION_FETCHED_MS) else settings.putLong(KEY_LOCATION_FETCHED_MS, value)</ID>
-    <ID>MaxLineLength:Prefs.kt$Prefs$set(value) = if (value == null) settings.remove(KEY_STEPS_FETCHED_MS) else settings.putLong(KEY_STEPS_FETCHED_MS, value)</ID>
-    <ID>MaxLineLength:Prefs.kt$Prefs$set(value) = if (value == null) settings.remove(KEY_TEMP_CACHE_UNIT) else settings.putString(KEY_TEMP_CACHE_UNIT, value.name)</ID>
-    <ID>MaxLineLength:Prefs.kt$Prefs$set(value) = if (value == null) settings.remove(KEY_TEMP_FETCHED_MS) else settings.putLong(KEY_TEMP_FETCHED_MS, value)</ID>
-    <ID>MaxLineLength:Prefs.kt$Prefs$set(value) = if (value == null) settings.remove(KEY_TEMP_VALUE) else settings.putFloat(KEY_TEMP_VALUE, value.toFloat())</ID>
     <ID>MaxLineLength:TimerConfirm.kt$TimerConfirm$val activeSeconds = (reply[0].toInt() and 0xFF) * 3600 + (reply[1].toInt() and 0xFF) * 60 + (reply[2].toInt() and 0xFF)</ID>
     <ID>MaxLineLength:TimerSetEditScreen.kt$onDuplicate = { working = working.copy(slots = TimerSetEditing.duplicateToNext(working.slots, index)) }</ID>
     <ID>MaximumLineLength:AlarmRearm.kt$AlarmRearm$ </ID>
     <ID>MaximumLineLength:AppViewModel.kt$AppViewModel$ </ID>
     <ID>MaximumLineLength:ErrorNotifier.kt$ErrorNotifier$ </ID>
-    <ID>MaximumLineLength:HomeScreen.kt$ </ID>
-    <ID>MaximumLineLength:Prefs.kt$Prefs$ </ID>
     <ID>MaximumLineLength:TimerConfirm.kt$TimerConfirm$ </ID>
     <ID>MaximumLineLength:TimerSetEditScreen.kt$ </ID>
-    <ID>MultiLineIfElse:AlarmRearm.kt$AlarmRearm$"push+confirm OK (${if (latest != null) "armed ${latest.dateTime}" else "disarm"}) [attempt $attempt]"</ID>
-    <ID>MultiLineIfElse:AlarmRearm.kt$AlarmRearm$"push/confirm FAIL ${sent.exceptionOrNull()?.message ?: "read-back mismatch"} [attempt $attempt]"</ID>
-    <ID>MultiLineIfElse:AppViewModel.kt$AppViewModel$ConnectionStatus.Connecting</ID>
-    <ID>MultiLineIfElse:AppViewModel.kt$AppViewModel$ConnectionStatus.NoWatch</ID>
-    <ID>MultiLineIfElse:AutoSleepReconciler.kt$AutoSleepReconciler$config.inWindow</ID>
-    <ID>MultiLineIfElse:AutoSleepReconciler.kt$AutoSleepReconciler$config.outWindow</ID>
-    <ID>MultiLineIfElse:AutoUpdateScheduler.kt$AutoUpdateScheduler$null</ID>
-    <ID>MultiLineIfElse:AutoUpdateWorker.kt$AutoUpdateWorker$null</ID>
-    <ID>MultiLineIfElse:ComplicationController.kt$ComplicationController$null</ID>
-    <ID>MultiLineIfElse:ConnectionStatus.kt$"Wake the watch: long-press ALARM or triple-tap the Clock face, then tap Reconnect."</ID>
-    <ID>MultiLineIfElse:ConnectionStatus.kt$null</ID>
-    <ID>MultiLineIfElse:DevToolsReceiver.kt$DevToolsReceiver$"result: FAIL ${result.exceptionOrNull()?.message}"</ID>
-    <ID>MultiLineIfElse:DevToolsReceiver.kt$DevToolsReceiver$"result: OK"</ID>
-    <ID>MultiLineIfElse:DisplayFormatter.kt$DisplayFormatter$"E " + abbreviateThousands(clamped)</ID>
-    <ID>MultiLineIfElse:DisplayFormatter.kt$DisplayFormatter$markStale(plain, stale = true)</ID>
-    <ID>MultiLineIfElse:ErrorNotifier.kt$ErrorNotifier$return false</ID>
-    <ID>MultiLineIfElse:OlleeProtocol.kt$OlleeProtocol$(crc shl 1) xor 0x1021</ID>
-    <ID>MultiLineIfElse:OlleeProtocol.kt$OlleeProtocol$crc shl 1</ID>
-    <ID>MultiLineIfElse:OlleeProtocol.kt$OlleeProtocol.WatchConfig$word and (1 shl CONFIG_BIT_AUTOSLEEP).inv()</ID>
-    <ID>MultiLineIfElse:OlleeProtocol.kt$OlleeProtocol.WatchConfig$word or (1 shl CONFIG_BIT_AUTOSLEEP)</ID>
-    <ID>MultiLineIfElse:SettingsScreen.kt$"Locating…"</ID>
-    <ID>MultiLineIfElse:SettingsScreen.kt$state.locationLabel + (state.locationFreshness?.let { " · $it" } ?: "")</ID>
-    <ID>MultiLineIfElse:TimerSetsScreen.kt$"all blank"</ID>
     <ID>NestedBlockDepth:WatchLink.kt$WatchLink.HeldCallback$override fun onServicesDiscovered(g: BluetoothGatt, status: Int)</ID>
-    <ID>NoConsecutiveBlankLines:TimerSetEditScreen.kt$ </ID>
-    <ID>NoMultipleSpaces:AlarmReadback.kt$AlarmReadback$ </ID>
-    <ID>NoMultipleSpaces:AlarmRearm.kt$AlarmRearm$ </ID>
-    <ID>NoMultipleSpaces:AlarmsJson.kt$AlarmsJson$ </ID>
-    <ID>NoMultipleSpaces:AppViewModel.kt$AppViewModel$ </ID>
-    <ID>NoMultipleSpaces:Color.kt$Everforest$ </ID>
-    <ID>NoMultipleSpaces:ComplicationController.kt$ComplicationController$ </ID>
-    <ID>NoMultipleSpaces:NotifyFrameReassembler.kt$NotifyFrameReassembler$ </ID>
-    <ID>NoMultipleSpaces:OlleeProtocol.kt$OlleeProtocol$ </ID>
-    <ID>NoMultipleSpaces:TimerConfirm.kt$TimerConfirm$ </ID>
-    <ID>NoMultipleSpaces:TimerController.kt$TimerController$ </ID>
-    <ID>NoMultipleSpaces:WatchLink.kt$WatchLink$ </ID>
     <ID>NoWildcardImports:BondedDevicesDialog.kt$import androidx.compose.foundation.layout.*</ID>
     <ID>NoWildcardImports:MainActivity.kt$import androidx.compose.runtime.*</ID>
-    <ID>ParameterListWrapping:AlarmReadback.kt$AlarmReadback$( ble: BleClient, address: String, packet: ByteArray, enabled: Boolean, hour: Int, minute: Int, chimeIndex: Int, )</ID>
-    <ID>ParameterListWrapping:AndroidBleClient.kt$AndroidBleClient$( deviceAddress: String, requestPacket: ByteArray, expectedTarget: Int, timeoutMs: Long, )</ID>
-    <ID>ParameterListWrapping:Prefs.kt$Prefs$value</ID>
-    <ID>ParameterListWrapping:WatchLink.kt$WatchLink$( context: Context, address: String, requestPacket: ByteArray, expectedTarget: Int, timeoutMs: Long = READ_TIMEOUT_MS, )</ID>
-    <ID>ParameterListWrapping:WatchLink.kt$WatchLink.&lt;no name provided&gt;$( g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int, )</ID>
-    <ID>ParameterListWrapping:WatchLink.kt$WatchLink.HeldCallback$( g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int, )</ID>
-    <ID>ParameterListWrapping:WatchLink.kt$WatchLink.HeldCallback$( g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, value: ByteArray, )</ID>
     <ID>ReturnCount:AlarmConfirm.kt$AlarmConfirm$fun matches(enabled: Boolean, hour: Int, minute: Int, chimeIndex: Int, frame: OlleeProtocol.Frame): Boolean</ID>
     <ID>ReturnCount:AndroidStepsProvider.kt$AndroidStepsProvider$override suspend fun todaySteps(): Result&lt;Long&gt;</ID>
     <ID>ReturnCount:AutoSleepApply.kt$AutoSleepApply$suspend fun reconcile(ble: BleClient, address: String, desired: AutoSleepProfile): Boolean</ID>
@@ -377,20 +279,6 @@
     <ID>ReturnCount:TimerConfirm.kt$TimerConfirm$fun matches(writePacket: ByteArray, frame: OlleeProtocol.Frame): Boolean</ID>
     <ID>ReturnCount:WatchLink.kt$WatchLink.&lt;no name provided&gt;$override fun onServicesDiscovered(g: BluetoothGatt, status: Int)</ID>
     <ID>ReturnCount:WatchLink.kt$WatchLink.HeldCallback$private fun handleNotify(uuid: UUID, value: ByteArray?)</ID>
-    <ID>SpacingBetweenDeclarationsWithAnnotations:WatchLink.kt$WatchLink.HeldCallback$// Written under [lock] in writeHeld, read/incremented from the (serialized) GATT callback // thread in onCharacteristicWrite — @Volatile makes those cross-thread reads well-defined. @Volatile var writeChunks: List&lt;ByteArray&gt; = emptyList()</ID>
-    <ID>SpacingBetweenDeclarationsWithAnnotations:WatchLink.kt$WatchLink.HeldCallback$@Volatile var awaitCont: CancellableContinuation&lt;Result&lt;OlleeProtocol.Frame&gt;&gt;? = null</ID>
-    <ID>SpacingBetweenDeclarationsWithAnnotations:WatchLink.kt$WatchLink.HeldCallback$@Volatile var awaitTarget: Int? = null</ID>
-    <ID>SpacingBetweenDeclarationsWithAnnotations:WatchLink.kt$WatchLink.HeldCallback$@Volatile var writeChar: BluetoothGattCharacteristic? = null</ID>
-    <ID>SpacingBetweenDeclarationsWithAnnotations:WatchLink.kt$WatchLink.HeldCallback$@Volatile var writeCont: CancellableContinuation&lt;Result&lt;Unit&gt;&gt;? = null</ID>
-    <ID>SpacingBetweenDeclarationsWithAnnotations:WatchLink.kt$WatchLink.HeldCallback$@Volatile var writeIndex: Int = 0</ID>
-    <ID>SpacingBetweenDeclarationsWithComments:Alarm.kt$Alarm.Companion$/** The single-bit mask for [day] (Mon=bit0 … Sun=bit6). */</ID>
-    <ID>SpacingBetweenDeclarationsWithComments:OlleeProtocol.kt$OlleeProtocol$/** Allowed autosleep_period values (seconds), from the official app's picker. */</ID>
-    <ID>SpacingBetweenDeclarationsWithComments:OlleeProtocol.kt$OlleeProtocol$/** Bit position within the big-endian bitmask word. */</ID>
-    <ID>SpacingBetweenDeclarationsWithComments:OlleeProtocol.kt$OlleeProtocol$// Experimental: the Temperature face's field. The official app *reads* it at 0x2E</ID>
-    <ID>SpacingBetweenDeclarationsWithComments:Prefs.kt$Prefs.Companion$/** Legacy `active_face` value from when notifications was a mutually-exclusive face. */</ID>
-    <ID>SpacingBetweenDeclarationsWithComments:WatchLink.kt$WatchLink$// ATT payload for the watch's default 23-byte MTU (MTU - 3). Longer frames are fragmented across</ID>
-    <ID>SpacingBetweenDeclarationsWithComments:WatchLink.kt$WatchLink$// The Android GATT stack allows one outstanding op; a read-request write can be transiently</ID>
-    <ID>SpacingBetweenDeclarationsWithComments:WatchLink.kt$WatchLink.HeldCallback$// Written under [lock] in writeHeld, read/incremented from the (serialized) GATT callback</ID>
     <ID>SwallowedException:OpenMeteoClient.kt$OpenMeteoClient$e: ConnectTimeoutException</ID>
     <ID>SwallowedException:OpenMeteoClient.kt$OpenMeteoClient$e: Exception</ID>
     <ID>SwallowedException:OpenMeteoClient.kt$OpenMeteoClient$e: IOException</ID>
@@ -407,38 +295,5 @@
     <ID>UseCheckOrError:WatchLink.kt$WatchLink$throw IllegalStateException("read request write stayed busy")</ID>
     <ID>WildcardImport:BondedDevicesDialog.kt$import androidx.compose.foundation.layout.*</ID>
     <ID>WildcardImport:MainActivity.kt$import androidx.compose.runtime.*</ID>
-    <ID>Wrapping:AlarmSchedule.kt$AlarmSchedule$;</ID>
-    <ID>Wrapping:AlarmsJson.kt$AlarmsJson$(</ID>
-    <ID>Wrapping:AlarmsScreen.kt$(</ID>
-    <ID>Wrapping:AlarmsScreen.kt$;</ID>
-    <ID>Wrapping:AppViewModel.kt$AppViewModel$;</ID>
-    <ID>Wrapping:ComplicationController.kt$ComplicationController$;</ID>
-    <ID>Wrapping:ComplicationController.kt$ComplicationController$it.copy( lat = lat.toString(), lng = lng.toString(), locating = false, locationLabel = locLabel(lat, lng), locationFreshness = "just now", )</ID>
-    <ID>Wrapping:ComplicationController.kt$ComplicationController$it.copy( locating = false, locationFreshness = (freshnessLabel(prefs.lastLocationFetchedMs, nowMs()) ?: "stale") + " · refresh failed", )</ID>
-    <ID>Wrapping:ComplicationController.kt$ComplicationController$it.copy( notificationCount = prefs.notificationCount, notificationAccessGranted = notificationAccess.isGranted(), notificationsEnabled = prefs.notificationsEnabled, )</ID>
-    <ID>Wrapping:ComplicationController.kt$ComplicationController$it.copy( stepsHealthGranted = false, stepsPreview = PreviewState.Error("Grant Health access to read steps"), )</ID>
-    <ID>Wrapping:ComplicationController.kt$ComplicationController$it.copy( stepsPreview = PreviewState.Error("Couldn't read steps from Health Connect"), )</ID>
-    <ID>Wrapping:ComplicationController.kt$ComplicationController$it.copy( stepsPreview = PreviewState.Ready(payload, stepsHuman(cached) + " (stale)"), stepsUpdated = prefs.stepsFetchedMs?.let { ms -&gt; "Updated ${clockTime(ms)}" }, )</ID>
-    <ID>Wrapping:ComplicationController.kt$ComplicationController$it.copy( stepsPreview = PreviewState.Ready(payload, stepsHuman(count)), stepsUpdated = "Updated ${clockTime(prefs.stepsFetchedMs!!)}", )</ID>
-    <ID>Wrapping:ComplicationController.kt$ComplicationController$it.copy( sunPreview = PreviewState.Ready(payload, "$kindLabel at $pretty"), sunUpdated = "Updated ${clockTime(nowMs())}", sunNext = "Next: $kindLabel at $pretty", )</ID>
-    <ID>Wrapping:ComplicationController.kt$ComplicationController$it.copy( tempPreview = PreviewState.Ready(payload, human), tempUpdated = "Updated ${clockTime(prefs.tempFetchedMs!!)}", tempNext = tempNextText(), )</ID>
-    <ID>Wrapping:ComplicationController.kt$ComplicationController$it.copy( tempPreview = PreviewState.Ready(payload, human), tempUpdated = prefs.tempFetchedMs?.let { ms -&gt; "Updated ${clockTime(ms)}" }, )</ID>
-    <ID>Wrapping:Formatters.kt$;</ID>
-    <ID>Wrapping:MainActivity.kt$;</ID>
-    <ID>Wrapping:SettingsController.kt$SettingsController$it.copy( locationLabel = locLabel(latD, lngD), locationFreshness = "just now", )</ID>
-    <ID>Wrapping:SettingsScreen.kt$;</ID>
-    <ID>Wrapping:TimerController.kt$TimerController$(</ID>
-    <ID>Wrapping:TimerController.kt$TimerController$;</ID>
-    <ID>Wrapping:TimerSetEditScreen.kt$(</ID>
-    <ID>Wrapping:TimerSetEditScreen.kt$;</ID>
-    <ID>Wrapping:TimerSetsJson.kt$TimerSetsJson$(</ID>
-    <ID>Wrapping:TimerSetsJson.kt$TimerSetsJson$("slots", buildJsonArray { for (slot in set.slots) add(buildJsonObject { put("label", JsonPrimitive(slot.label)) put("dur", JsonPrimitive(slot.durationSeconds)) }) })</ID>
-    <ID>Wrapping:TimerSetsScreen.kt$(</ID>
-    <ID>Wrapping:WatchLink.kt$WatchLink$(</ID>
-    <ID>Wrapping:WatchLink.kt$WatchLink$("OLLEE_BLE", "FreeOllee RX $address target=0x${f.target.toString(16)} " + "payload=${f.payload.toHex()} crcOk=${f.crcOk}")</ID>
-    <ID>Wrapping:WatchLink.kt$WatchLink$;</ID>
-    <ID>Wrapping:WatchLink.kt$WatchLink${ closeHeldLocked(); _status.value = ConnectionStatus.NotReachable return@withLock Result.failure(IllegalStateException("connect failed")) }</ID>
-    <ID>Wrapping:WatchLink.kt$WatchLink.&lt;no name provided&gt;$;</ID>
-    <ID>Wrapping:WatchLink.kt$WatchLink.HeldCallback$;</ID>
   </CurrentIssues>
 </SmellBaseline>

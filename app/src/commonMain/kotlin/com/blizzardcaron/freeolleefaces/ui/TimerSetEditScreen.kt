@@ -133,10 +133,20 @@ private fun SlotEditor(
                     Box {
                         TextButton(onClick = { menu = true }) { Text("...") }
                         DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                            DropdownMenuItem(text = { Text("Fill down") },
-                                onClick = { menu = false; onFillDown() })
-                            DropdownMenuItem(text = { Text("Duplicate to next") },
-                                onClick = { menu = false; onDuplicate() })
+                            DropdownMenuItem(
+                                text = { Text("Fill down") },
+                                onClick = {
+                                    menu = false
+                                    onFillDown()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Duplicate to next") },
+                                onClick = {
+                                    menu = false
+                                    onDuplicate()
+                                }
+                            )
                         }
                     }
                 }
@@ -156,4 +166,3 @@ private fun SlotEditor(
         }
     }
 }
-

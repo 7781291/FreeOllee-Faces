@@ -68,8 +68,10 @@ fun AlarmsScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             if (alarms.isEmpty()) {
-                Text("No alarms yet. Tap \"Add alarm\" to create one.",
-                    style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    "No alarms yet. Tap \"Add alarm\" to create one.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
             for (alarm in alarms) {
                 // Key by id so deleting a card doesn't hand its remembered state (open chime
@@ -179,7 +181,10 @@ private fun ChimePicker(index: Int, onChange: (Int) -> Unit) {
             AlarmSchedule.CHIME_NAMES.forEachIndexed { i, name ->
                 DropdownMenuItem(
                     text = { Text(name) },
-                    onClick = { onChange(i); open = false },
+                    onClick = {
+                        onChange(i)
+                        open = false
+                    },
                 )
             }
         }

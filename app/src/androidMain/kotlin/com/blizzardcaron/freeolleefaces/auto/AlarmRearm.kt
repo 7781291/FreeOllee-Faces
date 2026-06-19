@@ -51,8 +51,8 @@ object AlarmRearm {
 
     const val TAG = "ALARM_REARM"
     const val EXTRA_ATTEMPT = "rearm_attempt"
-    private const val REQUEST_CODE = 4025           // fire+60s trigger: one slot, each schedule replaces the last
-    private const val BACKSTOP_REQUEST_CODE = 4026  // failed-push backstop: separate slot, same receiver
+    private const val REQUEST_CODE = 4025 // fire+60s trigger: one slot, each schedule replaces the last
+    private const val BACKSTOP_REQUEST_CODE = 4026 // failed-push backstop: separate slot, same receiver
     private const val PUSH_DEBOUNCE_MS = 750L
     private val generation = AtomicInteger()
     private val pushMutex = Mutex()
@@ -77,7 +77,9 @@ object AlarmRearm {
         // Schedule the trigger first — it must survive even if the push below fails.
         val am = ctx.getSystemService(AlarmManager::class.java)
         val trigger = PendingIntent.getBroadcast(
-            ctx, REQUEST_CODE, Intent(ctx, AlarmRearmReceiver::class.java),
+            ctx,
+            REQUEST_CODE,
+            Intent(ctx, AlarmRearmReceiver::class.java),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
         val zone = TimeZone.currentSystemDefault()
@@ -106,7 +108,7 @@ object AlarmRearm {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 delay(PUSH_DEBOUNCE_MS)
-                if (generation.get() != myGen) return@launch   // superseded by a newer rearm
+                if (generation.get() != myGen) return@launch // superseded by a newer rearm
                 if (address == null) {
                     // Inside the debounce so an edit burst surfaces ONE snackbar, not one per tap.
                     // Same message the manual send path shows (AppViewModel.pushTimerFrame).
@@ -118,7 +120,7 @@ object AlarmRearm {
                 // so without the lock an older push still in flight can land AFTER a newer one and
                 // leave the watch holding stale state (observed on-device 2026-06-11).
                 pushMutex.withLock {
-                    if (generation.get() != myGen) return@launch   // superseded while waiting
+                    if (generation.get() != myGen) return@launch // superseded while waiting
                     // Recompute at push time so a burst of edits sends the final state.
                     val latest = AlarmSchedule.nextFire(
                         AlarmsRepository(alarmSettings(ctx)).getAll(),
@@ -132,11 +134,14 @@ object AlarmRearm {
                         enabled = latest != null,
                         hour = latest?.hour ?: 0, minute = latest?.minute ?: 0, chimeIndex = latest?.chimeIndex ?: 0,
                     )
-                    Log.i(
-                        TAG,
-                        if (confirmed) "push+confirm OK (${if (latest != null) "armed ${latest.dateTime}" else "disarm"}) [attempt $attempt]"
-                        else "push/confirm FAIL ${sent.exceptionOrNull()?.message ?: "read-back mismatch"} [attempt $attempt]",
-                    )
+                    val outcome = if (confirmed) {
+                        val detail = if (latest != null) "armed ${latest.dateTime}" else "disarm"
+                        "push+confirm OK ($detail) [attempt $attempt]"
+                    } else {
+                        val reason = sent.exceptionOrNull()?.message ?: "read-back mismatch"
+                        "push/confirm FAIL $reason [attempt $attempt]"
+                    }
+                    Log.i(TAG, outcome)
                     val action = AlarmRearmRecovery.afterPush(confirmed, attempt)
                     applyRecovery(ctx, am, action)
                     pushResults.tryEmit(
@@ -183,7 +188,8 @@ object AlarmRearm {
     /** Extras don't participate in PendingIntent matching, so the same shape serves cancel(). */
     private fun backstopTrigger(ctx: Context, nextAttempt: Int): PendingIntent =
         PendingIntent.getBroadcast(
-            ctx, BACKSTOP_REQUEST_CODE,
+            ctx,
+            BACKSTOP_REQUEST_CODE,
             Intent(ctx, AlarmRearmReceiver::class.java).putExtra(EXTRA_ATTEMPT, nextAttempt),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )

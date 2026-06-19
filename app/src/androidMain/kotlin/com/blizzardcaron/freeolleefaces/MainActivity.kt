@@ -243,75 +243,84 @@ private fun AppRoot() {
     ) { inner ->
         val modifier = Modifier.padding(inner)
         when (screen) {
-        Screen.Home -> HomeScreen(state = state, callbacks = homeCallbacks, modifier = modifier)
-        Screen.Settings -> SettingsScreen(
-            state = state,
-            callbacks = settingsCallbacks,
-            onReconnect = { viewModel.onReconnect() },
-            modifier = modifier,
-        )
-        Screen.TimerSets -> TimerSetsScreen(
-            sets = viewModel.timers.timerSets,
-            activeId = viewModel.timers.timerActiveId,
-            sending = state.sending,
-            quickTimerSeconds = viewModel.timers.quickTimerSeconds,
-            quickTimerStartFromApp = viewModel.timers.quickTimerStartFromApp,
-            quickTimerIntervalMode = viewModel.timers.quickTimerIntervalMode,
-            onSaveQuick = { viewModel.timers.saveQuickTimer(it) },
-            onToggleStartFromApp = { viewModel.timers.toggleQuickTimerStartFromApp(it) },
-            onToggleIntervalMode = { viewModel.timers.toggleQuickTimerIntervalMode(it) },
-            onSendQuick = { viewModel.timers.sendQuickTimer() },
-            quickTimerAlarmMode = viewModel.timers.quickTimerAlarmMode,
-            quickTimerAlarmHour = viewModel.timers.quickTimerAlarmHour,
-            quickTimerAlarmMinute = viewModel.timers.quickTimerAlarmMinute,
-            onToggleAlarmMode = { viewModel.timers.toggleQuickTimerAlarmMode(it) },
-            onSaveAlarmTime = { h, m -> viewModel.timers.saveQuickTimerAlarmTime(h, m) },
-            onSendAlarm = { viewModel.timers.sendQuickAlarm() },
-            onOpen = { viewModel.timers.editTimerSet(it); viewModel.navigateTo(Screen.TimerSetEdit) },
-            onNew = { viewModel.timers.newTimerSet(); viewModel.navigateTo(Screen.TimerSetEdit) },
-            onDuplicate = { src -> viewModel.timers.duplicateTimerSet(src) },
-            onDelete = { viewModel.timers.deleteTimerSet(it) },
-            onSend = { viewModel.timers.sendTimerSet(it) },
-            onStart = { viewModel.timers.startTimerSet(it) },
-            onMoveUp = { viewModel.timers.moveTimerSetUp(it) },
-            onMoveDown = { viewModel.timers.moveTimerSetDown(it) },
-            onBack = { viewModel.navigateTo(Screen.Home) },
-            connectionStatus = state.connectionStatus,
-            onReconnect = { viewModel.onReconnect() },
-            modifier = modifier,
-        )
-        Screen.Alarms -> AlarmsScreen(
-            alarms = viewModel.alarms.items,
-            nextSummary = viewModel.alarms.nextAlarmSummary,
-            onAdd = { viewModel.alarms.addAlarm() },
-            onSave = { viewModel.alarms.saveAlarm(it) },
-            onToggle = { id, enabled -> viewModel.alarms.toggleAlarm(id, enabled) },
-            onDelete = { viewModel.alarms.deleteAlarm(it) },
-            onBack = { viewModel.navigateTo(Screen.Home) },
-            connectionStatus = state.connectionStatus,
-            onReconnect = { viewModel.onReconnect() },
-            modifier = modifier,
-        )
-        Screen.TimerSetEdit -> {
-            val editing = viewModel.timers.editingSet
-            if (editing == null) {
-                viewModel.navigateTo(Screen.TimerSets)
-            } else {
-                TimerSetEditScreen(
-                    set = editing,
-                    onSave = { s -> viewModel.timers.saveTimerSet(s); viewModel.navigateTo(Screen.TimerSets) },
-                    onSend = { s ->
-                        viewModel.timers.saveTimerSet(s)
-                        viewModel.timers.sendTimerSet(s)
-                        viewModel.navigateTo(Screen.TimerSets)
-                    },
-                    onBack = { viewModel.navigateTo(Screen.TimerSets) },
-                    connectionStatus = state.connectionStatus,
-                    onReconnect = { viewModel.onReconnect() },
-                    modifier = modifier,
-                )
+            Screen.Home -> HomeScreen(state = state, callbacks = homeCallbacks, modifier = modifier)
+            Screen.Settings -> SettingsScreen(
+                state = state,
+                callbacks = settingsCallbacks,
+                onReconnect = { viewModel.onReconnect() },
+                modifier = modifier,
+            )
+            Screen.TimerSets -> TimerSetsScreen(
+                sets = viewModel.timers.timerSets,
+                activeId = viewModel.timers.timerActiveId,
+                sending = state.sending,
+                quickTimerSeconds = viewModel.timers.quickTimerSeconds,
+                quickTimerStartFromApp = viewModel.timers.quickTimerStartFromApp,
+                quickTimerIntervalMode = viewModel.timers.quickTimerIntervalMode,
+                onSaveQuick = { viewModel.timers.saveQuickTimer(it) },
+                onToggleStartFromApp = { viewModel.timers.toggleQuickTimerStartFromApp(it) },
+                onToggleIntervalMode = { viewModel.timers.toggleQuickTimerIntervalMode(it) },
+                onSendQuick = { viewModel.timers.sendQuickTimer() },
+                quickTimerAlarmMode = viewModel.timers.quickTimerAlarmMode,
+                quickTimerAlarmHour = viewModel.timers.quickTimerAlarmHour,
+                quickTimerAlarmMinute = viewModel.timers.quickTimerAlarmMinute,
+                onToggleAlarmMode = { viewModel.timers.toggleQuickTimerAlarmMode(it) },
+                onSaveAlarmTime = { h, m -> viewModel.timers.saveQuickTimerAlarmTime(h, m) },
+                onSendAlarm = { viewModel.timers.sendQuickAlarm() },
+                onOpen = {
+                    viewModel.timers.editTimerSet(it)
+                    viewModel.navigateTo(Screen.TimerSetEdit)
+                },
+                onNew = {
+                    viewModel.timers.newTimerSet()
+                    viewModel.navigateTo(Screen.TimerSetEdit)
+                },
+                onDuplicate = { src -> viewModel.timers.duplicateTimerSet(src) },
+                onDelete = { viewModel.timers.deleteTimerSet(it) },
+                onSend = { viewModel.timers.sendTimerSet(it) },
+                onStart = { viewModel.timers.startTimerSet(it) },
+                onMoveUp = { viewModel.timers.moveTimerSetUp(it) },
+                onMoveDown = { viewModel.timers.moveTimerSetDown(it) },
+                onBack = { viewModel.navigateTo(Screen.Home) },
+                connectionStatus = state.connectionStatus,
+                onReconnect = { viewModel.onReconnect() },
+                modifier = modifier,
+            )
+            Screen.Alarms -> AlarmsScreen(
+                alarms = viewModel.alarms.items,
+                nextSummary = viewModel.alarms.nextAlarmSummary,
+                onAdd = { viewModel.alarms.addAlarm() },
+                onSave = { viewModel.alarms.saveAlarm(it) },
+                onToggle = { id, enabled -> viewModel.alarms.toggleAlarm(id, enabled) },
+                onDelete = { viewModel.alarms.deleteAlarm(it) },
+                onBack = { viewModel.navigateTo(Screen.Home) },
+                connectionStatus = state.connectionStatus,
+                onReconnect = { viewModel.onReconnect() },
+                modifier = modifier,
+            )
+            Screen.TimerSetEdit -> {
+                val editing = viewModel.timers.editingSet
+                if (editing == null) {
+                    viewModel.navigateTo(Screen.TimerSets)
+                } else {
+                    TimerSetEditScreen(
+                        set = editing,
+                        onSave = { s ->
+                            viewModel.timers.saveTimerSet(s)
+                            viewModel.navigateTo(Screen.TimerSets)
+                        },
+                        onSend = { s ->
+                            viewModel.timers.saveTimerSet(s)
+                            viewModel.timers.sendTimerSet(s)
+                            viewModel.navigateTo(Screen.TimerSets)
+                        },
+                        onBack = { viewModel.navigateTo(Screen.TimerSets) },
+                        connectionStatus = state.connectionStatus,
+                        onReconnect = { viewModel.onReconnect() },
+                        modifier = modifier,
+                    )
+                }
             }
-        }
         }
     }
 

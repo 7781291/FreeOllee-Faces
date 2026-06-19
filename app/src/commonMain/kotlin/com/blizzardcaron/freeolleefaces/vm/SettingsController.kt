@@ -41,10 +41,12 @@ class SettingsController(
             prefs.lastLat = latD
             prefs.lastLng = lngD
             prefs.lastLocationFetchedMs = clock.now().toEpochMilliseconds()
-            update { it.copy(
-                locationLabel = locLabel(latD, lngD),
-                locationFreshness = "just now",
-            ) }
+            update {
+                it.copy(
+                    locationLabel = locLabel(latD, lngD),
+                    locationFreshness = "just now",
+                )
+            }
         }
         debounceJob?.cancel()
         debounceJob = scope.launch {

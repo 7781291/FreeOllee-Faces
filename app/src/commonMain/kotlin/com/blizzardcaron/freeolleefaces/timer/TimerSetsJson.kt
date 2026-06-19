@@ -20,16 +20,23 @@ object TimerSetsJson {
     private val json = Json { ignoreUnknownKeys = true }
 
     fun encode(sets: List<TimerSet>): String = buildJsonArray {
-        for (set in sets) add(buildJsonObject {
-            put("id", JsonPrimitive(set.id))
-            put("name", JsonPrimitive(set.name))
-            put("slots", buildJsonArray {
-                for (slot in set.slots) add(buildJsonObject {
-                    put("label", JsonPrimitive(slot.label))
-                    put("dur", JsonPrimitive(slot.durationSeconds))
-                })
-            })
-        })
+        for (set in sets) add(
+            buildJsonObject {
+                put("id", JsonPrimitive(set.id))
+                put("name", JsonPrimitive(set.name))
+                put(
+                    "slots",
+                    buildJsonArray {
+                        for (slot in set.slots) add(
+                            buildJsonObject {
+                                put("label", JsonPrimitive(slot.label))
+                                put("dur", JsonPrimitive(slot.durationSeconds))
+                            }
+                        )
+                    }
+                )
+            }
+        )
     }.toString()
 
     fun decode(json: String?): List<TimerSet> {

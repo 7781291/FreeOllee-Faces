@@ -49,11 +49,13 @@ object WatchLink {
     private const val CONNECT_TIMEOUT_MS = 8_000L
     private const val WRITE_TIMEOUT_MS = 8_000L
     private const val READ_TIMEOUT_MS = 5_000L
+
     // The Android GATT stack allows one outstanding op; a read-request write can be transiently
     // rejected while a prior write's ack-notify, the CCCD enable, or a concurrent push is in flight.
     // Retry the write while busy, bounded by READ_TIMEOUT_MS via the surrounding withTimeout.
     private const val READ_WRITE_RETRY_MS = 100L
     private const val READ_WRITE_MAX_ATTEMPTS = 40
+
     // ATT payload for the watch's default 23-byte MTU (MTU - 3). Longer frames are fragmented across
     // sequential writes and reassembled by the firmware via the LEN field.
     private const val ATT_PAYLOAD = 20
@@ -84,7 +86,8 @@ object WatchLink {
             g.writeCharacteristic(char, bytes, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT) ==
                 BluetoothStatusCodes.SUCCESS
         } else {
-            @Suppress("DEPRECATION") run {
+            @Suppress("DEPRECATION")
+            run {
                 char.value = bytes
                 char.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
                 g.writeCharacteristic(char)
@@ -135,7 +138,10 @@ object WatchLink {
     private suspend fun openHeld(context: Context, address: String): Boolean =
         suspendCancellableCoroutine { cont ->
             val manager = context.getSystemService(BluetoothManager::class.java)
-            if (manager == null) { cont.resume(false); return@suspendCancellableCoroutine }
+            if (manager == null) {
+                cont.resume(false)
+                return@suspendCancellableCoroutine
+            }
             val device: BluetoothDevice = manager.adapter.getRemoteDevice(address)
             val cb = HeldCallback().apply { connectCont = cont }
             heldCallback = cb
@@ -199,7 +205,10 @@ object WatchLink {
      * subscribes to notify during service discovery, and resumes on the first matching frame.
      */
     suspend fun sendAndAwait(
-        context: Context, address: String, requestPacket: ByteArray, expectedTarget: Int,
+        context: Context,
+        address: String,
+        requestPacket: ByteArray,
+        expectedTarget: Int,
         timeoutMs: Long = READ_TIMEOUT_MS,
     ): Result<OlleeProtocol.Frame> = withContext(Dispatchers.IO) {
         if ((context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
@@ -213,19 +222,24 @@ object WatchLink {
                 _status.value = ConnectionStatus.Connecting
                 val ok = runCatching { withTimeout(CONNECT_TIMEOUT_MS) { openHeld(context, address) } }
                     .getOrDefault(false)
-                if (!ok) { closeHeldLocked(); _status.value = ConnectionStatus.NotReachable
-                    return@withLock Result.failure(IllegalStateException("connect failed")) }
+                if (!ok) {
+                    closeHeldLocked()
+                    _status.value = ConnectionStatus.NotReachable
+                    return@withLock Result.failure(IllegalStateException("connect failed"))
+                }
                 _status.value = ConnectionStatus.Connected
             }
-            val g = heldGatt; val cb = heldCallback; val char = cb?.writeChar
+            val g = heldGatt
+            val cb = heldCallback
+            val char = cb?.writeChar
             if (g == null || cb == null || char == null) {
                 return@withLock Result.failure(IllegalStateException("no link"))
             }
             runCatching {
                 withTimeout(timeoutMs) {
                     cb.reassembler.reset()
-                    cb.writeCont = null   // request write ack is irrelevant; we wait for the notify
-                    val chunk = chunksOf(requestPacket)[0]   // a read request is a single 8-byte chunk
+                    cb.writeCont = null // request write ack is irrelevant; we wait for the notify
+                    val chunk = chunksOf(requestPacket)[0] // a read request is a single 8-byte chunk
                     // Issue the read request, retrying while the GATT stack is transiently busy. The
                     // watch cannot reply before it receives the request, so awaitTarget/awaitCont are
                     // set only after the write is accepted — no reply can be lost in between.
@@ -239,15 +253,21 @@ object WatchLink {
                     suspendCancellableCoroutine<Result<OlleeProtocol.Frame>> { cont ->
                         cb.awaitTarget = expectedTarget
                         cb.awaitCont = cont
-                        cont.invokeOnCancellation { cb.awaitCont = null; cb.awaitTarget = null }
+                        cont.invokeOnCancellation {
+                            cb.awaitCont = null
+                            cb.awaitTarget = null
+                        }
                     }
                 }
             }.getOrElse { Result.failure(it) }.also { r ->
                 // Debug builds: mirror the TX log — record the notify reply on the OLLEE_BLE tag.
                 if ((context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
                     r.onSuccess { f ->
-                        Log.i("OLLEE_BLE", "FreeOllee RX $address target=0x${f.target.toString(16)} " +
-                            "payload=${f.payload.toHex()} crcOk=${f.crcOk}")
+                        Log.i(
+                            "OLLEE_BLE",
+                            "FreeOllee RX $address target=0x${f.target.toString(16)} " +
+                                "payload=${f.payload.toHex()} crcOk=${f.crcOk}"
+                        )
                     }
                 }
             }
@@ -300,18 +320,24 @@ object WatchLink {
                 }
 
                 override fun onServicesDiscovered(g: BluetoothGatt, status: Int) {
-                    if (!cont.isActive) { g.disconnect(); return }
+                    if (!cont.isActive) {
+                        g.disconnect()
+                        return
+                    }
                     if (status != BluetoothGatt.GATT_SUCCESS) {
                         cont.resumeWithException(IllegalStateException("service discovery failed: $status"))
-                        g.disconnect(); return
+                        g.disconnect()
+                        return
                     }
                     val service = g.getService(SERVICE_UUID) ?: run {
                         cont.resumeWithException(IllegalStateException("Nordic UART service not found"))
-                        g.disconnect(); return
+                        g.disconnect()
+                        return
                     }
                     val char = service.getCharacteristic(CHAR_UUID) ?: run {
                         cont.resumeWithException(IllegalStateException("RX characteristic not found"))
-                        g.disconnect(); return
+                        g.disconnect()
+                        return
                     }
                     if (!writeChunk(g, char, chunks[next])) {
                         cont.resumeWithException(IllegalStateException("writeCharacteristic returned false"))
@@ -320,16 +346,23 @@ object WatchLink {
                 }
 
                 override fun onCharacteristicWrite(
-                    g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int,
+                    g: BluetoothGatt,
+                    characteristic: BluetoothGattCharacteristic,
+                    status: Int,
                 ) {
-                    if (!cont.isActive) { g.disconnect(); return }
+                    if (!cont.isActive) {
+                        g.disconnect()
+                        return
+                    }
                     if (status != BluetoothGatt.GATT_SUCCESS) {
                         cont.resumeWithException(IllegalStateException("write failed: $status"))
-                        g.disconnect(); return
+                        g.disconnect()
+                        return
                     }
                     next++
                     if (next >= chunks.size) {
-                        cont.resume(Unit); g.disconnect()
+                        cont.resume(Unit)
+                        g.disconnect()
                     } else if (!writeChunk(g, characteristic, chunks[next])) {
                         cont.resumeWithException(IllegalStateException("writeCharacteristic returned false"))
                         g.disconnect()
@@ -348,15 +381,21 @@ object WatchLink {
 
     private class HeldCallback : BluetoothGattCallback() {
         @Volatile var connectCont: CancellableContinuation<Boolean>? = null
+
         @Volatile var writeCont: CancellableContinuation<Result<Unit>>? = null
+
         @Volatile var writeChar: BluetoothGattCharacteristic? = null
+
         // Written under [lock] in writeHeld, read/incremented from the (serialized) GATT callback
         // thread in onCharacteristicWrite — @Volatile makes those cross-thread reads well-defined.
         @Volatile var writeChunks: List<ByteArray> = emptyList()
+
         @Volatile var writeIndex: Int = 0
 
         @Volatile var notifyChar: BluetoothGattCharacteristic? = null
+
         @Volatile var awaitTarget: Int? = null
+
         @Volatile var awaitCont: CancellableContinuation<Result<OlleeProtocol.Frame>>? = null
         val reassembler = NotifyFrameReassembler()
 
@@ -373,7 +412,8 @@ object WatchLink {
                 awaitCont?.let {
                     if (it.isActive) it.resume(Result.failure(IllegalStateException("link dropped: status=$status")))
                 }
-                awaitCont = null; awaitTarget = null
+                awaitCont = null
+                awaitTarget = null
                 WatchLink.onHeldDropped()
                 g.close()
             }
@@ -382,11 +422,17 @@ object WatchLink {
         override fun onServicesDiscovered(g: BluetoothGatt, status: Int) {
             val cc = connectCont
             if (status != BluetoothGatt.GATT_SUCCESS) {
-                connectCont = null; cc?.resume(false); g.disconnect(); return
+                connectCont = null
+                cc?.resume(false)
+                g.disconnect()
+                return
             }
             val char = g.getService(WatchLink.SERVICE_UUID)?.getCharacteristic(WatchLink.CHAR_UUID)
             if (char == null) {
-                connectCont = null; cc?.resume(false); g.disconnect(); return
+                connectCont = null
+                cc?.resume(false)
+                g.disconnect()
+                return
             }
             writeChar = char
             notifyChar = g.getService(WatchLink.SERVICE_UUID)?.getCharacteristic(WatchLink.NOTIFY_CHAR_UUID)
@@ -396,7 +442,8 @@ object WatchLink {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         g.writeDescriptor(d, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
                     } else {
-                        @Suppress("DEPRECATION") run {
+                        @Suppress("DEPRECATION")
+                        run {
                             d.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
                             g.writeDescriptor(d)
                         }
@@ -408,7 +455,9 @@ object WatchLink {
         }
 
         override fun onCharacteristicWrite(
-            g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int,
+            g: BluetoothGatt,
+            characteristic: BluetoothGattCharacteristic,
+            status: Int,
         ) {
             val wc = writeCont ?: return
             if (status != BluetoothGatt.GATT_SUCCESS) {
@@ -432,7 +481,9 @@ object WatchLink {
         }
 
         override fun onCharacteristicChanged(
-            g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, value: ByteArray,
+            g: BluetoothGatt,
+            characteristic: BluetoothGattCharacteristic,
+            value: ByteArray,
         ) {
             handleNotify(characteristic.uuid, value)
         }
@@ -443,7 +494,8 @@ object WatchLink {
             val want = awaitTarget ?: return
             if (frame.target == want && frame.crcOk) {
                 val c = awaitCont
-                awaitCont = null; awaitTarget = null
+                awaitCont = null
+                awaitTarget = null
                 c?.let { if (it.isActive) it.resume(Result.success(frame)) }
             }
         }

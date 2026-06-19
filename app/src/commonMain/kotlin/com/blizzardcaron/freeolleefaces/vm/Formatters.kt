@@ -20,7 +20,11 @@ internal const val LAT_ABS_MAX = 90.0
 internal const val LNG_ABS_MAX = 180.0
 
 internal val CLOCK: DateTimeFormat<LocalTime> = LocalTime.Format {
-    amPmHour(Padding.NONE); char(':'); minute(); char(' '); amPmMarker("AM", "PM")
+    amPmHour(Padding.NONE)
+    char(':')
+    minute()
+    char(' ')
+    amPmMarker("AM", "PM")
 }
 
 /**

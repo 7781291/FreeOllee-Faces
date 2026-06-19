@@ -142,8 +142,10 @@ fun TimerSetsScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             if (sets.isEmpty()) {
-                Text("No sets yet. Tap \"New set\" to create one.",
-                    style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    "No sets yet. Tap \"New set\" to create one.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
             sets.forEachIndexed { index, set ->
                 TimerSetRow(
@@ -218,8 +220,10 @@ private fun TimerSetRow(
                     // Radio = send: timerActiveId only updates on a successful send, so the radio
                     // moves when the push lands and stays put on failure (snackbar covers errors).
                     RadioButton(selected = active, onClick = onSend, enabled = !sending)
-                    Text(if (set.name.isBlank()) "(unnamed)" else set.name,
-                        style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        if (set.name.isBlank()) "(unnamed)" else set.name,
+                        style = MaterialTheme.typography.titleMedium
+                    )
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     TextButton(onClick = onMoveUp, enabled = canMoveUp) { Text("▲") }
@@ -230,7 +234,9 @@ private fun TimerSetRow(
             val first = set.slots.firstOrNull { it.durationSeconds > 0 }?.durationSeconds
             val summary = if (first != null) {
                 "$count of 10 set · first ${TimerSetEditing.formatHms(first)}"
-            } else "all blank"
+            } else {
+                "all blank"
+            }
             Text(summary, style = MaterialTheme.typography.bodySmall)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = onStart, enabled = !sending) { Text("▶ Start intervals") }

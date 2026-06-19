@@ -49,7 +49,9 @@ object AutoUpdateScheduler {
         val now = Clock.System.now().toLocalDateTime(zone)
         val sleep = if (prefs.sleepEnabled) {
             SleepWindow(prefs.sleepStartMin, prefs.sleepEndMin)
-        } else null
+        } else {
+            null
+        }
         val nowMinOfDay = now.hour * 60 + now.minute
         val inSleep = sleep != null &&
             AutoUpdateSchedule.isInSleepWindow(nowMinOfDay, sleep.startMin, sleep.endMin)

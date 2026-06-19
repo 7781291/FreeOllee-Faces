@@ -46,8 +46,11 @@ object AlarmSchedule {
     fun packetFor(next: NextFire?): ByteArray =
         if (next != null) {
             OlleeProtocol.buildAlarmPacket(
-                hour = next.hour, minute = next.minute, chimeIndex = next.chimeIndex,
-                playNow = false, enabled = true,
+                hour = next.hour,
+                minute = next.minute,
+                chimeIndex = next.chimeIndex,
+                playNow = false,
+                enabled = true,
             )
         } else {
             OlleeProtocol.buildAlarmPacket(hour = 0, minute = 0, chimeIndex = 0, playNow = false, enabled = false)
@@ -57,7 +60,9 @@ object AlarmSchedule {
     fun formatNext(next: NextFire?): String {
         if (next == null) return "No alarms"
         val day = next.dateTime.dayOfWeek.name.take(3).lowercase().replaceFirstChar { it.uppercase() }
-        val h12 = when { next.hour == 0 -> 12; next.hour > 12 -> next.hour - 12; else -> next.hour }
+        val h12 = when { next.hour == 0 -> 12
+            next.hour > 12 -> next.hour - 12
+            else -> next.hour }
         val amPm = if (next.hour < 12) "AM" else "PM"
         val mm = next.minute.toString().padStart(2, '0')
         return "Next: $day $h12:$mm $amPm · ${chimeName(next.chimeIndex)}"

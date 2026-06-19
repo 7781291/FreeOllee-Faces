@@ -104,7 +104,7 @@ class AppViewModel(
         clock = clock,
     )
 
-    private val _events = Channel<String>(Channel.BUFFERED)   // snackbar messages
+    private val _events = Channel<String>(Channel.BUFFERED) // snackbar messages
     val events = _events.receiveAsFlow()
 
     private var statusJob: Job? = null
@@ -121,8 +121,11 @@ class AppViewModel(
         lng = prefs.lastLng?.toString() ?: "",
         watchLabel = prefs.watchAddress?.let { "Watch: $it" } ?: "Watch: none selected",
         watchSelected = prefs.watchAddress != null,
-        connectionStatus = if (prefs.watchAddress != null) ConnectionStatus.Connecting
-                           else ConnectionStatus.NoWatch,
+        connectionStatus = if (prefs.watchAddress != null) {
+            ConnectionStatus.Connecting
+        } else {
+            ConnectionStatus.NoWatch
+        },
         tempUnit = prefs.tempUnit,
         updateIntervalMinutes = prefs.updateIntervalMinutes,
         sleepEnabled = prefs.sleepEnabled,
@@ -170,7 +173,10 @@ class AppViewModel(
     fun backgroundActive(): Boolean = prefs.activeComplication != ActiveComplication.CUSTOM && prefs.watchAddress != null
 
     /** Initial re-arm of the auto-update chain; called once from a LaunchedEffect on start. */
-    fun onStart() { scheduler.reschedule(); alarmScheduler.rearm() }
+    fun onStart() {
+        scheduler.reschedule()
+        alarmScheduler.rearm()
+    }
 
     /**
      * UI entered the foreground: start mirroring link status into state and connect if a watch is
@@ -178,7 +184,7 @@ class AppViewModel(
      * no watch is selected the chip reads NoWatch regardless of the link's own status.
      */
     fun onForeground() {
-        if (statusJob != null) return   // already foregrounded — don't start a second collector or connect
+        if (statusJob != null) return // already foregrounded — don't start a second collector or connect
         statusJob = viewModelScope.launch {
             watchConnection.status.collect { s ->
                 val effective = if (prefs.watchAddress == null) ConnectionStatus.NoWatch else s

@@ -25,7 +25,7 @@ class NotifyFrameReassembler {
             }
         }
         if (buf.size < 4) return null
-        val total = (buf[1].toInt() and 0xFF) + 2          // frame length = LEN + 2
+        val total = (buf[1].toInt() and 0xFF) + 2 // frame length = LEN + 2
         if (buf.size < total) return null
         val frameBytes = buf.subList(0, total).toByteArray()
         buf.clear()

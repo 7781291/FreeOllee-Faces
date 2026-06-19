@@ -91,8 +91,11 @@ private fun WatchSection(state: HomeState, callbacks: SettingsCallbacks) {
 private fun LocationSection(state: HomeState, callbacks: SettingsCallbacks) {
     Text("Location", style = MaterialTheme.typography.titleSmall)
     Text(
-        if (state.locating) "Locating…"
-        else state.locationLabel + (state.locationFreshness?.let { " · $it" } ?: ""),
+        if (state.locating) {
+            "Locating…"
+        } else {
+            state.locationLabel + (state.locationFreshness?.let { " · $it" } ?: "")
+        },
         style = MaterialTheme.typography.bodySmall,
     )
     OutlinedTextField(
@@ -162,14 +165,20 @@ private fun SleepSection(state: HomeState, callbacks: SettingsCallbacks) {
         if (pickingStart) {
             TimePickerDialog(
                 initialMinuteOfDay = state.sleepStartMin,
-                onConfirm = { callbacks.onSleepStartChange(it); pickingStart = false },
+                onConfirm = {
+                    callbacks.onSleepStartChange(it)
+                    pickingStart = false
+                },
                 onDismiss = { pickingStart = false },
             )
         }
         if (pickingEnd) {
             TimePickerDialog(
                 initialMinuteOfDay = state.sleepEndMin,
-                onConfirm = { callbacks.onSleepEndChange(it); pickingEnd = false },
+                onConfirm = {
+                    callbacks.onSleepEndChange(it)
+                    pickingEnd = false
+                },
                 onDismiss = { pickingEnd = false },
             )
         }
@@ -249,14 +258,20 @@ private fun AutoSleepSection(state: HomeState, callbacks: SettingsCallbacks) {
         if (pickingStart) {
             TimePickerDialog(
                 initialMinuteOfDay = state.autoSleepWindowStartMin,
-                onConfirm = { callbacks.onAutoSleepWindowStartChange(it); pickingStart = false },
+                onConfirm = {
+                    callbacks.onAutoSleepWindowStartChange(it)
+                    pickingStart = false
+                },
                 onDismiss = { pickingStart = false },
             )
         }
         if (pickingEnd) {
             TimePickerDialog(
                 initialMinuteOfDay = state.autoSleepWindowEndMin,
-                onConfirm = { callbacks.onAutoSleepWindowEndChange(it); pickingEnd = false },
+                onConfirm = {
+                    callbacks.onAutoSleepWindowEndChange(it)
+                    pickingEnd = false
+                },
                 onDismiss = { pickingEnd = false },
             )
         }

@@ -32,6 +32,7 @@ data class Alarm(
 
     companion object {
         const val ALL_DAYS = 0x7F
+
         /** The single-bit mask for [day] (Mon=bit0 … Sun=bit6). */
         fun bit(day: DayOfWeek): Int = 1 shl (day.isoDayNumber - 1)
     }

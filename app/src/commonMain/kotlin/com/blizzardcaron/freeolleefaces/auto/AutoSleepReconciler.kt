@@ -13,9 +13,10 @@ object AutoSleepReconciler {
      */
     fun desiredProfile(config: AutoSleepWindowConfig, nowMinuteOfDay: Int): AutoSleepProfile? {
         if (!config.enabled) return null
-        return if (AutoUpdateSchedule.isInSleepWindow(nowMinuteOfDay, config.startMin, config.endMin))
+        return if (AutoUpdateSchedule.isInSleepWindow(nowMinuteOfDay, config.startMin, config.endMin)) {
             config.inWindow
-        else
+        } else {
             config.outWindow
+        }
     }
 }

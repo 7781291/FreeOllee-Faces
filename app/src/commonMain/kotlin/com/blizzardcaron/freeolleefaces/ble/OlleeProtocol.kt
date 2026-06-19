@@ -6,6 +6,7 @@ object OlleeProtocol {
 
     /** BLE field selectors (the second inner byte, after cmd 0x02). */
     const val TARGET_NAMEPLATE = 0x2f
+
     // Experimental: the Temperature face's field. The official app *reads* it at 0x2E
     // (response 0x4E, e.g. "  54 F"); whether *writing* 0x2E overrides what the face shows
     // is the open question this parameterization exists to test.
@@ -62,12 +63,14 @@ object OlleeProtocol {
     const val TARGET_SET_CONFIG = 0x33
 
     // Layout of the 0x52 config payload — confirmed on-device 2026-06-18 (see Task 1 note).
-    private const val CONFIG_BITMASK_OFFSET = 0   // 4-byte big-endian settings word
-    private const val CONFIG_PERIOD_OFFSET = 4    // autosleep_period, 4-byte big-endian uint32 (seconds)
+    private const val CONFIG_BITMASK_OFFSET = 0 // 4-byte big-endian settings word
+    private const val CONFIG_PERIOD_OFFSET = 4 // autosleep_period, 4-byte big-endian uint32 (seconds)
     private const val CONFIG_PERIOD_WIDTH = 4
-    private const val CONFIG_MIN_PAYLOAD = CONFIG_PERIOD_OFFSET + CONFIG_PERIOD_WIDTH  // 8
+    private const val CONFIG_MIN_PAYLOAD = CONFIG_PERIOD_OFFSET + CONFIG_PERIOD_WIDTH // 8
+
     /** Bit position within the big-endian bitmask word. */
     const val CONFIG_BIT_AUTOSLEEP = 6
+
     /** Allowed autosleep_period values (seconds), from the official app's picker. */
     val CONFIG_PERIOD_VALUES_SEC = listOf(5, 10, 30, 60, 120)
 
@@ -79,18 +82,18 @@ object OlleeProtocol {
     class WatchConfig(val raw: ByteArray) {
         private fun maskWord(): Int =
             ((raw[CONFIG_BITMASK_OFFSET].toInt() and 0xFF) shl 24) or
-            ((raw[CONFIG_BITMASK_OFFSET + 1].toInt() and 0xFF) shl 16) or
-            ((raw[CONFIG_BITMASK_OFFSET + 2].toInt() and 0xFF) shl 8) or
-            (raw[CONFIG_BITMASK_OFFSET + 3].toInt() and 0xFF)
+                ((raw[CONFIG_BITMASK_OFFSET + 1].toInt() and 0xFF) shl 16) or
+                ((raw[CONFIG_BITMASK_OFFSET + 2].toInt() and 0xFF) shl 8) or
+                (raw[CONFIG_BITMASK_OFFSET + 3].toInt() and 0xFF)
 
         private fun bit(i: Int): Boolean = (maskWord() ushr i) and 1 == 1
 
         val autoSleepOn: Boolean get() = bit(CONFIG_BIT_AUTOSLEEP)
         val periodSec: Int get() =
             ((raw[CONFIG_PERIOD_OFFSET].toInt() and 0xFF) shl 24) or
-            ((raw[CONFIG_PERIOD_OFFSET + 1].toInt() and 0xFF) shl 16) or
-            ((raw[CONFIG_PERIOD_OFFSET + 2].toInt() and 0xFF) shl 8) or
-            (raw[CONFIG_PERIOD_OFFSET + 3].toInt() and 0xFF)
+                ((raw[CONFIG_PERIOD_OFFSET + 1].toInt() and 0xFF) shl 16) or
+                ((raw[CONFIG_PERIOD_OFFSET + 2].toInt() and 0xFF) shl 8) or
+                (raw[CONFIG_PERIOD_OFFSET + 3].toInt() and 0xFF)
 
         fun withAutoSleep(on: Boolean, periodSec: Int): WatchConfig {
             require(!on || periodSec in CONFIG_PERIOD_VALUES_SEC) {
@@ -98,8 +101,11 @@ object OlleeProtocol {
             }
             val copy = raw.copyOf()
             var word = maskWord()
-            word = if (on) word or (1 shl CONFIG_BIT_AUTOSLEEP)
-                   else word and (1 shl CONFIG_BIT_AUTOSLEEP).inv()
+            word = if (on) {
+                word or (1 shl CONFIG_BIT_AUTOSLEEP)
+            } else {
+                word and (1 shl CONFIG_BIT_AUTOSLEEP).inv()
+            }
             copy[CONFIG_BITMASK_OFFSET] = ((word ushr 24) and 0xFF).toByte()
             copy[CONFIG_BITMASK_OFFSET + 1] = ((word ushr 16) and 0xFF).toByte()
             copy[CONFIG_BITMASK_OFFSET + 2] = ((word ushr 8) and 0xFF).toByte()
@@ -129,10 +135,11 @@ object OlleeProtocol {
         for (b in data) {
             crc = crc xor ((b.toInt() and 0xFF) shl 8)
             repeat(8) {
-                crc = if ((crc and 0x8000) != 0)
+                crc = if ((crc and 0x8000) != 0) {
                     (crc shl 1) xor 0x1021
-                else
+                } else {
                     crc shl 1
+                }
                 crc = crc and 0xFFFF
             }
         }
@@ -231,9 +238,9 @@ object OlleeProtocol {
         require(headerSeconds >= 0) { "headerSeconds must be >= 0 (got $headerSeconds)" }
         val payload = ByteArray(4 + 10 * 4) // 4-byte header + 10 LE-uint32 words
         payload[0] = (headerSeconds / 3600).coerceAtMost(0xFF).toByte() // HH (hours; clamp for safety)
-        payload[1] = ((headerSeconds % 3600) / 60).toByte()             // MM (0-59)
-        payload[2] = (headerSeconds % 60).toByte()                      // SS (0-59)
-        payload[3] = startMode.byte3.toByte()                           // start/mode selector
+        payload[1] = ((headerSeconds % 3600) / 60).toByte() // MM (0-59)
+        payload[2] = (headerSeconds % 60).toByte() // SS (0-59)
+        payload[3] = startMode.byte3.toByte() // start/mode selector
         durationsSeconds.forEachIndexed { i, s ->
             val off = 4 + i * 4
             payload[off] = (s and 0xFF).toByte()
@@ -286,15 +293,15 @@ object OlleeProtocol {
         val payload = byteArrayOf(
             if (enabled) 0x01 else 0x00,
             if (hourlyChime) 0x01 else 0x00,
-            0x00,                       // snooze off
+            0x00, // snooze off
             hour.toByte(),
             minute.toByte(),
-            0xFE.toByte(),              // repeat every day — see KDoc; 0x00 would disable
+            0xFE.toByte(), // repeat every day — see KDoc; 0x00 would disable
             chimeIndex.toByte(),
-            0x05,                       // snooze period (minutes), stock value
+            0x05, // snooze period (minutes), stock value
             if (playNow) 0x01 else 0x00,
             0xC0.toByte(), 0xFF.toByte(), 0x0F, // hourly-chime hours 6:00-19:00
-            0xFF.toByte(),              // terminator
+            0xFF.toByte(), // terminator
         )
         return buildRawPacket(TARGET_ALARM, payload)
     }

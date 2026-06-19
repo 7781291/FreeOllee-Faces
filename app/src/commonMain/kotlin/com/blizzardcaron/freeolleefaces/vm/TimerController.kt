@@ -104,7 +104,10 @@ class TimerController(
     /** Shared path for the three 0x26 sends: addr check, in-flight guard, push, snackbar. */
     private fun pushTimerFrame(packet: ByteArray, successMsg: String, onSuccess: () -> Unit = {}) {
         val addr = prefs.watchAddress
-        if (addr == null) { showSnackbar("No watch selected — open Settings (⚙)"); return }
+        if (addr == null) {
+            showSnackbar("No watch selected — open Settings (⚙)")
+            return
+        }
         if (state().sending) return
         scope.launch {
             update { it.copy(sending = true) }
@@ -124,7 +127,7 @@ class TimerController(
 
     fun saveQuickTimer(seconds: Int) {
         prefs.quickTimerSeconds = seconds
-        quickTimerSeconds = prefs.quickTimerSeconds   // read back to apply the >=0 coercion
+        quickTimerSeconds = prefs.quickTimerSeconds // read back to apply the >=0 coercion
     }
 
     /** "Start timer from app" toggle — whether a Send to watch also starts the countdown. */
@@ -147,7 +150,7 @@ class TimerController(
     fun saveQuickTimerAlarmTime(hour: Int, minute: Int) {
         prefs.quickTimerAlarmHour = hour
         prefs.quickTimerAlarmMinute = minute
-        quickTimerAlarmHour = prefs.quickTimerAlarmHour     // read back to apply coercion
+        quickTimerAlarmHour = prefs.quickTimerAlarmHour // read back to apply coercion
         quickTimerAlarmMinute = prefs.quickTimerAlarmMinute
     }
 
@@ -162,23 +165,34 @@ class TimerController(
             .coerceAtMost(86_399)
         val slots = timerActiveId?.let { timerRepo.get(it) }?.durations() ?: List(10) { 0 }
         val packet = OlleeProtocol.buildTimerPacket(
-            slots, headerSeconds = seconds, startMode = OlleeProtocol.TimerStartMode.START_SINGLE)
+            slots,
+            headerSeconds = seconds,
+            startMode = OlleeProtocol.TimerStartMode.START_SINGLE
+        )
         pushTimerFrame(packet, "Started alarm timer on watch")
     }
 
     fun sendTimerSet(set: TimerSet) {
         val packet = OlleeProtocol.buildTimerPacket(
-            set.durations(), headerSeconds = quickTimerSeconds, startMode = OlleeProtocol.TimerStartMode.SAVE)
+            set.durations(),
+            headerSeconds = quickTimerSeconds,
+            startMode = OlleeProtocol.TimerStartMode.SAVE
+        )
         pushTimerFrame(packet, "Sent '${set.name}' to watch") {
-            timerRepo.setActive(set.id); timerActiveId = set.id
+            timerRepo.setActive(set.id)
+            timerActiveId = set.id
         }
     }
 
     fun startTimerSet(set: TimerSet) {
         val packet = OlleeProtocol.buildTimerPacket(
-            set.durations(), headerSeconds = quickTimerSeconds, startMode = OlleeProtocol.TimerStartMode.START_INTERVAL)
+            set.durations(),
+            headerSeconds = quickTimerSeconds,
+            startMode = OlleeProtocol.TimerStartMode.START_INTERVAL
+        )
         pushTimerFrame(packet, "Started '${set.name}' on watch") {
-            timerRepo.setActive(set.id); timerActiveId = set.id
+            timerRepo.setActive(set.id)
+            timerActiveId = set.id
         }
     }
 
@@ -192,7 +206,10 @@ class TimerController(
         val mode = OlleeProtocol.TimerStartMode.of(quickTimerStartFromApp, quickTimerIntervalMode)
         val slots = timerActiveId?.let { timerRepo.get(it) }?.durations() ?: List(10) { 0 }
         val packet = OlleeProtocol.buildTimerPacket(
-            slots, headerSeconds = quickTimerSeconds, startMode = mode)
+            slots,
+            headerSeconds = quickTimerSeconds,
+            startMode = mode
+        )
         val msg = when (mode) {
             OlleeProtocol.TimerStartMode.SAVE -> "Sent quick timer to watch"
             OlleeProtocol.TimerStartMode.START_INTERVAL -> "Started intervals on watch"

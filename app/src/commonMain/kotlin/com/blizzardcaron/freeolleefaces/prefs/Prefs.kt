@@ -59,20 +59,52 @@ class Prefs(
 
     var tempValue: Double?
         get() = if (settings.hasKey(KEY_TEMP_VALUE)) settings.getFloat(KEY_TEMP_VALUE, 0f).toDouble() else null
-        set(value) = if (value == null) settings.remove(KEY_TEMP_VALUE) else settings.putFloat(KEY_TEMP_VALUE, value.toFloat())
+        set(
+        value
+        ) = if (value == null) {
+            settings.remove(
+                KEY_TEMP_VALUE
+            )
+        } else {
+            settings.putFloat(KEY_TEMP_VALUE, value.toFloat())
+        }
 
     var tempCacheUnit: TempUnit?
         get() = settings.getStringOrNull(KEY_TEMP_CACHE_UNIT)
             ?.let { runCatching { TempUnit.valueOf(it) }.getOrNull() }
-        set(value) = if (value == null) settings.remove(KEY_TEMP_CACHE_UNIT) else settings.putString(KEY_TEMP_CACHE_UNIT, value.name)
+        set(
+        value
+        ) = if (value == null) {
+            settings.remove(
+                KEY_TEMP_CACHE_UNIT
+            )
+        } else {
+            settings.putString(KEY_TEMP_CACHE_UNIT, value.name)
+        }
 
     var tempFetchedMs: Long?
         get() = if (settings.hasKey(KEY_TEMP_FETCHED_MS)) settings.getLong(KEY_TEMP_FETCHED_MS, 0L) else null
-        set(value) = if (value == null) settings.remove(KEY_TEMP_FETCHED_MS) else settings.putLong(KEY_TEMP_FETCHED_MS, value)
+        set(
+        value
+        ) = if (value == null) {
+            settings.remove(
+                KEY_TEMP_FETCHED_MS
+            )
+        } else {
+            settings.putLong(KEY_TEMP_FETCHED_MS, value)
+        }
 
     var lastLocationFetchedMs: Long?
         get() = if (settings.hasKey(KEY_LOCATION_FETCHED_MS)) settings.getLong(KEY_LOCATION_FETCHED_MS, 0L) else null
-        set(value) = if (value == null) settings.remove(KEY_LOCATION_FETCHED_MS) else settings.putLong(KEY_LOCATION_FETCHED_MS, value)
+        set(
+        value
+        ) = if (value == null) {
+            settings.remove(
+                KEY_LOCATION_FETCHED_MS
+            )
+        } else {
+            settings.putLong(KEY_LOCATION_FETCHED_MS, value)
+        }
 
     var customText: String
         get() = settings.getString(KEY_CUSTOM_TEXT, "")
@@ -113,7 +145,15 @@ class Prefs(
 
     var customSentMs: Long?
         get() = if (settings.hasKey(KEY_CUSTOM_SENT_MS)) settings.getLong(KEY_CUSTOM_SENT_MS, 0L) else null
-        set(value) = if (value == null) settings.remove(KEY_CUSTOM_SENT_MS) else settings.putLong(KEY_CUSTOM_SENT_MS, value)
+        set(
+        value
+        ) = if (value == null) {
+            settings.remove(
+                KEY_CUSTOM_SENT_MS
+            )
+        } else {
+            settings.putLong(KEY_CUSTOM_SENT_MS, value)
+        }
 
     /** Live count of undismissed, non-persistent notifications, kept by the listener service. */
     var notificationCount: Int
@@ -138,7 +178,15 @@ class Prefs(
 
     var stepsFetchedMs: Long?
         get() = if (settings.hasKey(KEY_STEPS_FETCHED_MS)) settings.getLong(KEY_STEPS_FETCHED_MS, 0L) else null
-        set(value) = if (value == null) settings.remove(KEY_STEPS_FETCHED_MS) else settings.putLong(KEY_STEPS_FETCHED_MS, value)
+        set(
+        value
+        ) = if (value == null) {
+            settings.remove(
+                KEY_STEPS_FETCHED_MS
+            )
+        } else {
+            settings.putLong(KEY_STEPS_FETCHED_MS, value)
+        }
 
     /** Stamp the cached step count and the time it was read from Health Connect. */
     fun recordStepsFetch(count: Long) {
@@ -164,12 +212,28 @@ class Prefs(
 
     var lastAutoSendSummary: String?
         get() = settings.getStringOrNull(KEY_LAST_SEND_SUMMARY)
-        set(value) = if (value == null) settings.remove(KEY_LAST_SEND_SUMMARY) else settings.putString(KEY_LAST_SEND_SUMMARY, value)
+        set(
+        value
+        ) = if (value == null) {
+            settings.remove(
+                KEY_LAST_SEND_SUMMARY
+            )
+        } else {
+            settings.putString(KEY_LAST_SEND_SUMMARY, value)
+        }
 
     var lastNotifiedKind: FailureKind?
         get() = settings.getStringOrNull(KEY_LAST_NOTIFIED_KIND)
             ?.let { runCatching { FailureKind.valueOf(it) }.getOrNull() }
-        set(value) = if (value == null) settings.remove(KEY_LAST_NOTIFIED_KIND) else settings.putString(KEY_LAST_NOTIFIED_KIND, value.name)
+        set(
+        value
+        ) = if (value == null) {
+            settings.remove(
+                KEY_LAST_NOTIFIED_KIND
+            )
+        } else {
+            settings.putString(KEY_LAST_NOTIFIED_KIND, value.name)
+        }
 
     /** Convenience: stamp the time and summary of the most recent background send attempt. */
     fun recordAutoSend(summary: String) {
@@ -235,6 +299,7 @@ class Prefs(
         private const val KEY_CUSTOM_SENT_MS = "custom_sent_ms"
         private const val KEY_NOTIFICATION_COUNT = "notification_count"
         private const val KEY_NOTIFICATIONS_ENABLED = "notifications_enabled"
+
         /** Legacy `active_face` value from when notifications was a mutually-exclusive face. */
         private const val LEGACY_NOTIFICATIONS_COMPLICATION = "NOTIFICATIONS"
         private const val KEY_UPDATE_INTERVAL = "update_interval_min"

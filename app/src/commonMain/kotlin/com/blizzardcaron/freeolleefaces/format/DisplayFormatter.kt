@@ -59,8 +59,11 @@ object DisplayFormatter {
         if (!stale) return plain
         // 6-digit counts fill the row, leaving no pad for 'E' — abbreviate to thousands first so
         // "E " + a 4-char "Nk" value fits in 6. Smaller counts keep their pad for markStale.
-        return if (plain.startsWith(' ')) markStale(plain, stale = true)
-        else "E " + abbreviateThousands(clamped)
+        return if (plain.startsWith(' ')) {
+            markStale(plain, stale = true)
+        } else {
+            "E " + abbreviateThousands(clamped)
+        }
     }
 
     /**

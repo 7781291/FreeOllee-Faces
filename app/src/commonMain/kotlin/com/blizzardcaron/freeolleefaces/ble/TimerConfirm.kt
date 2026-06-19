@@ -25,7 +25,7 @@ object TimerConfirm {
 
         val intended = OlleeProtocol.parseFrame(writePacket) ?: return false
         val w = intended.payload
-        if (w.size < 8) return false   // [HH,MM,SS,mode] + at least slot0 (4 bytes)
+        if (w.size < 8) return false // [HH,MM,SS,mode] + at least slot0 (4 bytes)
 
         val headerSeconds = (w[0].toInt() and 0xFF) * 3600 + (w[1].toInt() and 0xFF) * 60 + (w[2].toInt() and 0xFF)
         val mode = w[3].toInt() and 0xFF

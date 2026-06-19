@@ -34,13 +34,18 @@ object ErrorNotifier {
         ensureChannel(ctx)
         if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS)
             != PackageManager.PERMISSION_GRANTED
-        ) return false
+        ) {
+            return false
+        }
 
         val intent = Intent(ctx, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         val pending = PendingIntent.getActivity(
-            ctx, 0, intent, PendingIntent.FLAG_IMMUTABLE,
+            ctx,
+            0,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE,
         )
         val builder = NotificationCompat.Builder(ctx, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_notify_error)
@@ -53,7 +58,10 @@ object ErrorNotifier {
         if (kind.retryable) {
             val retryIntent = Intent(ctx, retryReceiverFor(kind))
             val retryPending = PendingIntent.getBroadcast(
-                ctx, retryRequestCodeFor(kind), retryIntent, PendingIntent.FLAG_IMMUTABLE,
+                ctx,
+                retryRequestCodeFor(kind),
+                retryIntent,
+                PendingIntent.FLAG_IMMUTABLE,
             )
             builder.addAction(0, "Retry", retryPending)
         }
