@@ -82,35 +82,6 @@
     <ID>MagicNumber:NotifyFrameReassembler.kt$NotifyFrameReassembler$4</ID>
     <ID>MagicNumber:NumberFormat.kt$10</ID>
     <ID>MagicNumber:NumberFormat.kt$3</ID>
-    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$0x05</ID>
-    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$0x1021</ID>
-    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$0x55</ID>
-    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$0x7E</ID>
-    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$0x8000</ID>
-    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$0xFF</ID>
-    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$0xFFFF</ID>
-    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$10</ID>
-    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$120</ID>
-    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$127</ID>
-    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$16</ID>
-    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$23</ID>
-    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$24</ID>
-    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$3</ID>
-    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$30</ID>
-    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$359_999</ID>
-    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$3600</ID>
-    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$4</ID>
-    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$5</ID>
-    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$59</ID>
-    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$6</ID>
-    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$60</ID>
-    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$7</ID>
-    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol$8</ID>
-    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol.WatchConfig$0xFF</ID>
-    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol.WatchConfig$16</ID>
-    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol.WatchConfig$24</ID>
-    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol.WatchConfig$3</ID>
-    <ID>MagicNumber:OlleeProtocol.kt$OlleeProtocol.WatchConfig$8</ID>
     <ID>MagicNumber:Prefs.kt$Prefs$120</ID>
     <ID>MagicNumber:Prefs.kt$Prefs$180</ID>
     <ID>MagicNumber:Prefs.kt$Prefs$22</ID>
