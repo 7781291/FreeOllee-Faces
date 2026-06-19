@@ -39,6 +39,9 @@ import kotlin.coroutines.resumeWithException
  * runs a one-shot connect -> write -> disconnect. A [Mutex] serializes all GATT work — the watch only
  * accepts one client at a time, so a foreground send and a background Worker cooperate here.
  */
+// cohesive process-wide BLE connection point; its functions are one responsibility
+// (connect/hold/send) and don't split cleanly
+@Suppress("TooManyFunctions")
 @SuppressLint("MissingPermission")
 object WatchLink {
 
@@ -166,19 +169,20 @@ object WatchLink {
                 Log.i("OLLEE_BLE", "FreeOllee TX $address ${packet.toHex()}")
             }
             lock.withLock {
-                val g = heldGatt
-                val cb = heldCallback
-                val char = cb?.writeChar
-                if (g != null && cb != null && char != null && heldAddress == address &&
-                    _status.value == ConnectionStatus.Connected
-                ) {
-                    val held = runCatching {
-                        withTimeout(WRITE_TIMEOUT_MS) { writeHeld(g, cb, char, packet) }
-                    }.getOrElse { Result.failure(it) }
-                    if (held.isSuccess) return@withLock held
-                    // Held write failed — drop the link and fall back to a fresh one-shot.
-                    closeHeldLocked()
-                    _status.value = ConnectionStatus.NotReachable
+                val sameConnectedLink = heldAddress == address && _status.value == ConnectionStatus.Connected
+                if (sameConnectedLink) {
+                    val g = heldGatt
+                    val cb = heldCallback
+                    val char = cb?.writeChar
+                    if (g != null && cb != null && char != null) {
+                        val held = runCatching {
+                            withTimeout(WRITE_TIMEOUT_MS) { writeHeld(g, cb, char, packet) }
+                        }.getOrElse { Result.failure(it) }
+                        if (held.isSuccess) return@withLock held
+                        // Held write failed — drop the link and fall back to a fresh one-shot.
+                        closeHeldLocked()
+                        _status.value = ConnectionStatus.NotReachable
+                    }
                 }
                 oneShotSend(context, address, packet)
             }
@@ -246,7 +250,7 @@ object WatchLink {
                     var attempt = 0
                     while (!writeChunk(g, char, chunk)) {
                         if (++attempt >= READ_WRITE_MAX_ATTEMPTS) {
-                            throw IllegalStateException("read request write stayed busy")
+                            error("read request write stayed busy")
                         }
                         delay(READ_WRITE_RETRY_MS)
                     }
@@ -280,6 +284,9 @@ object WatchLink {
     // ~30s across MAX_ATTEMPTS + backoffs) will block a concurrent connectHeld (e.g. a Reconnect tap)
     // until it finishes. Acceptable for now — revisit the lock scope if on-device use shows the
     // Reconnect button stalling behind background sends.
+    // retry wrapper: catches any transient BLE failure, then delegates the retry/abort decision to
+    // BleRetryPolicy.isRetryable
+    @Suppress("TooGenericExceptionCaught")
     private suspend fun oneShotSend(context: Context, address: String, packet: ByteArray): Result<Unit> =
         runCatching {
             val manager = context.getSystemService(BluetoothManager::class.java)
@@ -301,6 +308,28 @@ object WatchLink {
             }
         }
 
+    /**
+     * Look up the notify characteristic, store it on [cb], and — if present — subscribe via CCCD
+     * write across the SDK's pre-/post-Tiramisu API split. Called from [HeldCallback.onServicesDiscovered]
+     * once the write characteristic has been resolved.
+     */
+    private fun subscribeNotify(g: BluetoothGatt, cb: HeldCallback) {
+        val nc = g.getService(SERVICE_UUID)?.getCharacteristic(NOTIFY_CHAR_UUID)
+        cb.notifyChar = nc
+        if (nc == null) return
+        g.setCharacteristicNotification(nc, true)
+        val d = nc.getDescriptor(CCCD_UUID) ?: return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            g.writeDescriptor(d, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
+        } else {
+            @Suppress("DEPRECATION")
+            run {
+                d.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+                g.writeDescriptor(d)
+            }
+        }
+    }
+
     private suspend fun oneShotWrite(context: Context, device: BluetoothDevice, packet: ByteArray) =
         suspendCancellableCoroutine<Unit> { cont ->
             var gatt: BluetoothGatt? = null
@@ -319,6 +348,9 @@ object WatchLink {
                     }
                 }
 
+                // async GATT discovery: each validation stage must resume-with-exception + disconnect +
+                // bail; early returns are the clearest, safest form
+                @Suppress("ReturnCount")
                 override fun onServicesDiscovered(g: BluetoothGatt, status: Int) {
                     if (!cont.isActive) {
                         g.disconnect()
@@ -435,21 +467,7 @@ object WatchLink {
                 return
             }
             writeChar = char
-            notifyChar = g.getService(WatchLink.SERVICE_UUID)?.getCharacteristic(WatchLink.NOTIFY_CHAR_UUID)
-            notifyChar?.let { nc ->
-                g.setCharacteristicNotification(nc, true)
-                nc.getDescriptor(WatchLink.CCCD_UUID)?.let { d ->
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        g.writeDescriptor(d, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
-                    } else {
-                        @Suppress("DEPRECATION")
-                        run {
-                            d.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-                            g.writeDescriptor(d)
-                        }
-                    }
-                }
-            }
+            WatchLink.subscribeNotify(g, this)
             connectCont = null
             cc?.resume(true)
         }
@@ -490,14 +508,19 @@ object WatchLink {
 
         private fun handleNotify(uuid: UUID, value: ByteArray?) {
             if (uuid != WatchLink.NOTIFY_CHAR_UUID || value == null) return
-            val frame = reassembler.offer(value) ?: return
-            val want = awaitTarget ?: return
-            if (frame.target == want && frame.crcOk) {
+            val frame = reassembler.offer(value)
+            if (frame != null && isAwaitedMatch(frame)) {
                 val c = awaitCont
                 awaitCont = null
                 awaitTarget = null
                 c?.let { if (it.isActive) it.resume(Result.success(frame)) }
             }
+        }
+
+        /** True when [frame] is the one currently awaited by [sendAndAwait][WatchLink.sendAndAwait]. */
+        private fun isAwaitedMatch(frame: OlleeProtocol.Frame): Boolean {
+            val want = awaitTarget ?: return false
+            return frame.target == want && frame.crcOk
         }
     }
 }
