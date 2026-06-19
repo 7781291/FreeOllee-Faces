@@ -27,12 +27,9 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.Clock
 import kotlinx.datetime.toLocalDateTime
-import com.blizzardcaron.freeolleefaces.alarm.Alarm
 import com.blizzardcaron.freeolleefaces.alarm.AlarmsRepository
 import com.blizzardcaron.freeolleefaces.fakes.FakeAlarmScheduler
 import kotlin.test.AfterTest
-import kotlin.test.assertFalse
-import kotlin.test.assertNull
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -495,67 +492,9 @@ class AppViewModelTest {
     }
 
     // ---------------------------------------------------------------------------
-    // Test D1 — alarm CRUD persists, updates state, and re-arms on every change
+    // Test D1/D2 — alarm CRUD moved to AlarmControllerTest (vm/AlarmControllerTest.kt);
+    // AppViewModel now delegates the alarm cluster to AlarmController (viewModel.alarms).
     // ---------------------------------------------------------------------------
-
-    @Test
-    fun `alarm CRUD persists, updates state, and re-arms on every change`() {
-        val callLog = mutableListOf<String>()
-        val settings = MapSettings()
-        val vm = AppViewModel(
-            prefs = Prefs(MapSettings()),
-            ble = FakeBleClient(callLog),
-            steps = FakeStepsProvider(),
-            location = FakeLocationProvider(),
-            notificationAccess = FakeNotificationAccessChecker(),
-            timerRepo = TimerSetsRepository(MapSettings()),
-            scheduler = FakeScheduler(callLog),
-            alarmRepo = AlarmsRepository(settings),
-            alarmScheduler = FakeAlarmScheduler(callLog),
-        )
-
-        vm.addAlarm()
-        assertEquals(1, vm.alarms.size)
-        assertEquals(1, callLog.count { it == "alarmScheduler.rearm" })
-
-        val alarm = vm.alarms[0]
-        vm.saveAlarm(alarm.copy(hour = 6, minute = 45))
-        assertEquals(6, vm.alarms[0].hour)
-
-        // Label-only change persists but does NOT re-arm (the label never reaches the watch).
-        vm.saveAlarm(vm.alarms[0].copy(label = "Work"))
-        assertEquals("Work", vm.alarms[0].label)
-        assertEquals(2, callLog.count { it == "alarmScheduler.rearm" })
-
-        vm.toggleAlarm(alarm.id, enabled = false)
-        assertFalse(vm.alarms[0].enabled)
-
-        vm.deleteAlarm(alarm.id)
-        assertTrue(vm.alarms.isEmpty())
-        assertNull(AlarmsRepository(settings).get(alarm.id))   // really deleted from the store
-        assertEquals(4, callLog.count { it == "alarmScheduler.rearm" })
-    }
-
-    // ---------------------------------------------------------------------------
-    // Test D2 — addAlarm caps at MAX_ALARMS
-    // ---------------------------------------------------------------------------
-
-    @Test
-    fun `addAlarm caps at MAX_ALARMS`() {
-        val vm = AppViewModel(
-            prefs = Prefs(MapSettings()),
-            ble = FakeBleClient(),
-            steps = FakeStepsProvider(),
-            location = FakeLocationProvider(),
-            notificationAccess = FakeNotificationAccessChecker(),
-            timerRepo = TimerSetsRepository(MapSettings()),
-            scheduler = FakeScheduler(),
-            alarmRepo = AlarmsRepository(MapSettings()),
-            alarmScheduler = FakeAlarmScheduler(),
-        )
-        repeat(AlarmsRepository.MAX_ALARMS + 1) { vm.addAlarm() }
-        assertEquals(AlarmsRepository.MAX_ALARMS, vm.alarms.size)
-    }
 
     // ---------------------------------------------------------------------------
     // Test E — moveTimerSetUp / moveTimerSetDown

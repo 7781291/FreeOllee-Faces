@@ -5,8 +5,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.blizzardcaron.freeolleefaces.alarm.Alarm
-import com.blizzardcaron.freeolleefaces.alarm.AlarmSchedule
 import com.blizzardcaron.freeolleefaces.alarm.AlarmsRepository
 import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
 import com.blizzardcaron.freeolleefaces.auto.AlarmScheduler
@@ -40,6 +38,7 @@ import com.blizzardcaron.freeolleefaces.timer.TimerSetsRepository
 import com.blizzardcaron.freeolleefaces.ui.HomeState
 import com.blizzardcaron.freeolleefaces.ui.PreviewState
 import com.blizzardcaron.freeolleefaces.ui.Screen
+import com.blizzardcaron.freeolleefaces.vm.AlarmController
 import com.blizzardcaron.freeolleefaces.weather.OpenMeteoClient
 import com.blizzardcaron.freeolleefaces.weather.RetryPolicy
 import kotlinx.coroutines.Job
@@ -118,14 +117,15 @@ class AppViewModel(
     var quickTimerAlarmMinute by mutableStateOf(prefs.quickTimerAlarmMinute)
         private set
 
-    var alarms by mutableStateOf(alarmRepo.getAll())
-        private set
-
-    /** e.g. "Next: Tue 7:00 AM · Breeze" — or "No alarms". */
-    val nextAlarmSummary: String
-        get() = AlarmSchedule.formatNext(
-            AlarmSchedule.nextFire(alarms, Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())),
-        )
+    val alarms = AlarmController(
+        alarmRepo = alarmRepo,
+        alarmScheduler = alarmScheduler,
+        ble = ble,
+        prefs = prefs,
+        scope = viewModelScope,
+        showSnackbar = ::emitEvent,
+        clock = clock,
+    )
 
     private val _events = Channel<String>(Channel.BUFFERED)   // snackbar messages
     val events = _events.receiveAsFlow()
@@ -135,7 +135,10 @@ class AppViewModel(
     private var statusJob: Job? = null
 
     private fun update(transform: (HomeState) -> HomeState) { state = transform(state) }
-    private fun showSnackbar(message: String) { viewModelScope.launch { _events.send(message) } }
+    private fun showSnackbar(message: String) = emitEvent(message)
+
+    /** Launches a snackbar send on [viewModelScope]; shared with controllers via injection. */
+    internal fun emitEvent(message: String) { viewModelScope.launch { _events.send(message) } }
 
     private fun initialState(): HomeState = HomeState(
         activeComplication = prefs.activeComplication,
@@ -176,34 +179,6 @@ class AppViewModel(
     fun refreshTimers() {
         timerSets = timerRepo.getAll()
         timerActiveId = timerRepo.activeId()
-    }
-
-    fun refreshAlarms() { alarms = alarmRepo.getAll() }
-
-    fun addAlarm() {
-        if (alarms.size >= AlarmsRepository.MAX_ALARMS) return
-        alarmRepo.save(Alarm(id = randomId(), hour = 7, minute = 0))
-        alarms = alarmRepo.getAll()
-        alarmScheduler.rearm()
-    }
-
-    fun saveAlarm(alarm: Alarm) {
-        val before = alarmRepo.get(alarm.id)
-        alarmRepo.save(alarm)
-        alarms = alarmRepo.getAll()
-        // The label is phone-side only — a label-only edit (every keystroke lands here) must not
-        // re-push the watch. Anything schedule-affecting re-arms.
-        if (before == null || before.copy(label = alarm.label) != alarm) alarmScheduler.rearm()
-    }
-
-    fun toggleAlarm(id: String, enabled: Boolean) {
-        alarmRepo.get(id)?.let { saveAlarm(it.copy(enabled = enabled)) }
-    }
-
-    fun deleteAlarm(id: String) {
-        alarmRepo.delete(id)
-        alarms = alarmRepo.getAll()
-        alarmScheduler.rearm()
     }
 
     fun newTimerSet() {

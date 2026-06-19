@@ -301,7 +301,7 @@ private fun AppRoot() {
                             selected = BottomNavTab.forScreen(screen) == tab,
                             onClick = {
                                 when (tab) {
-                                    BottomNavTab.Alarm -> viewModel.refreshAlarms()
+                                    BottomNavTab.Alarm -> viewModel.alarms.refreshAlarms()
                                     BottomNavTab.Timer -> viewModel.refreshTimers()
                                     else -> {}
                                 }
@@ -355,12 +355,12 @@ private fun AppRoot() {
             modifier = modifier,
         )
         Screen.Alarms -> AlarmsScreen(
-            alarms = viewModel.alarms,
-            nextSummary = viewModel.nextAlarmSummary,
-            onAdd = { viewModel.addAlarm() },
-            onSave = { viewModel.saveAlarm(it) },
-            onToggle = { id, enabled -> viewModel.toggleAlarm(id, enabled) },
-            onDelete = { viewModel.deleteAlarm(it) },
+            alarms = viewModel.alarms.items,
+            nextSummary = viewModel.alarms.nextAlarmSummary,
+            onAdd = { viewModel.alarms.addAlarm() },
+            onSave = { viewModel.alarms.saveAlarm(it) },
+            onToggle = { id, enabled -> viewModel.alarms.toggleAlarm(id, enabled) },
+            onDelete = { viewModel.alarms.deleteAlarm(it) },
             onBack = { viewModel.navigateTo(Screen.Home) },
             connectionStatus = state.connectionStatus,
             onReconnect = { viewModel.onReconnect() },
