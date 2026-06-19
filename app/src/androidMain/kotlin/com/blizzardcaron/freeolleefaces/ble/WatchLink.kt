@@ -319,7 +319,6 @@ object WatchLink {
                     }
                 }
 
-                @Suppress("DEPRECATION")
                 override fun onCharacteristicWrite(
                     g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int,
                 ) {
@@ -408,7 +407,6 @@ object WatchLink {
             cc?.resume(true)
         }
 
-        @Suppress("DEPRECATION")
         override fun onCharacteristicWrite(
             g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int,
         ) {
