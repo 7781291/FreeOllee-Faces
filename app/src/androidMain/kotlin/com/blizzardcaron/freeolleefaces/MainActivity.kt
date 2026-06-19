@@ -302,7 +302,7 @@ private fun AppRoot() {
                             onClick = {
                                 when (tab) {
                                     BottomNavTab.Alarm -> viewModel.alarms.refreshAlarms()
-                                    BottomNavTab.Timer -> viewModel.refreshTimers()
+                                    BottomNavTab.Timer -> viewModel.timers.refreshTimers()
                                     else -> {}
                                 }
                                 viewModel.navigateTo(tab.screen)
@@ -325,30 +325,30 @@ private fun AppRoot() {
             modifier = modifier,
         )
         Screen.TimerSets -> TimerSetsScreen(
-            sets = viewModel.timerSets,
-            activeId = viewModel.timerActiveId,
+            sets = viewModel.timers.timerSets,
+            activeId = viewModel.timers.timerActiveId,
             sending = state.sending,
-            quickTimerSeconds = viewModel.quickTimerSeconds,
-            quickTimerStartFromApp = viewModel.quickTimerStartFromApp,
-            quickTimerIntervalMode = viewModel.quickTimerIntervalMode,
-            onSaveQuick = { viewModel.saveQuickTimer(it) },
-            onToggleStartFromApp = { viewModel.toggleQuickTimerStartFromApp(it) },
-            onToggleIntervalMode = { viewModel.toggleQuickTimerIntervalMode(it) },
-            onSendQuick = { viewModel.sendQuickTimer() },
-            quickTimerAlarmMode = viewModel.quickTimerAlarmMode,
-            quickTimerAlarmHour = viewModel.quickTimerAlarmHour,
-            quickTimerAlarmMinute = viewModel.quickTimerAlarmMinute,
-            onToggleAlarmMode = { viewModel.toggleQuickTimerAlarmMode(it) },
-            onSaveAlarmTime = { h, m -> viewModel.saveQuickTimerAlarmTime(h, m) },
-            onSendAlarm = { viewModel.sendQuickAlarm() },
-            onOpen = { viewModel.editTimerSet(it); viewModel.navigateTo(Screen.TimerSetEdit) },
-            onNew = { viewModel.newTimerSet() },
-            onDuplicate = { src -> viewModel.duplicateTimerSet(src) },
-            onDelete = { viewModel.deleteTimerSet(it) },
-            onSend = { viewModel.sendTimerSet(it) },
-            onStart = { viewModel.startTimerSet(it) },
-            onMoveUp = { viewModel.moveTimerSetUp(it) },
-            onMoveDown = { viewModel.moveTimerSetDown(it) },
+            quickTimerSeconds = viewModel.timers.quickTimerSeconds,
+            quickTimerStartFromApp = viewModel.timers.quickTimerStartFromApp,
+            quickTimerIntervalMode = viewModel.timers.quickTimerIntervalMode,
+            onSaveQuick = { viewModel.timers.saveQuickTimer(it) },
+            onToggleStartFromApp = { viewModel.timers.toggleQuickTimerStartFromApp(it) },
+            onToggleIntervalMode = { viewModel.timers.toggleQuickTimerIntervalMode(it) },
+            onSendQuick = { viewModel.timers.sendQuickTimer() },
+            quickTimerAlarmMode = viewModel.timers.quickTimerAlarmMode,
+            quickTimerAlarmHour = viewModel.timers.quickTimerAlarmHour,
+            quickTimerAlarmMinute = viewModel.timers.quickTimerAlarmMinute,
+            onToggleAlarmMode = { viewModel.timers.toggleQuickTimerAlarmMode(it) },
+            onSaveAlarmTime = { h, m -> viewModel.timers.saveQuickTimerAlarmTime(h, m) },
+            onSendAlarm = { viewModel.timers.sendQuickAlarm() },
+            onOpen = { viewModel.timers.editTimerSet(it); viewModel.navigateTo(Screen.TimerSetEdit) },
+            onNew = { viewModel.timers.newTimerSet(); viewModel.navigateTo(Screen.TimerSetEdit) },
+            onDuplicate = { src -> viewModel.timers.duplicateTimerSet(src) },
+            onDelete = { viewModel.timers.deleteTimerSet(it) },
+            onSend = { viewModel.timers.sendTimerSet(it) },
+            onStart = { viewModel.timers.startTimerSet(it) },
+            onMoveUp = { viewModel.timers.moveTimerSetUp(it) },
+            onMoveDown = { viewModel.timers.moveTimerSetDown(it) },
             onBack = { viewModel.navigateTo(Screen.Home) },
             connectionStatus = state.connectionStatus,
             onReconnect = { viewModel.onReconnect() },
@@ -367,14 +367,18 @@ private fun AppRoot() {
             modifier = modifier,
         )
         Screen.TimerSetEdit -> {
-            val editing = viewModel.editingSet
+            val editing = viewModel.timers.editingSet
             if (editing == null) {
                 viewModel.navigateTo(Screen.TimerSets)
             } else {
                 TimerSetEditScreen(
                     set = editing,
-                    onSave = { s -> viewModel.saveTimerSet(s); viewModel.navigateTo(Screen.TimerSets) },
-                    onSend = { s -> viewModel.saveTimerSet(s); viewModel.sendTimerSet(s); viewModel.navigateTo(Screen.TimerSets) },
+                    onSave = { s -> viewModel.timers.saveTimerSet(s); viewModel.navigateTo(Screen.TimerSets) },
+                    onSend = { s ->
+                        viewModel.timers.saveTimerSet(s)
+                        viewModel.timers.sendTimerSet(s)
+                        viewModel.navigateTo(Screen.TimerSets)
+                    },
                     onBack = { viewModel.navigateTo(Screen.TimerSets) },
                     connectionStatus = state.connectionStatus,
                     onReconnect = { viewModel.onReconnect() },

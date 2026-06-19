@@ -13,18 +13,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
-
-@OptIn(ExperimentalUuidApi::class)
-private fun randomId(): String = Uuid.random().toString()
 
 /**
  * Owns the alarm cluster extracted from [com.blizzardcaron.freeolleefaces.AppViewModel]: the
  * alarm list (here [items] — renamed from the VM's old `alarms` to avoid
  * `viewModel.alarms.alarms`), the next-fire summary, and the 5 CRUD operations. Moved verbatim;
- * the only renames are `alarms` -> `items`, `viewModelScope` -> `scope`, and `showSnackbar` is
- * now an injected callback (the VM's own snackbar channel, via `emitEvent`).
+ * the only renames are `alarms` -> `items` and the injected [clock] (was `Clock.System` directly
+ * in the VM); `viewModelScope` -> `scope` and `showSnackbar` becoming an injected callback (the
+ * VM's own snackbar channel, via `emitEvent`) are constructor-level, not method-body renames.
  */
 class AlarmController(
     private val alarmRepo: AlarmsRepository,
