@@ -1,5 +1,8 @@
 package com.blizzardcaron.freeolleefaces.ble
 
+// cohesive Ollee wire-protocol codec: one responsibility (frame build/parse/CRC) whose
+// functions are tightly coupled to the byte layout and don't split into separate types cleanly
+@Suppress("TooManyFunctions")
 object OlleeProtocol {
 
     const val MAX_VALUE_LENGTH = 6

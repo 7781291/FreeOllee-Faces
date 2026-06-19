@@ -45,6 +45,9 @@ private fun nowMs(): Long = Clock.System.now().toEpochMilliseconds()
 
 private const val MINUTES_PER_HOUR = 60
 
+// 12 injected dependencies, each defaulted for tests — standard constructor DI; bundling them
+// into a holder type would only obscure the wiring and worsen test ergonomics
+@Suppress("LongParameterList")
 class AppViewModel(
     private val prefs: Prefs,
     private val ble: BleClient,

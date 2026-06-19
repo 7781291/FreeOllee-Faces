@@ -18,6 +18,9 @@ import kotlin.math.tan
 
 data class NextEvent(val kind: SunEventKind, val time: LocalDateTime)
 
+// cohesive solar-position algorithm: its helper functions are steps of one NOAA computation
+// and only make sense together
+@Suppress("TooManyFunctions")
 object SunCalc {
 
     // Standard "official" zenith for sunrise/sunset: 90.833° (includes refraction + solar disc).
