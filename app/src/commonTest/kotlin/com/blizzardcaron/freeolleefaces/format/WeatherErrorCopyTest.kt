@@ -16,7 +16,7 @@ class WeatherErrorCopyTest {
 
     @Test
     fun `Timeout shows a retry hint without a code`() {
-        val msg = WeatherErrorCopy.describe(WeatherFetchError.Timeout)
+        val msg = WeatherErrorCopy.describe(WeatherFetchError.Timeout())
         assertTrue(msg.contains("timed out"), msg)
     }
 

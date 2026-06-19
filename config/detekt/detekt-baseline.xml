@@ -46,15 +46,7 @@
     <ID>ReturnCount:TimerConfirm.kt$TimerConfirm$fun matches(writePacket: ByteArray, frame: OlleeProtocol.Frame): Boolean</ID>
     <ID>ReturnCount:WatchLink.kt$WatchLink.&lt;no name provided&gt;$override fun onServicesDiscovered(g: BluetoothGatt, status: Int)</ID>
     <ID>ReturnCount:WatchLink.kt$WatchLink.HeldCallback$private fun handleNotify(uuid: UUID, value: ByteArray?)</ID>
-    <ID>SwallowedException:OpenMeteoClient.kt$OpenMeteoClient$e: ConnectTimeoutException</ID>
-    <ID>SwallowedException:OpenMeteoClient.kt$OpenMeteoClient$e: Exception</ID>
-    <ID>SwallowedException:OpenMeteoClient.kt$OpenMeteoClient$e: IOException</ID>
-    <ID>SwallowedException:OpenMeteoClient.kt$OpenMeteoClient$e: SocketTimeoutException</ID>
-    <ID>SwallowedException:OpenMeteoClient.kt$OpenMeteoClient$e: TimeoutCancellationException</ID>
-    <ID>ThrowsCount:OpenMeteoClient.kt$OpenMeteoClient$fun parseCurrentTemperatureF(json: String): Double</ID>
-    <ID>ThrowsCount:OpenMeteoClient.kt$OpenMeteoClient$private suspend fun fetchOnce(lat: Double, lng: Double, unit: TempUnit): Double</ID>
     <ID>TooGenericExceptionCaught:DevToolsReceiver.kt$DevToolsReceiver$e: Exception</ID>
-    <ID>TooGenericExceptionCaught:OpenMeteoClient.kt$OpenMeteoClient$e: Exception</ID>
     <ID>TooGenericExceptionCaught:WatchLink.kt$WatchLink$error: Exception</ID>
     <ID>TooManyFunctions:OlleeProtocol.kt$OlleeProtocol</ID>
     <ID>TooManyFunctions:SunCalc.kt$SunCalc</ID>

@@ -11,6 +11,7 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.io.IOException
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 
 object OpenMeteoClient {
@@ -46,7 +47,13 @@ object OpenMeteoClient {
             fetchOnce(lat, lng, unit)
         }
 
-    /** A single HTTP attempt. Throws a [WeatherFetchError] on any failure. */
+    /**
+     * A single HTTP attempt. Throws a [WeatherFetchError] on any failure.
+     *
+     * Each catch arm maps its specific exception to the matching [WeatherFetchError], but the
+     * actual `throw` is consolidated to one site below so ThrowsCount stays low without losing
+     * per-exception specificity (and without resorting to a generic `catch (e: Exception)`).
+     */
     private suspend fun fetchOnce(lat: Double, lng: Double, unit: TempUnit): Double {
         val client = HttpClient {
             install(HttpTimeout) {
@@ -55,34 +62,34 @@ object OpenMeteoClient {
                 socketTimeoutMillis = READ_TIMEOUT_MS
             }
         }
+        val mappedError: WeatherFetchError
         try {
             val response = client.get(buildUrl(lat, lng, unit))
             WeatherFetchError.fromHttpStatus(response.status.value)?.let { throw it }
             val body = response.bodyAsText()
             return parseCurrentTemperatureF(body)
         } catch (e: SocketTimeoutException) {
-            throw WeatherFetchError.Timeout
+            mappedError = WeatherFetchError.Timeout(e)
         } catch (e: ConnectTimeoutException) {
-            throw WeatherFetchError.Timeout
+            mappedError = WeatherFetchError.Timeout(e)
         } catch (e: TimeoutCancellationException) {
-            throw WeatherFetchError.Timeout
+            mappedError = WeatherFetchError.Timeout(e)
         } catch (e: IOException) {
-            throw WeatherFetchError.Network(e.message ?: "I/O error")
+            mappedError = WeatherFetchError.Network(e.message ?: "I/O error", e)
         } finally {
             client.close()
         }
+        throw mappedError
     }
 
     /** Extracts `current.temperature_2m` from the response JSON. Unit is whatever the URL requested. */
     fun parseCurrentTemperatureF(json: String): Double {
         val response = try {
             parseJson.decodeFromString<OpenMeteoResponse>(json)
-        } catch (e: Exception) {
-            throw WeatherFetchError.Malformed("response is not valid JSON: ${e.message}")
+        } catch (e: SerializationException) {
+            throw WeatherFetchError.Malformed("response is not valid JSON: ${e.message}", e)
         }
-        val current = response.current
-            ?: throw WeatherFetchError.Malformed("response missing 'current' block")
-        return current.temp2m
-            ?: throw WeatherFetchError.Malformed("response 'current' missing 'temperature_2m'")
+        return response.current?.temp2m
+            ?: throw WeatherFetchError.Malformed("response missing 'current' or 'temperature_2m'")
     }
 }

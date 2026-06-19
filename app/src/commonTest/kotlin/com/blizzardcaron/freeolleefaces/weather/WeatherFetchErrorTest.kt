@@ -32,8 +32,8 @@ class WeatherFetchErrorTest {
 
     @Test
     fun `Timeout and Network are transient with no status code`() {
-        assertTrue(WeatherFetchError.Timeout.isTransient)
-        assertNull(WeatherFetchError.Timeout.statusCode)
+        assertTrue(WeatherFetchError.Timeout().isTransient)
+        assertNull(WeatherFetchError.Timeout().statusCode)
         assertTrue(WeatherFetchError.Network("conn reset").isTransient)
         assertNull(WeatherFetchError.Network("conn reset").statusCode)
     }
