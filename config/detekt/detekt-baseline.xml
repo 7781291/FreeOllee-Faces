@@ -24,11 +24,6 @@
     <ID>MagicNumber:Alarm.kt$Alarm$0x7F</ID>
     <ID>MagicNumber:Alarm.kt$Alarm$23</ID>
     <ID>MagicNumber:Alarm.kt$Alarm$59</ID>
-    <ID>MagicNumber:AlarmConfirm.kt$AlarmConfirm$0xFF</ID>
-    <ID>MagicNumber:AlarmConfirm.kt$AlarmConfirm$3</ID>
-    <ID>MagicNumber:AlarmConfirm.kt$AlarmConfirm$4</ID>
-    <ID>MagicNumber:AlarmConfirm.kt$AlarmConfirm$6</ID>
-    <ID>MagicNumber:AlarmConfirm.kt$AlarmConfirm$7</ID>
     <ID>MagicNumber:AlarmRearm.kt$AlarmRearm$1000</ID>
     <ID>MagicNumber:AlarmRearm.kt$AlarmRearm$60_000L</ID>
     <ID>MagicNumber:AlarmSchedule.kt$AlarmSchedule$12</ID>
@@ -77,9 +72,6 @@
     <ID>MagicNumber:NotificationCount.kt$NotificationCount$11</ID>
     <ID>MagicNumber:NotificationCount.kt$NotificationCount$7</ID>
     <ID>MagicNumber:NotificationCount.kt$NotificationCount$9</ID>
-    <ID>MagicNumber:NotifyFrameReassembler.kt$NotifyFrameReassembler$0xFF</ID>
-    <ID>MagicNumber:NotifyFrameReassembler.kt$NotifyFrameReassembler$3</ID>
-    <ID>MagicNumber:NotifyFrameReassembler.kt$NotifyFrameReassembler$4</ID>
     <ID>MagicNumber:NumberFormat.kt$10</ID>
     <ID>MagicNumber:NumberFormat.kt$3</ID>
     <ID>MagicNumber:Prefs.kt$Prefs$120</ID>
@@ -98,17 +90,6 @@
     <ID>MagicNumber:SettingsScreen.kt$60</ID>
     <ID>MagicNumber:Staleness.kt$60_000L</ID>
     <ID>MagicNumber:TimePickerDialog.kt$60</ID>
-    <ID>MagicNumber:TimerConfirm.kt$TimerConfirm$0xFF</ID>
-    <ID>MagicNumber:TimerConfirm.kt$TimerConfirm$16</ID>
-    <ID>MagicNumber:TimerConfirm.kt$TimerConfirm$24</ID>
-    <ID>MagicNumber:TimerConfirm.kt$TimerConfirm$3</ID>
-    <ID>MagicNumber:TimerConfirm.kt$TimerConfirm$3600</ID>
-    <ID>MagicNumber:TimerConfirm.kt$TimerConfirm$4</ID>
-    <ID>MagicNumber:TimerConfirm.kt$TimerConfirm$5</ID>
-    <ID>MagicNumber:TimerConfirm.kt$TimerConfirm$6</ID>
-    <ID>MagicNumber:TimerConfirm.kt$TimerConfirm$60</ID>
-    <ID>MagicNumber:TimerConfirm.kt$TimerConfirm$7</ID>
-    <ID>MagicNumber:TimerConfirm.kt$TimerConfirm$8</ID>
     <ID>MagicNumber:TimerController.kt$TimerController$10</ID>
     <ID>MagicNumber:TimerController.kt$TimerController$86_399</ID>
     <ID>MagicNumber:TimerModels.kt$TimerSet$10</ID>
@@ -121,8 +102,6 @@
     <ID>MagicNumber:TimerSetsScreen.kt$60</ID>
     <ID>MagicNumber:TimerSetsScreen.kt$86_399</ID>
     <ID>MagicNumber:TimerWidgets.kt$12</ID>
-    <ID>MagicNumber:WatchLink.kt$WatchLink$0xFF</ID>
-    <ID>MagicNumber:WatchLink.kt$WatchLink$16</ID>
     <ID>MagicNumber:WeatherFetchError.kt$WeatherFetchError.Companion$200</ID>
     <ID>MagicNumber:WeatherFetchError.kt$WeatherFetchError.Companion$299</ID>
     <ID>MagicNumber:WeatherFetchError.kt$WeatherFetchError.Companion$500</ID>

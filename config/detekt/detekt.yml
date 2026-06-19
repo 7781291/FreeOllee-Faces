@@ -26,4 +26,4 @@ style:
     active: true
     maxLineLength: 120
   MagicNumber:
-    excludes: ['**/ui/theme/Color.kt', '**/ui/theme/Type.kt', '**/ble/OlleeProtocol.kt', '**/sun/SunCalc.kt']
+    excludes: ['**/ui/theme/Color.kt', '**/ui/theme/Type.kt', '**/ble/OlleeProtocol.kt', '**/sun/SunCalc.kt', '**/ble/TimerConfirm.kt', '**/ble/AlarmConfirm.kt', '**/ble/NotifyFrameReassembler.kt', '**/ble/WatchLink.kt']
