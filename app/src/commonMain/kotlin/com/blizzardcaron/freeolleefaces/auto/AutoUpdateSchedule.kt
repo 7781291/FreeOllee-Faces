@@ -48,10 +48,12 @@ object AutoUpdateSchedule {
         sleep: SleepWindow?,
     ): LocalDateTime {
         val base = now.plusMinutes(intervalMinutes.toLong())
-        if (sleep == null) return base
         val baseMinOfDay = base.hour * MINUTES_PER_HOUR + base.minute
-        if (!isInSleepWindow(baseMinOfDay, sleep.startMin, sleep.endMin)) return base
-        return snapToEnd(base, sleep.endMin)
+        return if (sleep != null && isInSleepWindow(baseMinOfDay, sleep.startMin, sleep.endMin)) {
+            snapToEnd(base, sleep.endMin)
+        } else {
+            base
+        }
     }
 
     /** Wake right after the event goes stale. */

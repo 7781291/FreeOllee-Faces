@@ -8,15 +8,19 @@ package com.blizzardcaron.freeolleefaces.ble
  */
 object AlarmConfirm {
     fun matches(enabled: Boolean, hour: Int, minute: Int, chimeIndex: Int, frame: OlleeProtocol.Frame): Boolean {
-        if (!frame.crcOk) return false
-        if (frame.target != OlleeProtocol.TARGET_GET_ALARM + OlleeProtocol.RESPONSE_TARGET_OFFSET) return false
         val p = frame.payload
-        if (p.size < 7) return false
+        val isValidFrame = frame.crcOk &&
+            frame.target == OlleeProtocol.TARGET_GET_ALARM + OlleeProtocol.RESPONSE_TARGET_OFFSET &&
+            p.size >= 7
+        if (!isValidFrame) return false
         val enableByte = p[0].toInt() and 0xFF
-        if (!enabled) return enableByte == 0
-        return enableByte == 1 &&
-            (p[3].toInt() and 0xFF) == hour &&
-            (p[4].toInt() and 0xFF) == minute &&
-            (p[6].toInt() and 0xFF) == chimeIndex
+        return if (!enabled) {
+            enableByte == 0
+        } else {
+            enableByte == 1 &&
+                (p[3].toInt() and 0xFF) == hour &&
+                (p[4].toInt() and 0xFF) == minute &&
+                (p[6].toInt() and 0xFF) == chimeIndex
+        }
     }
 }

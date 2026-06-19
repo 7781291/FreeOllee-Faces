@@ -14,13 +14,13 @@ suspend fun <T> withRetry(
     block: suspend () -> T,
 ): Result<T> {
     var lastError: Throwable? = null
-    repeat(policy.maxAttempts) { attempt ->
+    for (attempt in 0 until policy.maxAttempts) {
         val result = runCatching { block() }
         if (result.isSuccess) return result
         val error = result.exceptionOrNull()!!
         lastError = error
         val isLastAttempt = attempt == policy.maxAttempts - 1
-        if (isLastAttempt || !isTransient(error)) return Result.failure(error)
+        if (isLastAttempt || !isTransient(error)) break
         val waitMs = policy.backoffMs.getOrElse(attempt) { policy.backoffMs.lastOrNull() ?: 0L }
         if (waitMs > 0) delayFn(waitMs)
     }

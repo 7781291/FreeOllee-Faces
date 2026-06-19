@@ -18,14 +18,14 @@ object TimerConfirm {
     private const val RUN_FLAG_RUNNING = 0x02
 
     fun matches(writePacket: ByteArray, frame: OlleeProtocol.Frame): Boolean {
-        if (!frame.crcOk) return false
-        if (frame.target != OlleeProtocol.TARGET_GET_TIMER + OlleeProtocol.RESPONSE_TARGET_OFFSET) return false
         val reply = frame.payload
-        if (reply.size < 4) return false
-
-        val intended = OlleeProtocol.parseFrame(writePacket) ?: return false
-        val w = intended.payload
-        if (w.size < 8) return false // [HH,MM,SS,mode] + at least slot0 (4 bytes)
+        val isValidReply = frame.crcOk &&
+            frame.target == OlleeProtocol.TARGET_GET_TIMER + OlleeProtocol.RESPONSE_TARGET_OFFSET &&
+            reply.size >= 4
+        val intended = OlleeProtocol.parseFrame(writePacket)
+        val w = intended?.payload
+        // [HH,MM,SS,mode] + at least slot0 (4 bytes)
+        if (!isValidReply || w == null || w.size < 8) return false
 
         val headerSeconds = (w[0].toInt() and 0xFF) * 3600 + (w[1].toInt() and 0xFF) * 60 + (w[2].toInt() and 0xFF)
         val mode = w[3].toInt() and 0xFF

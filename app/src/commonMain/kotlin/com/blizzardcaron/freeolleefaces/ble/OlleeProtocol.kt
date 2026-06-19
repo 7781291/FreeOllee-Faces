@@ -141,10 +141,10 @@ object OlleeProtocol {
 
     /** Parses a 0x52 config reply into a [WatchConfig], or null if target/CRC/length is wrong. */
     fun parseConfig(frame: Frame): WatchConfig? {
-        if (!frame.crcOk) return null
-        if (frame.target != TARGET_GET_CONFIG + RESPONSE_TARGET_OFFSET) return null
-        if (frame.payload.size < CONFIG_MIN_PAYLOAD) return null
-        return WatchConfig(frame.payload)
+        val isValid = frame.crcOk &&
+            frame.target == TARGET_GET_CONFIG + RESPONSE_TARGET_OFFSET &&
+            frame.payload.size >= CONFIG_MIN_PAYLOAD
+        return if (isValid) WatchConfig(frame.payload) else null
     }
 
     /** Builds the 0x33 config write from a (read-modified) [config]. */
@@ -341,8 +341,9 @@ object OlleeProtocol {
      * responses, e.g. a temperature read-back at target 0x4E with payload "  54 F".
      */
     fun parseFrame(bytes: ByteArray): Frame? {
-        if (bytes.size < MIN_FRAME_LENGTH) return null
-        if (bytes[2] != 0xAA.toByte() || bytes[3] != 0x55.toByte()) return null
+        val hasValidHeader = bytes.size >= MIN_FRAME_LENGTH &&
+            bytes[2] == 0xAA.toByte() && bytes[3] == 0x55.toByte()
+        if (!hasValidHeader) return null
         val crc = ((bytes[4].toInt() and 0xFF) shl 8) or (bytes[5].toInt() and 0xFF)
         val inner = bytes.copyOfRange(6, bytes.size)
         val cmd = inner[0].toInt() and 0xFF

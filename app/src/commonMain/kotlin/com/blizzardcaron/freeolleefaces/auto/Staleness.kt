@@ -15,7 +15,6 @@ fun isTempCacheFresh(
     intervalMin: Int,
     nowMs: Long,
 ): Boolean {
-    if (fetchedMs == null || cacheUnit == null) return false
-    if (cacheUnit != currentUnit) return false
-    return nowMs - fetchedMs < intervalMin * MILLIS_PER_MINUTE
+    return fetchedMs != null && cacheUnit != null && cacheUnit == currentUnit &&
+        nowMs - fetchedMs < intervalMin * MILLIS_PER_MINUTE
 }
