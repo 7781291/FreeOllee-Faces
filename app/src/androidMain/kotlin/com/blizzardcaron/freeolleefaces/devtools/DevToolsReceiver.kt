@@ -38,6 +38,13 @@ import kotlinx.coroutines.launch
  */
 class DevToolsReceiver : BroadcastReceiver() {
 
+    @Suppress("ReturnCount", "TooGenericExceptionCaught")
+    // ReturnCount: debug-only adb probe with sequential input-validation guards, each with a
+    // distinct diagnostic — early returns are the clearest form for a dev probe.
+    // TooGenericExceptionCaught: buildPacket parses arbitrary adb-supplied hex/int extras, so it
+    // must treat ANY malformed input (NumberFormatException, IllegalArgumentException from
+    // require(), NPE from !!, etc.) as "bad request"; narrowing the catch would let some
+    // malformed input crash the receiver.
     override fun onReceive(context: Context, intent: Intent) {
         val ctx = context.applicationContext
         if ((ctx.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) == 0) return

@@ -16,13 +16,9 @@
     <ID>LongParameterList:TimerSetsScreen.kt$( set: TimerSet, active: Boolean, sending: Boolean, canMoveUp: Boolean, canMoveDown: Boolean, onOpen: () -&gt; Unit, onDuplicate: () -&gt; Unit, onDelete: () -&gt; Unit, onSend: () -&gt; Unit, onStart: () -&gt; Unit, onMoveUp: () -&gt; Unit, onMoveDown: () -&gt; Unit, )</ID>
     <ID>LongParameterList:TimerSetsScreen.kt$( sets: List&lt;TimerSet&gt;, activeId: String?, sending: Boolean, quickTimerSeconds: Int, quickTimerStartFromApp: Boolean, quickTimerIntervalMode: Boolean, onSaveQuick: (Int) -&gt; Unit, onToggleStartFromApp: (Boolean) -&gt; Unit, onToggleIntervalMode: (Boolean) -&gt; Unit, quickTimerAlarmMode: Boolean, quickTimerAlarmHour: Int, quickTimerAlarmMinute: Int, onToggleAlarmMode: (Boolean) -&gt; Unit, onSaveAlarmTime: (Int, Int) -&gt; Unit, onSendAlarm: () -&gt; Unit, onSendQuick: () -&gt; Unit, onOpen: (TimerSet) -&gt; Unit, onNew: () -&gt; Unit, onDuplicate: (TimerSet) -&gt; Unit, onDelete: (TimerSet) -&gt; Unit, onSend: (TimerSet) -&gt; Unit, onStart: (TimerSet) -&gt; Unit, onMoveUp: (TimerSet) -&gt; Unit, onMoveDown: (TimerSet) -&gt; Unit, onBack: () -&gt; Unit, connectionStatus: ConnectionStatus, onReconnect: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
     <ID>NestedBlockDepth:WatchLink.kt$WatchLink.HeldCallback$override fun onServicesDiscovered(g: BluetoothGatt, status: Int)</ID>
-    <ID>ReturnCount:AndroidStepsProvider.kt$AndroidStepsProvider$override suspend fun todaySteps(): Result&lt;Long&gt;</ID>
-    <ID>ReturnCount:AutoUpdateWorker.kt$AutoUpdateWorker$override suspend fun doWork(): Result</ID>
-    <ID>ReturnCount:DevToolsReceiver.kt$DevToolsReceiver$override fun onReceive(context: Context, intent: Intent)</ID>
     <ID>ReturnCount:MainActivity.kt$@SuppressLint("MissingPermission") private fun bondedDevices(context: Context): List&lt;BondedDevice&gt;</ID>
     <ID>ReturnCount:WatchLink.kt$WatchLink.&lt;no name provided&gt;$override fun onServicesDiscovered(g: BluetoothGatt, status: Int)</ID>
     <ID>ReturnCount:WatchLink.kt$WatchLink.HeldCallback$private fun handleNotify(uuid: UUID, value: ByteArray?)</ID>
-    <ID>TooGenericExceptionCaught:DevToolsReceiver.kt$DevToolsReceiver$e: Exception</ID>
     <ID>TooGenericExceptionCaught:WatchLink.kt$WatchLink$error: Exception</ID>
     <ID>TooManyFunctions:OlleeProtocol.kt$OlleeProtocol</ID>
     <ID>TooManyFunctions:SunCalc.kt$SunCalc</ID>

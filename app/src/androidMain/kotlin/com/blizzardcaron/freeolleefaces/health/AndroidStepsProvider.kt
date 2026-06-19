@@ -44,12 +44,14 @@ class AndroidStepsProvider(context: Context) : StepsProvider {
      * background read without `READ_HEALTH_DATA_IN_BACKGROUND`).
      */
     override suspend fun todaySteps(): Result<Long> {
-        if (availability() != StepsProvider.Availability.AVAILABLE) {
-            return Result.failure(IllegalStateException("Health Connect unavailable"))
+        val failure: Throwable? = when {
+            availability() != StepsProvider.Availability.AVAILABLE ->
+                IllegalStateException("Health Connect unavailable")
+            !hasReadPermission() ->
+                SecurityException("Steps read permission not granted")
+            else -> null
         }
-        if (!hasReadPermission()) {
-            return Result.failure(SecurityException("Steps read permission not granted"))
-        }
+        if (failure != null) return Result.failure(failure)
         val zone = ZoneId.systemDefault()
         val start = LocalDate.now(zone).atStartOfDay(zone).toInstant()
         val end = java.time.Instant.now()

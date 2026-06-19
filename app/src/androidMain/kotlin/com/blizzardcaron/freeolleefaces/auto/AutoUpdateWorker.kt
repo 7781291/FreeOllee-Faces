@@ -59,34 +59,34 @@ class AutoUpdateWorker(
         // whatever schedule the active face arms and never affects that face's success/scheduling.
         maybePushNotificationCount(ctx, prefs, address)
         maybeReconcileAutoSleep(ctx, prefs, address)
+        val now = nowLocal()
 
-        // CUSTOM has no schedule; clear any stale error notification and stop the chain.
-        if (face == ActiveComplication.CUSTOM) {
-            applyHealth(ctx, prefs, null, inSleep = false)
-            return Result.success()
-        }
+        return when {
+            // CUSTOM has no schedule; clear any stale error notification and stop the chain.
+            face == ActiveComplication.CUSTOM -> {
+                applyHealth(ctx, prefs, null, inSleep = false)
+                Result.success()
+            }
 
-        // STEPS needs only a watch (no coordinates); handle before the location guard.
-        if (face == ActiveComplication.STEPS) {
-            if (address == null) {
+            // STEPS needs only a watch (no coordinates); handle before the location guard.
+            face == ActiveComplication.STEPS && address == null -> {
                 prefs.recordAutoSend("Skipped: set watch in app")
                 applyHealth(ctx, prefs, FailureKind.SETUP_INCOMPLETE, inSleepNow(prefs))
-                return Result.success()
+                Result.success()
             }
-            return runSteps(ctx, prefs, address, nowLocal())
-        }
 
-        if (lat == null || lng == null || address == null) {
-            prefs.recordAutoSend("Skipped: set location/watch in app")
-            applyHealth(ctx, prefs, FailureKind.SETUP_INCOMPLETE, inSleepNow(prefs))
-            return Result.success()
-        }
+            face == ActiveComplication.STEPS -> runSteps(ctx, prefs, address!!, now)
 
-        val now = nowLocal()
-        return when (face) {
-            ActiveComplication.TEMPERATURE -> runTemperature(ctx, prefs, lat, lng, address, now)
-            ActiveComplication.SUN -> runSun(ctx, prefs, lat, lng, address, now)
-            ActiveComplication.STEPS, ActiveComplication.CUSTOM -> Result.success() // handled above
+            lat == null || lng == null || address == null -> {
+                prefs.recordAutoSend("Skipped: set location/watch in app")
+                applyHealth(ctx, prefs, FailureKind.SETUP_INCOMPLETE, inSleepNow(prefs))
+                Result.success()
+            }
+
+            face == ActiveComplication.TEMPERATURE -> runTemperature(ctx, prefs, lat, lng, address, now)
+            face == ActiveComplication.SUN -> runSun(ctx, prefs, lat, lng, address, now)
+
+            else -> Result.success() // STEPS/CUSTOM already handled above
         }
     }
 
