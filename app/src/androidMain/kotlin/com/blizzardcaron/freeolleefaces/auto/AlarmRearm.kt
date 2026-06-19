@@ -78,32 +78,8 @@ object AlarmRearm {
 
         // Schedule the trigger first — it must survive even if the push below fails.
         val am = ctx.getSystemService(AlarmManager::class.java)
-        val trigger = PendingIntent.getBroadcast(
-            ctx,
-            REQUEST_CODE,
-            Intent(ctx, AlarmRearmReceiver::class.java),
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
         val zone = TimeZone.currentSystemDefault()
-        val next = AlarmSchedule.nextFire(
-            AlarmsRepository(alarmSettings(ctx)).getAll(),
-            Clock.System.now().toLocalDateTime(zone),
-        )
-        if (next != null) {
-            val atMs = next.dateTime.toInstant(zone).toEpochMilliseconds() + POST_FIRE_TRIGGER_DELAY_MS
-            if (am.canScheduleExactAlarms()) {
-                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, atMs, trigger)
-                Log.i(TAG, "next fire ${next.dateTime}; trigger set for fire+60s")
-            } else {
-                // SCHEDULE_EXACT_ALARM revoked (possible on API 31-32 only): an inexact trigger
-                // still re-arms the watch, just possibly late.
-                am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, atMs, trigger)
-                Log.w(TAG, "next fire ${next.dateTime}; exact alarms not permitted — inexact trigger set")
-            }
-        } else {
-            am.cancel(trigger)
-            Log.i(TAG, "no alarms due; trigger cancelled, will push disarm")
-        }
+        scheduleReArmTrigger(ctx, am, zone)
 
         val address = Prefs(appSettings(ctx)).watchAddress
         val myGen = generation.incrementAndGet()
@@ -123,44 +99,79 @@ object AlarmRearm {
                 // leave the watch holding stale state (observed on-device 2026-06-11).
                 pushMutex.withLock {
                     if (generation.get() != myGen) return@launch // superseded while waiting
-                    // Recompute at push time so a burst of edits sends the final state.
-                    val latest = AlarmSchedule.nextFire(
-                        AlarmsRepository(alarmSettings(ctx)).getAll(),
-                        Clock.System.now().toLocalDateTime(zone),
-                    )
-                    val ble = AndroidBleClient(ctx)
-                    val packet = AlarmSchedule.packetFor(latest)
-                    val sent = ble.sendPacket(address, packet)
-                    val confirmed = sent.isSuccess && AlarmReadback.confirm(
-                        ble, address, packet,
-                        enabled = latest != null,
-                        hour = latest?.hour ?: 0, minute = latest?.minute ?: 0, chimeIndex = latest?.chimeIndex ?: 0,
-                    )
-                    val outcome = if (confirmed) {
-                        val detail = if (latest != null) "armed ${latest.dateTime}" else "disarm"
-                        "push+confirm OK ($detail) [attempt $attempt]"
-                    } else {
-                        val reason = sent.exceptionOrNull()?.message ?: "read-back mismatch"
-                        "push/confirm FAIL $reason [attempt $attempt]"
-                    }
-                    Log.i(TAG, outcome)
-                    val action = AlarmRearmRecovery.afterPush(confirmed, attempt)
-                    applyRecovery(ctx, am, action)
-                    pushResults.tryEmit(
-                        when {
-                            !confirmed && action is AlarmRearmRecovery.Action.ScheduleRetry ->
-                                "Alarm send failed — long-press ALARM to wake the watch (retrying automatically)"
-                            !confirmed ->
-                                "Alarm send failed after several tries — long-press ALARM to wake the watch, then tap Retry in the notification"
-                            latest != null -> "Sent to watch — ${AlarmSchedule.formatNext(latest)}"
-                            else -> "Sent to watch — alarm off"
-                        },
-                    )
+                    pushAndRecover(ctx, am, address, attempt, zone)
                 }
             } finally {
                 onComplete()
             }
         }
+    }
+
+    /** Computes the next-fire-plus-60s trigger and schedules it, or cancels it if no alarm is due. */
+    private fun scheduleReArmTrigger(ctx: Context, am: AlarmManager, zone: TimeZone) {
+        val trigger = PendingIntent.getBroadcast(
+            ctx,
+            REQUEST_CODE,
+            Intent(ctx, AlarmRearmReceiver::class.java),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        val next = AlarmSchedule.nextFire(
+            AlarmsRepository(alarmSettings(ctx)).getAll(),
+            Clock.System.now().toLocalDateTime(zone),
+        )
+        if (next != null) {
+            val atMs = next.dateTime.toInstant(zone).toEpochMilliseconds() + POST_FIRE_TRIGGER_DELAY_MS
+            if (am.canScheduleExactAlarms()) {
+                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, atMs, trigger)
+                Log.i(TAG, "next fire ${next.dateTime}; trigger set for fire+60s")
+            } else {
+                // SCHEDULE_EXACT_ALARM revoked (possible on API 31-32 only): an inexact trigger
+                // still re-arms the watch, just possibly late.
+                am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, atMs, trigger)
+                Log.w(TAG, "next fire ${next.dateTime}; exact alarms not permitted — inexact trigger set")
+            }
+        } else {
+            am.cancel(trigger)
+            Log.i(TAG, "no alarms due; trigger cancelled, will push disarm")
+        }
+    }
+
+    /** Recomputes the final state at push time, sends + confirms the `0x25` frame, and recovers. */
+    private suspend fun pushAndRecover(ctx: Context, am: AlarmManager, address: String, attempt: Int, zone: TimeZone) {
+        // Recompute at push time so a burst of edits sends the final state.
+        val latest = AlarmSchedule.nextFire(
+            AlarmsRepository(alarmSettings(ctx)).getAll(),
+            Clock.System.now().toLocalDateTime(zone),
+        )
+        val ble = AndroidBleClient(ctx)
+        val packet = AlarmSchedule.packetFor(latest)
+        val sent = ble.sendPacket(address, packet)
+        val confirmed = sent.isSuccess && AlarmReadback.confirm(
+            ble, address, packet,
+            enabled = latest != null,
+            hour = latest?.hour ?: 0, minute = latest?.minute ?: 0, chimeIndex = latest?.chimeIndex ?: 0,
+        )
+        val outcome = if (confirmed) {
+            val detail = if (latest != null) "armed ${latest.dateTime}" else "disarm"
+            "push+confirm OK ($detail) [attempt $attempt]"
+        } else {
+            val reason = sent.exceptionOrNull()?.message ?: "read-back mismatch"
+            "push/confirm FAIL $reason [attempt $attempt]"
+        }
+        Log.i(TAG, outcome)
+        val action = AlarmRearmRecovery.afterPush(confirmed, attempt)
+        applyRecovery(ctx, am, action)
+        pushResults.tryEmit(
+            when {
+                !confirmed && action is AlarmRearmRecovery.Action.ScheduleRetry ->
+                    "Alarm send failed — long-press ALARM to wake the watch (retrying automatically)"
+                !confirmed ->
+                    "Alarm send failed after several tries — long-press ALARM to wake the watch, " +
+                        "then tap Retry in the notification"
+                latest != null -> "Sent to watch — ${AlarmSchedule.formatNext(latest)}"
+                else -> "Sent to watch — alarm off"
+            },
+        )
     }
 
     /** Applies one [AlarmRearmRecovery] outcome: backstop scheduling, cleanup, or notification. */
