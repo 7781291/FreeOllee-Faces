@@ -19,8 +19,7 @@ over Bluetooth Low Energy.
 - The current temperature in °F (via Open-Meteo).
 - The next sunrise or sunset time (computed locally with the NOAA solar algorithm).
 - Today's step count, read from Android Health Connect (whatever app you use writes it
-  there — a fitness ring, phone pedometer, etc.). See
-  [`docs/superpowers/specs/2026-06-02-steps-face-design.md`](docs/superpowers/specs/2026-06-02-steps-face-design.md).
+  there — a fitness ring, phone pedometer, etc.).
 - A custom 6-character string (for experimentation).
 
 **Notification badge** — counts the phone's undismissed notifications and shows the count
@@ -33,17 +32,14 @@ lands). The quick timer also has an **alarm mode** — flip it on to enter a wal
 (H:M AM/PM) instead of a duration, and the app sends the watch a one-shot countdown that
 fires at that time (rolling to the next day for times already past, up to ~24h out). Slots
 within a set can be sorted by duration or hand-reordered with ▲/▼, and the
-set library on the dashboard can be reordered the same way. See
-[`docs/superpowers/specs/2026-06-10-timer-enhancements-design.md`](docs/superpowers/specs/2026-06-10-timer-enhancements-design.md)
-and [`docs/superpowers/specs/2026-06-13-timer-reorder-and-sort-design.md`](docs/superpowers/specs/2026-06-13-timer-reorder-and-sort-design.md).
+set library on the dashboard can be reordered the same way.
 
 **Alarms** — up to 5 alarms with day-of-week repeats, labels, and all 15 watch chime
 tones by name. The watch itself stores only a single alarm with no day field, so the app
 computes the soonest occurrence and re-arms the watch's one slot after every edit and
 every fire — without disturbing the watch's hourly-chime settings, which live in the same
 BLE record. If a re-arm push can't reach the watch it retries at 2/5/15 minutes, then posts a
-notification with a Retry action — a missed push otherwise means a silently skipped alarm. See
-[`docs/superpowers/specs/2026-06-10-alarm-scheduler-design.md`](docs/superpowers/specs/2026-06-10-alarm-scheduler-design.md).
+notification with a Retry action — a missed push otherwise means a silently skipped alarm.
 
 **Connection status** — every screen shows the current watch link in its top bar (`Connected`,
 `Connecting…`, or a tappable `⟳ Reconnect`), so you always know whether a push will actually reach
@@ -61,9 +57,7 @@ protocol in-tree rather than depending on the FreeOllee APK.
 
 ## Reference
 
-- Design spec: [`docs/superpowers/specs/2026-05-14-freeollee-faces-app-design.md`](docs/superpowers/specs/2026-05-14-freeollee-faces-app-design.md)
-- Implementation plan: [`docs/superpowers/plans/2026-05-14-freeollee-faces-app.md`](docs/superpowers/plans/2026-05-14-freeollee-faces-app.md)
-- Screenshots of the official Ollee app for design reference: [`docs/reference/ollee-app-screenshots/`](docs/reference/ollee-app-screenshots/)
+- BLE protocol notes: [`docs/reference/ollee-ble-protocol.md`](docs/reference/ollee-ble-protocol.md)
 
 ## Building
 
