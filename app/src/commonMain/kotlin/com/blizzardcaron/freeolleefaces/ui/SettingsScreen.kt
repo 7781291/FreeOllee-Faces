@@ -13,7 +13,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -34,7 +33,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.blizzardcaron.freeolleefaces.ble.OlleeProtocol
 import com.blizzardcaron.freeolleefaces.prefs.IntervalOptions
 import com.blizzardcaron.freeolleefaces.resources.Res
 import com.blizzardcaron.freeolleefaces.resources.wordmark_super_free
@@ -188,106 +186,9 @@ private fun SleepSection(state: HomeState, callbacks: SettingsCallbacks) {
     }
 }
 
-private fun minutesToLabel(min: Int): String {
+internal fun minutesToLabel(min: Int): String {
     val h = min / MINUTES_PER_HOUR
     return "%d:%02d %s".format(hour12Of(h), min % MINUTES_PER_HOUR, if (isPm(h)) "PM" else "AM")
-}
-
-@Composable
-private fun AutoSleepSection(state: HomeState, callbacks: SettingsCallbacks) {
-    val periods = OlleeProtocol.CONFIG_PERIOD_VALUES_SEC // 5/10/30/60/120 (official app's picker)
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Text("Scheduled auto-sleep")
-        Switch(
-            checked = state.autoSleepScheduleEnabled,
-            onCheckedChange = callbacks.onAutoSleepScheduleEnabledChange,
-        )
-    }
-    if (state.autoSleepScheduleEnabled) {
-        var pickingStart by remember { mutableStateOf(false) }
-        var pickingEnd by remember { mutableStateOf(false) }
-
-        val crosses = state.autoSleepWindowStartMin > state.autoSleepWindowEndMin
-        Text(
-            "Sleeps ${minutesToLabel(state.autoSleepWindowStartMin)} → " +
-                "${minutesToLabel(state.autoSleepWindowEndMin)}${if (crosses) " (next day)" else ""}",
-        )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            OutlinedButton(onClick = { pickingStart = true }, modifier = Modifier.weight(1f)) {
-                Text("From ${minutesToLabel(state.autoSleepWindowStartMin)}")
-            }
-            OutlinedButton(onClick = { pickingEnd = true }, modifier = Modifier.weight(1f)) {
-                Text("To ${minutesToLabel(state.autoSleepWindowEndMin)}")
-            }
-        }
-
-        // In-window profile
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text("In window: screen sleeps")
-            Switch(checked = state.autoSleepInWindowOn, onCheckedChange = callbacks.onAutoSleepInWindowOnChange)
-        }
-        if (state.autoSleepInWindowOn) {
-            PeriodRow(periods, state.autoSleepInWindowPeriodSec, callbacks.onAutoSleepInWindowPeriodChange)
-        }
-
-        // Out-of-window profile
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(if (state.autoSleepOutWindowOn) "Outside window: screen sleeps" else "Outside window: screen stays on")
-            Switch(checked = state.autoSleepOutWindowOn, onCheckedChange = callbacks.onAutoSleepOutWindowOnChange)
-        }
-        if (state.autoSleepOutWindowOn) {
-            PeriodRow(periods, state.autoSleepOutWindowPeriodSec, callbacks.onAutoSleepOutWindowPeriodChange)
-        }
-
-        // Bluetooth-always-on advisory (static — the BLE_CONTINUOUS bit position wasn't isolated
-        // in the spike, so we can't reliably read its live state; show the guidance unconditionally).
-        Text(
-            "Tip: enable \"Bluetooth always on\" on the watch so the schedule applies on time.",
-            style = MaterialTheme.typography.bodySmall,
-        )
-
-        if (pickingStart) {
-            TimePickerDialog(
-                initialMinuteOfDay = state.autoSleepWindowStartMin,
-                onConfirm = {
-                    callbacks.onAutoSleepWindowStartChange(it)
-                    pickingStart = false
-                },
-                onDismiss = { pickingStart = false },
-            )
-        }
-        if (pickingEnd) {
-            TimePickerDialog(
-                initialMinuteOfDay = state.autoSleepWindowEndMin,
-                onConfirm = {
-                    callbacks.onAutoSleepWindowEndChange(it)
-                    pickingEnd = false
-                },
-                onDismiss = { pickingEnd = false },
-            )
-        }
-    }
-}
-
-@Composable
-private fun PeriodRow(periods: List<Int>, selected: Int, onChange: (Int) -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-        periods.forEach { p ->
-            FilterChip(selected = p == selected, onClick = { onChange(p) }, label = { Text("${p}s") })
-        }
-    }
 }
 
 @Composable

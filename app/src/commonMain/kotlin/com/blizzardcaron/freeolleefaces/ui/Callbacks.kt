@@ -1,5 +1,6 @@
 package com.blizzardcaron.freeolleefaces.ui
 
+import com.blizzardcaron.freeolleefaces.alarm.Alarm
 import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 import com.blizzardcaron.freeolleefaces.timer.TimerSet
@@ -74,6 +75,26 @@ data class TimerSetRowCallbacks(
     val onDelete: () -> Unit,
     val onSend: () -> Unit,
     val onStart: () -> Unit,
+    val onMoveUp: () -> Unit,
+    val onMoveDown: () -> Unit,
+)
+
+/** Alarm-screen callbacks, bundled to keep the composable signature small. */
+data class AlarmsCallbacks(
+    val onAdd: () -> Unit,
+    val onSave: (Alarm) -> Unit,
+    val onToggle: (String, Boolean) -> Unit,
+    val onDelete: (String) -> Unit,
+    val onBack: () -> Unit,
+    val onReconnect: () -> Unit,
+)
+
+/** Per-slot callbacks for the timer-set editor. */
+data class SlotEditorCallbacks(
+    val onLabelChange: (String) -> Unit,
+    val onDurationChange: (Int) -> Unit,
+    val onFillDown: () -> Unit,
+    val onDuplicate: () -> Unit,
     val onMoveUp: () -> Unit,
     val onMoveDown: () -> Unit,
 )

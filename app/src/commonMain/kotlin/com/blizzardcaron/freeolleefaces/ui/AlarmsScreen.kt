@@ -43,26 +43,21 @@ private const val MAX_MINUTE = 59
 fun AlarmsScreen(
     alarms: List<Alarm>,
     nextSummary: String,
-    onAdd: () -> Unit,
-    onSave: (Alarm) -> Unit,
-    onToggle: (String, Boolean) -> Unit,
-    onDelete: (String) -> Unit,
-    onBack: () -> Unit,
+    callbacks: AlarmsCallbacks,
     connectionStatus: ConnectionStatus,
-    onReconnect: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    BackHandler { onBack() }
+    BackHandler { callbacks.onBack() }
     Column(
         modifier = modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        AppBar(title = "Alarms", connectionStatus = connectionStatus, onReconnect = onReconnect)
+        AppBar(title = "Alarms", connectionStatus = connectionStatus, onReconnect = callbacks.onReconnect)
 
         Text(nextSummary, style = MaterialTheme.typography.titleMedium)
 
         val atMax = alarms.size >= AlarmsRepository.MAX_ALARMS
-        Button(onClick = onAdd, enabled = !atMax, modifier = Modifier.fillMaxWidth()) {
+        Button(onClick = callbacks.onAdd, enabled = !atMax, modifier = Modifier.fillMaxWidth()) {
             Text(if (atMax) "Max ${AlarmsRepository.MAX_ALARMS} alarms" else "Add alarm")
         }
 
@@ -82,9 +77,9 @@ fun AlarmsScreen(
                 key(alarm.id) {
                     AlarmCard(
                         alarm = alarm,
-                        onSave = onSave,
-                        onToggle = { onToggle(alarm.id, it) },
-                        onDelete = { onDelete(alarm.id) },
+                        onSave = callbacks.onSave,
+                        onToggle = { callbacks.onToggle(alarm.id, it) },
+                        onDelete = { callbacks.onDelete(alarm.id) },
                     )
                 }
             }

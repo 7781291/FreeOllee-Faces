@@ -45,6 +45,7 @@ import com.blizzardcaron.freeolleefaces.prefs.alarmSettings
 import com.blizzardcaron.freeolleefaces.prefs.appSettings
 import com.blizzardcaron.freeolleefaces.prefs.timerSettings
 import com.blizzardcaron.freeolleefaces.timer.TimerSetsRepository
+import com.blizzardcaron.freeolleefaces.ui.AlarmsCallbacks
 import com.blizzardcaron.freeolleefaces.ui.AlarmsScreen
 import com.blizzardcaron.freeolleefaces.ui.BondedDevice
 import com.blizzardcaron.freeolleefaces.ui.BondedDevicesDialog
@@ -370,13 +371,15 @@ private fun AppContent(
         Screen.Alarms -> AlarmsScreen(
             alarms = viewModel.alarms.items,
             nextSummary = viewModel.alarms.nextAlarmSummary,
-            onAdd = { viewModel.alarms.addAlarm() },
-            onSave = { viewModel.alarms.saveAlarm(it) },
-            onToggle = { id, enabled -> viewModel.alarms.toggleAlarm(id, enabled) },
-            onDelete = { viewModel.alarms.deleteAlarm(it) },
-            onBack = { viewModel.navigateTo(Screen.Home) },
+            callbacks = AlarmsCallbacks(
+                onAdd = { viewModel.alarms.addAlarm() },
+                onSave = { viewModel.alarms.saveAlarm(it) },
+                onToggle = { id, enabled -> viewModel.alarms.toggleAlarm(id, enabled) },
+                onDelete = { viewModel.alarms.deleteAlarm(it) },
+                onBack = { viewModel.navigateTo(Screen.Home) },
+                onReconnect = { viewModel.onReconnect() },
+            ),
             connectionStatus = state.connectionStatus,
-            onReconnect = { viewModel.onReconnect() },
             modifier = modifier,
         )
         Screen.TimerSetEdit -> {
