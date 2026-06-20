@@ -1,9 +1,5 @@
 <?xml version="1.0" ?>
 <SmellBaseline>
   <ManuallySuppressedIssues></ManuallySuppressedIssues>
-  <CurrentIssues>
-    <ID>LongMethod:HomeScreen.kt$@Composable private fun NotificationsCard( state: HomeState, expanded: Boolean, onToggle: () -&gt; Unit, onToggleEnabled: (Boolean) -&gt; Unit, onGrantAccess: () -&gt; Unit, onUpdateNow: () -&gt; Unit, )</ID>
-    <ID>LongMethod:HomeScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun HomeScreen( state: HomeState, callbacks: HomeCallbacks, modifier: Modifier = Modifier, )</ID>
-    <ID>LongParameterList:HomeScreen.kt$( title: String, active: Boolean, onActivate: () -&gt; Unit, preview: PreviewState, updated: String?, next: String?, expanded: Boolean, onToggle: (() -&gt; Unit)?, expandedContent: (@Composable () -&gt; Unit)? = null, )</ID>
-  </CurrentIssues>
+  <CurrentIssues></CurrentIssues>
 </SmellBaseline>
