@@ -275,4 +275,31 @@ class PrefsTest {
         assertEquals(AutoSleepProfile(autoSleepOn = true, periodSec = 60), cfg.inWindow)
         assertEquals(false, cfg.outWindow.autoSleepOn)
     }
+
+    // ---------------------------------------------------------------------------
+    // activity-mode prefs
+    // ---------------------------------------------------------------------------
+
+    @Test fun activityActive_defaultsFalse_andRoundTrips() {
+        val prefs = freshPrefs()
+        assertEquals(false, prefs.activityActive)
+        prefs.activityActive = true
+        assertEquals(true, prefs.activityActive)
+    }
+
+    @Test fun activityUnit_defaultsImperial_andRoundTrips() {
+        val prefs = freshPrefs()
+        assertEquals(com.blizzardcaron.freeolleefaces.activity.ActivityUnit.IMPERIAL, prefs.activityUnit)
+        prefs.activityUnit = com.blizzardcaron.freeolleefaces.activity.ActivityUnit.METRIC
+        assertEquals(com.blizzardcaron.freeolleefaces.activity.ActivityUnit.METRIC, prefs.activityUnit)
+    }
+
+    @Test fun savedAutoSleepProfile_nullByDefault_andRoundTrips() {
+        val prefs = freshPrefs()
+        assertNull(prefs.savedAutoSleepProfile)
+        prefs.savedAutoSleepProfile = AutoSleepProfile(autoSleepOn = true, periodSec = 30)
+        assertEquals(AutoSleepProfile(true, 30), prefs.savedAutoSleepProfile)
+        prefs.savedAutoSleepProfile = null
+        assertNull(prefs.savedAutoSleepProfile)
+    }
 }
