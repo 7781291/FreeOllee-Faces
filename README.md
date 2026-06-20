@@ -41,6 +41,18 @@ every fire — without disturbing the watch's hourly-chime settings, which live 
 BLE record. If a re-arm push can't reach the watch it retries at 2/5/15 minutes, then posts a
 notification with a Retry action — a missed push otherwise means a silently skipped alarm.
 
+**Activity mode** — a GPS-tracked walk/run that streams live **pace**, **distance**, and
+**time** to the watch's name tag while you move. Start and stop from the phone's Activity
+tab; tap **MODE** to cycle which metric the watch shows (the change lands immediately).
+The session runs in a foreground service with an ongoing notification, so tracking survives
+the screen turning off, and it disables the watch's auto-sleep for the duration so pushes
+keep landing — then restores your previous auto-sleep setting on stop (and on crash
+recovery, if the app is killed mid-session). Distance and pace render in miles/min-mi or
+km/min-km via the units toggle. Every session is saved as a Strava-ready track file (SI
+units, with per-point altitude) under the app's `files/activities/`, and the last activity's
+distance/time/average-pace summary shows on the Activity tab. Works with no watch selected
+too — it still records the track.
+
 **Connection status** — every screen shows the current watch link in its top bar (`Connected`,
 `Connecting…`, or a tappable `⟳ Reconnect`), so you always know whether a push will actually reach
 the watch.
