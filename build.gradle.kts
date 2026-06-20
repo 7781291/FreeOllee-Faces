@@ -13,7 +13,6 @@ subprojects {
     apply(plugin = "io.gitlab.arturbosch.detekt")
     configure<DetektExtension> {
         config.setFrom(rootProject.file("config/detekt/detekt.yml"))
-        baseline = rootProject.file("config/detekt/detekt-baseline.xml")
         buildUponDefaultConfig = true
         source.setFrom(
             "src/commonMain/kotlin",
