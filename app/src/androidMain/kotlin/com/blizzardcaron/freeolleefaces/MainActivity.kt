@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,6 +46,8 @@ import com.blizzardcaron.freeolleefaces.prefs.alarmSettings
 import com.blizzardcaron.freeolleefaces.prefs.appSettings
 import com.blizzardcaron.freeolleefaces.prefs.timerSettings
 import com.blizzardcaron.freeolleefaces.timer.TimerSetsRepository
+import com.blizzardcaron.freeolleefaces.ui.ActivityCallbacks
+import com.blizzardcaron.freeolleefaces.ui.ActivityScreen
 import com.blizzardcaron.freeolleefaces.ui.AlarmsCallbacks
 import com.blizzardcaron.freeolleefaces.ui.AlarmsScreen
 import com.blizzardcaron.freeolleefaces.ui.BondedDevice
@@ -359,8 +362,29 @@ private fun AppContent(
     settingsCallbacks: SettingsCallbacks,
     modifier: Modifier,
 ) {
+    @Composable
+    fun ActivityTab() {
+        val activityState by viewModel.activity.state.collectAsState()
+        // Task 14: lastSummary should read latestActivitySummary(context); onStart should call
+        // startActivityWithPermission(context, viewModel) instead of onStart() directly.
+        ActivityScreen(
+            state = activityState,
+            unit = viewModel.activity.activityUnit,
+            watchSelected = viewModel.activity.watchSelected,
+            lastSummary = null,
+            callbacks = ActivityCallbacks(
+                onStart = { viewModel.activity.onStart() },
+                onStop = { viewModel.activity.onStop() },
+                onMode = { viewModel.activity.onMode() },
+                onToggleUnit = { viewModel.activity.toggleUnit() },
+            ),
+            modifier = modifier,
+        )
+    }
+
     when (screen) {
         Screen.Home -> HomeScreen(state = state, callbacks = homeCallbacks, modifier = modifier)
+        Screen.Activity -> ActivityTab()
         Screen.Settings -> SettingsScreen(
             state = state,
             callbacks = settingsCallbacks,
