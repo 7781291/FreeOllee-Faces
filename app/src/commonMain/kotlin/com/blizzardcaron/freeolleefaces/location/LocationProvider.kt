@@ -1,6 +1,16 @@
 package com.blizzardcaron.freeolleefaces.location
 
-data class Coords(val lat: Double, val lng: Double, val accuracyM: Float?, val provider: String?)
+data class Coords(
+    val lat: Double,
+    val lng: Double,
+    /**
+     * Horizontal accuracy radius in metres; smaller is better (Android Location.getAccuracy
+     * convention). null when unknown.
+     */
+    val accuracyM: Float?,
+    val provider: String?,
+    val altM: Double? = null,
+)
 
 /** One-shot device location for the weather/sun faces; platform implementations own the plumbing. */
 interface LocationProvider {
