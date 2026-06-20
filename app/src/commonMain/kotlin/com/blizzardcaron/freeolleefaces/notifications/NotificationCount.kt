@@ -9,6 +9,15 @@ import com.blizzardcaron.freeolleefaces.ble.OlleeProtocol
  */
 object NotificationCount {
 
+    /** Highest count renderable as a single digit in the legible left cell. */
+    private const val MAX_SINGLE_DIGIT_COUNT = 9
+
+    /** Highest count renderable as two clean digits (`10`/`11`) before collapsing to "11 or more". */
+    private const val MAX_TWO_DIGIT_COUNT = 11
+
+    /** Number of weekday slots on the watch (Mon..Sun). */
+    private const val WEEKDAY_SLOT_COUNT = 7
+
     /** A framework-free view of one active (shade) notification. */
     data class ActiveNotification(
         val packageName: String,
@@ -45,8 +54,8 @@ object NotificationCount {
      */
     fun format(n: Int): String? = when {
         n <= 0 -> null
-        n <= 9 -> "$n "
-        n <= 11 -> n.toString()
+        n <= MAX_SINGLE_DIGIT_COUNT -> "$n "
+        n <= MAX_TWO_DIGIT_COUNT -> n.toString()
         else -> "11"
     }
 
@@ -59,7 +68,7 @@ object NotificationCount {
      */
     fun packetFor(n: Int): ByteArray {
         val label = format(n)
-        val slots = if (label == null) REAL_WEEKDAYS else List(7) { label }
+        val slots = if (label == null) REAL_WEEKDAYS else List(WEEKDAY_SLOT_COUNT) { label }
         return OlleeProtocol.buildWeekdayPacket(slots)
     }
 }

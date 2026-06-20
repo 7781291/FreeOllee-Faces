@@ -34,13 +34,18 @@ object ErrorNotifier {
         ensureChannel(ctx)
         if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS)
             != PackageManager.PERMISSION_GRANTED
-        ) return false
+        ) {
+            return false
+        }
 
         val intent = Intent(ctx, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         val pending = PendingIntent.getActivity(
-            ctx, 0, intent, PendingIntent.FLAG_IMMUTABLE,
+            ctx,
+            0,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE,
         )
         val builder = NotificationCompat.Builder(ctx, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_notify_error)
@@ -53,7 +58,10 @@ object ErrorNotifier {
         if (kind.retryable) {
             val retryIntent = Intent(ctx, retryReceiverFor(kind))
             val retryPending = PendingIntent.getBroadcast(
-                ctx, retryRequestCodeFor(kind), retryIntent, PendingIntent.FLAG_IMMUTABLE,
+                ctx,
+                retryRequestCodeFor(kind),
+                retryIntent,
+                PendingIntent.FLAG_IMMUTABLE,
             )
             builder.addAction(0, "Retry", retryPending)
         }
@@ -101,11 +109,17 @@ object ErrorNotifier {
     }
 
     private fun textFor(kind: FailureKind): String = when (kind) {
-        FailureKind.WATCH_UNREACHABLE -> "Couldn't reach your watch after several tries. Long-press the ALARM button to wake its Bluetooth, then tap Retry."
+        FailureKind.WATCH_UNREACHABLE ->
+            "Couldn't reach your watch after several tries. Long-press the ALARM button to wake its " +
+                "Bluetooth, then tap Retry."
         FailureKind.WEATHER_FETCH_FAILED -> "Couldn't fetch the temperature. The watch value may be stale."
         FailureKind.SETUP_INCOMPLETE -> "Open the app to set your location and watch."
-        FailureKind.SUN_UNREACHABLE -> "Couldn't deliver the next sunrise/sunset after several tries. Long-press the ALARM button to wake your watch, then tap Retry."
+        FailureKind.SUN_UNREACHABLE ->
+            "Couldn't deliver the next sunrise/sunset after several tries. Long-press the ALARM button " +
+                "to wake your watch, then tap Retry."
         FailureKind.HEALTH_UNAVAILABLE -> "Open the app and grant Health access so step counts can sync."
-        FailureKind.ALARM_UNREACHABLE -> "Couldn't push your next alarm to the watch after several tries — it won't ring until this succeeds. Long-press the ALARM button to wake the watch, then tap Retry."
+        FailureKind.ALARM_UNREACHABLE ->
+            "Couldn't push your next alarm to the watch after several tries — it won't ring until this " +
+                "succeeds. Long-press the ALARM button to wake the watch, then tap Retry."
     }
 }

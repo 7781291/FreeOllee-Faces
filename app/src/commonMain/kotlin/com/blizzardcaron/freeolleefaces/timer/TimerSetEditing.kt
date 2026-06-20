@@ -1,5 +1,8 @@
 package com.blizzardcaron.freeolleefaces.timer
 
+private const val SECONDS_PER_HOUR = 3600
+private const val SECONDS_PER_MINUTE = 60
+
 /** Pure editor transforms for the Timer-set editor — no Android/UI dependencies. */
 object TimerSetEditing {
 
@@ -22,12 +25,12 @@ object TimerSetEditing {
 
     /** Combine an H:M:S triple into seconds (negatives clamped to 0). */
     fun hmsToSeconds(h: Int, m: Int, s: Int): Int =
-        (h.coerceAtLeast(0) * 3600) + (m.coerceAtLeast(0) * 60) + s.coerceAtLeast(0)
+        (h.coerceAtLeast(0) * SECONDS_PER_HOUR) + (m.coerceAtLeast(0) * SECONDS_PER_MINUTE) + s.coerceAtLeast(0)
 
     /** Split a seconds total into (hours, minutes, seconds). */
     fun secondsToHms(total: Int): Triple<Int, Int, Int> {
         val t = total.coerceAtLeast(0)
-        return Triple(t / 3600, (t % 3600) / 60, t % 60)
+        return Triple(t / SECONDS_PER_HOUR, (t % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE, t % SECONDS_PER_MINUTE)
     }
 
     /** "HH:MM:SS" for display. */

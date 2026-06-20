@@ -6,13 +6,10 @@ import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.provider.Settings
-import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -21,14 +18,19 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.core.content.ContextCompat
-import androidx.health.connect.client.PermissionController
 import com.blizzardcaron.freeolleefaces.alarm.AlarmsRepository
 import com.blizzardcaron.freeolleefaces.auto.AlarmRearm
 import com.blizzardcaron.freeolleefaces.auto.AndroidAlarmScheduler
@@ -36,7 +38,6 @@ import com.blizzardcaron.freeolleefaces.auto.AndroidScheduler
 import com.blizzardcaron.freeolleefaces.ble.AndroidBleClient
 import com.blizzardcaron.freeolleefaces.ble.AndroidWatchConnection
 import com.blizzardcaron.freeolleefaces.health.AndroidStepsProvider
-import com.blizzardcaron.freeolleefaces.health.StepsProvider
 import com.blizzardcaron.freeolleefaces.location.AndroidLocationProvider
 import com.blizzardcaron.freeolleefaces.notifications.AndroidNotificationAccess
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
@@ -44,21 +45,27 @@ import com.blizzardcaron.freeolleefaces.prefs.alarmSettings
 import com.blizzardcaron.freeolleefaces.prefs.appSettings
 import com.blizzardcaron.freeolleefaces.prefs.timerSettings
 import com.blizzardcaron.freeolleefaces.timer.TimerSetsRepository
+import com.blizzardcaron.freeolleefaces.ui.AlarmsCallbacks
+import com.blizzardcaron.freeolleefaces.ui.AlarmsScreen
 import com.blizzardcaron.freeolleefaces.ui.BondedDevice
 import com.blizzardcaron.freeolleefaces.ui.BondedDevicesDialog
 import com.blizzardcaron.freeolleefaces.ui.BottomNavTab
-import com.blizzardcaron.freeolleefaces.ui.AlarmsScreen
 import com.blizzardcaron.freeolleefaces.ui.HomeCallbacks
 import com.blizzardcaron.freeolleefaces.ui.HomeScreen
+import com.blizzardcaron.freeolleefaces.ui.HomeState
+import com.blizzardcaron.freeolleefaces.ui.QuickTimerState
 import com.blizzardcaron.freeolleefaces.ui.Screen
 import com.blizzardcaron.freeolleefaces.ui.SettingsCallbacks
 import com.blizzardcaron.freeolleefaces.ui.SettingsScreen
 import com.blizzardcaron.freeolleefaces.ui.TimerSetEditScreen
+import com.blizzardcaron.freeolleefaces.ui.TimerSetsCallbacks
 import com.blizzardcaron.freeolleefaces.ui.TimerSetsScreen
 import com.blizzardcaron.freeolleefaces.ui.theme.FreeOlleeFacesTheme
 import com.blizzardcaron.freeolleefaces.ui.versionLabel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+
+/** Dashboard preview refresh cadence while Home is visible. */
+private const val DASHBOARD_POLL_INTERVAL_MS = 60_000L
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -75,314 +82,28 @@ class MainActivity : ComponentActivity() {
 private fun AppRoot() {
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
-    val viewModel = remember {
-        val versionName = runCatching {
-            context.packageManager.getPackageInfo(context.packageName, 0).versionName
-        }.getOrNull()
-        AppViewModel(
-            prefs = Prefs(appSettings(context)),
-            ble = AndroidBleClient(context),
-            watchConnection = AndroidWatchConnection(context),
-            steps = AndroidStepsProvider(context),
-            location = AndroidLocationProvider(context),
-            notificationAccess = AndroidNotificationAccess(context),
-            timerRepo = TimerSetsRepository(timerSettings(context)),
-            scheduler = AndroidScheduler(context),
-            alarmRepo = AlarmsRepository(alarmSettings(context)),
-            alarmScheduler = AndroidAlarmScheduler(context),
-            versionLabel = versionLabel(versionName, context.packageName),
-        )
-    }
+    val viewModel = rememberAppViewModel(context)
     val state = viewModel.state
     val screen = viewModel.screen
-    val kotlinScope = rememberCoroutineScope()
 
     var showPicker by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        viewModel.events.collect { snackbarHostState.showSnackbar(it) }
-    }
+    AppEffects(viewModel, context, snackbarHostState, screen)
 
-    // Alarm BLE pushes run detached from the ViewModel (debounced in AlarmRearm, also fired by
-    // receivers) — confirm their outcomes through the same snackbar.
-    LaunchedEffect(Unit) {
-        AlarmRearm.pushResults.collect { snackbarHostState.showSnackbar(it) }
-    }
-
-    LaunchedEffect(Unit) {
-        val hasAnyLocation =
-            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
-                PackageManager.PERMISSION_GRANTED ||
-                ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) ==
-                PackageManager.PERMISSION_GRANTED
-        val haveCoords = viewModel.hasSavedCoords()
-        val stale = viewModel.locationIsStale()
-
-        when {
-            // Fresh saved coords: use them silently, no fix.
-            haveCoords && !stale -> { /* render with saved coords */ }
-
-            // Stale saved coords + permission: render saved, silently refresh.
-            haveCoords && hasAnyLocation -> {
-                viewModel.setLocating(true)
-                viewModel.fetchLocation()
-                    .onSuccess { coords -> viewModel.onLocationFetchedSilent(coords.lat, coords.lng) }
-                    .onFailure { viewModel.onLocationRefreshFailed() }
-            }
-
-            // No saved coords, permission held: first-run fix.
-            !haveCoords && hasAnyLocation -> {
-                viewModel.setLocating(true)
-                viewModel.fetchLocation()
-                    .onSuccess { coords -> viewModel.onLocationFetchedSilent(coords.lat, coords.lng) }
-                    .onFailure { viewModel.setLocating(false) }
-            }
-
-            // No permission and no saved coords: the user sets location in Settings.
-            else -> { /* nothing to fetch */ }
-        }
-
-        viewModel.refreshActive(force = false, push = false)
-        viewModel.onStart()
-    }
-
-    // Dashboard polling: while Home is visible, refresh all face previews on entry and every 60 s.
-    // Keyed on `screen` so it cancels when you navigate away and restarts on return.
-    LaunchedEffect(screen) {
-        if (screen == Screen.Home) {
-            while (true) {
-                viewModel.refreshAllPreviews()
-                delay(60_000)
-            }
-        }
-    }
-
-    val btPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) showPicker = true
-        else viewModel.onBluetoothDenied()
-    }
-
-    val notificationPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { /* granted or not — errors still record in-app either way */ }
-
-    LaunchedEffect(Unit) {
-        val backgroundActive = viewModel.backgroundActive()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && backgroundActive &&
-            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
-    }
-
-    // Re-check notification access/count when the activity resumes — e.g. returning from the
-    // system notification-access settings page. The 60 s dashboard poll alone would lag here.
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_START -> viewModel.onForeground()
-                Lifecycle.Event.ON_STOP -> viewModel.onBackground()
-                Lifecycle.Event.ON_RESUME -> viewModel.onResumeNotifications()
-                else -> {}
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-    }
-
-    val locationPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { results ->
-        if (results.values.any { it }) {
-            viewModel.setLocating(true)
-            kotlinScope.launch {
-                viewModel.fetchLocation()
-                    .onSuccess { coords -> viewModel.onLocationFetched(coords.lat, coords.lng) }
-                    .onFailure { err -> viewModel.onLocationFailed(err.message) }
-            }
-        } else {
-            viewModel.onLocationDenied()
-        }
-    }
-
-    val healthPermissionLauncher = rememberLauncherForActivityResult(
-        PermissionController.createRequestPermissionResultContract()
-    ) { granted ->
-        // The read permission alone is enough to show steps; background read just lets the
-        // worker keep updating while the app is closed.
-        viewModel.refreshSteps(push = viewModel.activeIsSteps())
-        if (!granted.containsAll(AndroidStepsProvider.PERMISSIONS)) {
-            viewModel.onPartialHealthGrant()
-        }
-    }
-
-    fun selectWatch() {
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT)
-            == PackageManager.PERMISSION_GRANTED
-        ) showPicker = true
-        else btPermissionLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT)
-    }
-
-    fun useMyLocation() {
-        val hasAny =
-            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
-                PackageManager.PERMISSION_GRANTED ||
-                ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) ==
-                PackageManager.PERMISSION_GRANTED
-        if (hasAny) {
-            viewModel.setLocating(true)
-            kotlinScope.launch {
-                viewModel.fetchLocation()
-                    .onSuccess { coords -> viewModel.onLocationFetched(coords.lat, coords.lng) }
-                    .onFailure { err -> viewModel.onLocationFailed(err.message) }
-            }
-        } else {
-            locationPermissionLauncher.launch(
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION,
-                )
-            )
-        }
-    }
-
-    val homeCallbacks = HomeCallbacks(
-        onActivate = { viewModel.activate(it) },
-        onUpdateNow = { viewModel.refreshActive(force = true, push = true) },
-        onTempUnitChange = { newUnit -> viewModel.setTempUnit(newUnit) },
-        onCustomChange = { text -> viewModel.setCustomText(text) },
-        onSendCustom = { viewModel.sendCustom(state.custom) },
-        onGrantHealth = {
-            when (viewModel.healthAvailability()) {
-                StepsProvider.Availability.AVAILABLE ->
-                    healthPermissionLauncher.launch(AndroidStepsProvider.PERMISSIONS)
-                StepsProvider.Availability.UPDATE_REQUIRED ->
-                    viewModel.onHealthUpdateRequired()
-                StepsProvider.Availability.UNAVAILABLE ->
-                    viewModel.onHealthUnavailable()
-            }
-        },
-        onGrantNotificationAccess = { openNotificationAccessSettings(context) },
-        onToggleNotifications = { viewModel.setNotificationsEnabled(it) },
-        onNotificationsUpdateNow = { viewModel.pushCountIfWatch() },
-        onReconnect = { viewModel.onReconnect() },
-    )
-
-    val settingsCallbacks = SettingsCallbacks(
-        onBack = { viewModel.navigateTo(Screen.Home) },
-        onSelectWatch = ::selectWatch,
-        onIntervalChange = { mins -> viewModel.setInterval(mins) },
-        onSleepEnabledChange = { enabled -> viewModel.setSleepEnabled(enabled) },
-        onSleepStartChange = { min -> viewModel.setSleepStart(min) },
-        onSleepEndChange = { min -> viewModel.setSleepEnd(min) },
-        onAutoSleepScheduleEnabledChange = { on -> viewModel.setAutoSleepScheduleEnabled(on) },
-        onAutoSleepWindowStartChange = { min -> viewModel.setAutoSleepWindowStart(min) },
-        onAutoSleepWindowEndChange = { min -> viewModel.setAutoSleepWindowEnd(min) },
-        onAutoSleepInWindowOnChange = { on -> viewModel.setAutoSleepInWindowOn(on) },
-        onAutoSleepInWindowPeriodChange = { sec -> viewModel.setAutoSleepInWindowPeriod(sec) },
-        onAutoSleepOutWindowOnChange = { on -> viewModel.setAutoSleepOutWindowOn(on) },
-        onAutoSleepOutWindowPeriodChange = { sec -> viewModel.setAutoSleepOutWindowPeriod(sec) },
-        onLatChange = { viewModel.onCoordEdit(it, state.lng) },
-        onLngChange = { viewModel.onCoordEdit(state.lat, it) },
-        onUseMyLocation = ::useMyLocation,
-    )
+    val (homeCallbacks, settingsCallbacks) = rememberAppCallbacks(viewModel, context, state) { showPicker = true }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        bottomBar = {
-            if (BottomNavTab.showsBottomBar(screen)) {
-                NavigationBar {
-                    BottomNavTab.entries.forEach { tab ->
-                        NavigationBarItem(
-                            selected = BottomNavTab.forScreen(screen) == tab,
-                            onClick = {
-                                when (tab) {
-                                    BottomNavTab.Alarm -> viewModel.refreshAlarms()
-                                    BottomNavTab.Timer -> viewModel.refreshTimers()
-                                    else -> {}
-                                }
-                                viewModel.navigateTo(tab.screen)
-                            },
-                            icon = { Text(tab.glyph, style = MaterialTheme.typography.titleLarge) },
-                            label = { Text(tab.label, style = MaterialTheme.typography.labelSmall) },
-                        )
-                    }
-                }
-            }
-        },
+        bottomBar = { AppBottomBar(screen, viewModel) },
     ) { inner ->
-        val modifier = Modifier.padding(inner)
-        when (screen) {
-        Screen.Home -> HomeScreen(state = state, callbacks = homeCallbacks, modifier = modifier)
-        Screen.Settings -> SettingsScreen(
+        AppContent(
+            screen = screen,
+            viewModel = viewModel,
             state = state,
-            callbacks = settingsCallbacks,
-            onReconnect = { viewModel.onReconnect() },
-            modifier = modifier,
+            homeCallbacks = homeCallbacks,
+            settingsCallbacks = settingsCallbacks,
+            modifier = Modifier.padding(inner),
         )
-        Screen.TimerSets -> TimerSetsScreen(
-            sets = viewModel.timerSets,
-            activeId = viewModel.timerActiveId,
-            sending = state.sending,
-            quickTimerSeconds = viewModel.quickTimerSeconds,
-            quickTimerStartFromApp = viewModel.quickTimerStartFromApp,
-            quickTimerIntervalMode = viewModel.quickTimerIntervalMode,
-            onSaveQuick = { viewModel.saveQuickTimer(it) },
-            onToggleStartFromApp = { viewModel.toggleQuickTimerStartFromApp(it) },
-            onToggleIntervalMode = { viewModel.toggleQuickTimerIntervalMode(it) },
-            onSendQuick = { viewModel.sendQuickTimer() },
-            quickTimerAlarmMode = viewModel.quickTimerAlarmMode,
-            quickTimerAlarmHour = viewModel.quickTimerAlarmHour,
-            quickTimerAlarmMinute = viewModel.quickTimerAlarmMinute,
-            onToggleAlarmMode = { viewModel.toggleQuickTimerAlarmMode(it) },
-            onSaveAlarmTime = { h, m -> viewModel.saveQuickTimerAlarmTime(h, m) },
-            onSendAlarm = { viewModel.sendQuickAlarm() },
-            onOpen = { viewModel.editTimerSet(it); viewModel.navigateTo(Screen.TimerSetEdit) },
-            onNew = { viewModel.newTimerSet() },
-            onDuplicate = { src -> viewModel.duplicateTimerSet(src) },
-            onDelete = { viewModel.deleteTimerSet(it) },
-            onSend = { viewModel.sendTimerSet(it) },
-            onStart = { viewModel.startTimerSet(it) },
-            onMoveUp = { viewModel.moveTimerSetUp(it) },
-            onMoveDown = { viewModel.moveTimerSetDown(it) },
-            onBack = { viewModel.navigateTo(Screen.Home) },
-            connectionStatus = state.connectionStatus,
-            onReconnect = { viewModel.onReconnect() },
-            modifier = modifier,
-        )
-        Screen.Alarms -> AlarmsScreen(
-            alarms = viewModel.alarms,
-            nextSummary = viewModel.nextAlarmSummary,
-            onAdd = { viewModel.addAlarm() },
-            onSave = { viewModel.saveAlarm(it) },
-            onToggle = { id, enabled -> viewModel.toggleAlarm(id, enabled) },
-            onDelete = { viewModel.deleteAlarm(it) },
-            onBack = { viewModel.navigateTo(Screen.Home) },
-            connectionStatus = state.connectionStatus,
-            onReconnect = { viewModel.onReconnect() },
-            modifier = modifier,
-        )
-        Screen.TimerSetEdit -> {
-            val editing = viewModel.editingSet
-            if (editing == null) {
-                viewModel.navigateTo(Screen.TimerSets)
-            } else {
-                TimerSetEditScreen(
-                    set = editing,
-                    onSave = { s -> viewModel.saveTimerSet(s); viewModel.navigateTo(Screen.TimerSets) },
-                    onSend = { s -> viewModel.saveTimerSet(s); viewModel.sendTimerSet(s); viewModel.navigateTo(Screen.TimerSets) },
-                    onBack = { viewModel.navigateTo(Screen.TimerSets) },
-                    connectionStatus = state.connectionStatus,
-                    onReconnect = { viewModel.onReconnect() },
-                    modifier = modifier,
-                )
-            }
-        }
-        }
     }
 
     if (showPicker) {
@@ -398,6 +119,295 @@ private fun AppRoot() {
     }
 }
 
+@Composable
+private fun AppEffects(
+    viewModel: AppViewModel,
+    context: Context,
+    snackbarHostState: SnackbarHostState,
+    screen: Screen,
+) {
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { snackbarHostState.showSnackbar(it) }
+    }
+
+    // Alarm BLE pushes run detached from the ViewModel (debounced in AlarmRearm, also fired by
+    // receivers) — confirm their outcomes through the same snackbar.
+    LaunchedEffect(Unit) {
+        AlarmRearm.pushResults.collect { snackbarHostState.showSnackbar(it) }
+    }
+
+    LaunchedEffect(Unit) {
+        runStartupLocation(viewModel, context)
+    }
+
+    // Dashboard polling: while Home is visible, refresh all face previews on entry and every 60 s.
+    // Keyed on `screen` so it cancels when you navigate away and restarts on return.
+    LaunchedEffect(screen) {
+        if (screen == Screen.Home) {
+            while (true) {
+                viewModel.complications.refreshAllPreviews()
+                delay(DASHBOARD_POLL_INTERVAL_MS)
+            }
+        }
+    }
+
+    // Re-check notification access/count when the activity resumes — e.g. returning from the
+    // system notification-access settings page. The 60 s dashboard poll alone would lag here.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_START -> viewModel.onForeground()
+                Lifecycle.Event.ON_STOP -> viewModel.onBackground()
+                Lifecycle.Event.ON_RESUME -> viewModel.complications.onResumeNotifications()
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+}
+
+@Composable
+private fun rememberAppViewModel(context: Context): AppViewModel = remember {
+    val versionName = runCatching {
+        context.packageManager.getPackageInfo(context.packageName, 0).versionName
+    }.getOrNull()
+    AppViewModel(
+        prefs = Prefs(appSettings(context)),
+        ble = AndroidBleClient(context),
+        watchConnection = AndroidWatchConnection(context),
+        steps = AndroidStepsProvider(context),
+        location = AndroidLocationProvider(context),
+        notificationAccess = AndroidNotificationAccess(context),
+        timerRepo = TimerSetsRepository(timerSettings(context)),
+        scheduler = AndroidScheduler(context),
+        alarmRepo = AlarmsRepository(alarmSettings(context)),
+        alarmScheduler = AndroidAlarmScheduler(context),
+        versionLabel = versionLabel(versionName, context.packageName),
+    )
+}
+
+@Composable
+private fun rememberAppCallbacks(
+    viewModel: AppViewModel,
+    context: Context,
+    state: HomeState,
+    onBluetoothGranted: () -> Unit,
+): Pair<HomeCallbacks, SettingsCallbacks> {
+    val perms = rememberPermissionsCoordinator(
+        PermissionsCallbacks(
+            backgroundActive = { viewModel.backgroundActive() },
+            onBluetoothGranted = onBluetoothGranted,
+            onBluetoothDenied = { viewModel.onBluetoothDenied() },
+            setLocating = { viewModel.complications.setLocating(it) },
+            onLocationFetched = { lat, lng -> viewModel.complications.onLocationFetched(lat, lng) },
+            onLocationFailed = { msg -> viewModel.complications.onLocationFailed(msg) },
+            onLocationDenied = { viewModel.complications.onLocationDenied() },
+            fetchLocation = { viewModel.complications.fetchLocation() },
+            refreshSteps = { push -> viewModel.complications.refreshSteps(push) },
+            activeIsSteps = { viewModel.complications.activeIsSteps() },
+            onPartialHealthGrant = { viewModel.complications.onPartialHealthGrant() },
+            healthAvailability = { viewModel.complications.healthAvailability() },
+            onHealthUpdateRequired = { viewModel.complications.onHealthUpdateRequired() },
+            onHealthUnavailable = { viewModel.complications.onHealthUnavailable() },
+        )
+    )
+    val homeCallbacks = HomeCallbacks(
+        onActivate = { viewModel.complications.activate(it) },
+        onUpdateNow = { viewModel.complications.refreshActive(force = true, push = true) },
+        onTempUnitChange = { newUnit -> viewModel.complications.setTempUnit(newUnit) },
+        onCustomChange = { text -> viewModel.complications.setCustomText(text) },
+        onSendCustom = { viewModel.complications.sendCustom(state.custom) },
+        onGrantHealth = { perms.requestHealth() },
+        onGrantNotificationAccess = { openNotificationAccessSettings(context) },
+        onToggleNotifications = { viewModel.complications.setNotificationsEnabled(it) },
+        onNotificationsUpdateNow = { viewModel.complications.pushCountIfWatch() },
+        onReconnect = { viewModel.onReconnect() },
+    )
+    val settingsCallbacks = SettingsCallbacks(
+        onBack = { viewModel.navigateTo(Screen.Home) },
+        onSelectWatch = perms::selectWatch,
+        onIntervalChange = { mins -> viewModel.settings.setInterval(mins) },
+        onSleepEnabledChange = { enabled -> viewModel.settings.setSleepEnabled(enabled) },
+        onSleepStartChange = { min -> viewModel.settings.setSleepStart(min) },
+        onSleepEndChange = { min -> viewModel.settings.setSleepEnd(min) },
+        onAutoSleepScheduleEnabledChange = { on -> viewModel.settings.setAutoSleepScheduleEnabled(on) },
+        onAutoSleepWindowStartChange = { min -> viewModel.settings.setAutoSleepWindowStart(min) },
+        onAutoSleepWindowEndChange = { min -> viewModel.settings.setAutoSleepWindowEnd(min) },
+        onAutoSleepInWindowOnChange = { on -> viewModel.settings.setAutoSleepInWindowOn(on) },
+        onAutoSleepInWindowPeriodChange = { sec -> viewModel.settings.setAutoSleepInWindowPeriod(sec) },
+        onAutoSleepOutWindowOnChange = { on -> viewModel.settings.setAutoSleepOutWindowOn(on) },
+        onAutoSleepOutWindowPeriodChange = { sec -> viewModel.settings.setAutoSleepOutWindowPeriod(sec) },
+        onLatChange = { viewModel.settings.onCoordEdit(it, state.lng) },
+        onLngChange = { viewModel.settings.onCoordEdit(state.lat, it) },
+        onUseMyLocation = perms::useMyLocation,
+    )
+    return homeCallbacks to settingsCallbacks
+}
+
+private suspend fun runStartupLocation(viewModel: AppViewModel, context: Context) {
+    val hasAnyLocation =
+        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED
+    val haveCoords = viewModel.complications.hasSavedCoords()
+    val stale = viewModel.complications.locationIsStale()
+
+    when {
+        // Fresh saved coords: use them silently, no fix.
+        haveCoords && !stale -> { /* render with saved coords */ }
+
+        // Stale saved coords + permission: render saved, silently refresh.
+        haveCoords && hasAnyLocation -> {
+            viewModel.complications.setLocating(true)
+            viewModel.complications.fetchLocation()
+                .onSuccess { coords -> viewModel.complications.onLocationFetchedSilent(coords.lat, coords.lng) }
+                .onFailure { viewModel.complications.onLocationRefreshFailed() }
+        }
+
+        // No saved coords, permission held: first-run fix.
+        !haveCoords && hasAnyLocation -> {
+            viewModel.complications.setLocating(true)
+            viewModel.complications.fetchLocation()
+                .onSuccess { coords -> viewModel.complications.onLocationFetchedSilent(coords.lat, coords.lng) }
+                .onFailure { viewModel.complications.setLocating(false) }
+        }
+
+        // No permission and no saved coords: the user sets location in Settings.
+        else -> { /* nothing to fetch */ }
+    }
+
+    viewModel.complications.refreshActive(force = false, push = false)
+    viewModel.onStart()
+}
+
+@Composable
+private fun AppBottomBar(screen: Screen, viewModel: AppViewModel) {
+    if (BottomNavTab.showsBottomBar(screen)) {
+        NavigationBar {
+            BottomNavTab.entries.forEach { tab ->
+                NavigationBarItem(
+                    selected = BottomNavTab.forScreen(screen) == tab,
+                    onClick = {
+                        when (tab) {
+                            BottomNavTab.Alarm -> viewModel.alarms.refreshAlarms()
+                            BottomNavTab.Timer -> viewModel.timers.refreshTimers()
+                            else -> {}
+                        }
+                        viewModel.navigateTo(tab.screen)
+                    },
+                    icon = { Text(tab.glyph, style = MaterialTheme.typography.titleLarge) },
+                    label = { Text(tab.label, style = MaterialTheme.typography.labelSmall) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AppTimerSetsScreen(viewModel: AppViewModel, state: HomeState, modifier: Modifier) {
+    TimerSetsScreen(
+        sets = viewModel.timers.timerSets,
+        activeId = viewModel.timers.timerActiveId,
+        sending = state.sending,
+        quickTimer = QuickTimerState(
+            seconds = viewModel.timers.quickTimerSeconds,
+            startFromApp = viewModel.timers.quickTimerStartFromApp,
+            intervalMode = viewModel.timers.quickTimerIntervalMode,
+            alarmMode = viewModel.timers.quickTimerAlarmMode,
+            alarmHour = viewModel.timers.quickTimerAlarmHour,
+            alarmMinute = viewModel.timers.quickTimerAlarmMinute,
+        ),
+        callbacks = TimerSetsCallbacks(
+            onSaveQuick = { viewModel.timers.saveQuickTimer(it) },
+            onToggleStartFromApp = { viewModel.timers.toggleQuickTimerStartFromApp(it) },
+            onToggleIntervalMode = { viewModel.timers.toggleQuickTimerIntervalMode(it) },
+            onToggleAlarmMode = { viewModel.timers.toggleQuickTimerAlarmMode(it) },
+            onSaveAlarmTime = { h, m -> viewModel.timers.saveQuickTimerAlarmTime(h, m) },
+            onSendAlarm = { viewModel.timers.sendQuickAlarm() },
+            onSendQuick = { viewModel.timers.sendQuickTimer() },
+            onOpen = {
+                viewModel.timers.editTimerSet(it)
+                viewModel.navigateTo(Screen.TimerSetEdit)
+            },
+            onNew = {
+                viewModel.timers.newTimerSet()
+                viewModel.navigateTo(Screen.TimerSetEdit)
+            },
+            onDuplicate = { src -> viewModel.timers.duplicateTimerSet(src) },
+            onDelete = { viewModel.timers.deleteTimerSet(it) },
+            onSend = { viewModel.timers.sendTimerSet(it) },
+            onStart = { viewModel.timers.startTimerSet(it) },
+            onMoveUp = { viewModel.timers.moveTimerSetUp(it) },
+            onMoveDown = { viewModel.timers.moveTimerSetDown(it) },
+            onBack = { viewModel.navigateTo(Screen.Home) },
+            onReconnect = { viewModel.onReconnect() },
+        ),
+        connectionStatus = state.connectionStatus,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun AppContent(
+    screen: Screen,
+    viewModel: AppViewModel,
+    state: HomeState,
+    homeCallbacks: HomeCallbacks,
+    settingsCallbacks: SettingsCallbacks,
+    modifier: Modifier,
+) {
+    when (screen) {
+        Screen.Home -> HomeScreen(state = state, callbacks = homeCallbacks, modifier = modifier)
+        Screen.Settings -> SettingsScreen(
+            state = state,
+            callbacks = settingsCallbacks,
+            onReconnect = { viewModel.onReconnect() },
+            modifier = modifier,
+        )
+        Screen.TimerSets -> AppTimerSetsScreen(viewModel = viewModel, state = state, modifier = modifier)
+        Screen.Alarms -> AlarmsScreen(
+            alarms = viewModel.alarms.items,
+            nextSummary = viewModel.alarms.nextAlarmSummary,
+            callbacks = AlarmsCallbacks(
+                onAdd = { viewModel.alarms.addAlarm() },
+                onSave = { viewModel.alarms.saveAlarm(it) },
+                onToggle = { id, enabled -> viewModel.alarms.toggleAlarm(id, enabled) },
+                onDelete = { viewModel.alarms.deleteAlarm(it) },
+                onBack = { viewModel.navigateTo(Screen.Home) },
+                onReconnect = { viewModel.onReconnect() },
+            ),
+            connectionStatus = state.connectionStatus,
+            modifier = modifier,
+        )
+        Screen.TimerSetEdit -> {
+            val editing = viewModel.timers.editingSet
+            if (editing == null) {
+                viewModel.navigateTo(Screen.TimerSets)
+            } else {
+                TimerSetEditScreen(
+                    set = editing,
+                    onSave = { s ->
+                        viewModel.timers.saveTimerSet(s)
+                        viewModel.navigateTo(Screen.TimerSets)
+                    },
+                    onSend = { s ->
+                        viewModel.timers.saveTimerSet(s)
+                        viewModel.timers.sendTimerSet(s)
+                        viewModel.navigateTo(Screen.TimerSets)
+                    },
+                    onBack = { viewModel.navigateTo(Screen.TimerSets) },
+                    connectionStatus = state.connectionStatus,
+                    onReconnect = { viewModel.onReconnect() },
+                    modifier = modifier,
+                )
+            }
+        }
+    }
+}
+
 private fun openNotificationAccessSettings(context: Context) {
     context.startActivity(
         Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
@@ -407,8 +417,10 @@ private fun openNotificationAccessSettings(context: Context) {
 
 @SuppressLint("MissingPermission")
 private fun bondedDevices(context: Context): List<BondedDevice> {
-    val mgr = context.getSystemService(BluetoothManager::class.java) ?: return emptyList()
-    val adapter = mgr.adapter ?: return emptyList()
-    if (!adapter.isEnabled) return emptyList()
-    return adapter.bondedDevices?.map { BondedDevice(it.name, it.address) }.orEmpty()
+    val adapter = context.getSystemService(BluetoothManager::class.java)?.adapter
+    return if (adapter?.isEnabled == true) {
+        adapter.bondedDevices?.map { BondedDevice(it.name, it.address) }.orEmpty()
+    } else {
+        emptyList()
+    }
 }

@@ -1,0 +1,29 @@
+build:
+  maxIssues: 0
+naming:
+  FunctionNaming:
+    active: true
+    ignoreAnnotated: ['Composable']
+formatting:
+  active: true
+  android: true
+  autoCorrect: false
+complexity:
+  LongMethod:
+    active: true
+  LongParameterList:
+    active: true
+    functionThreshold: 8
+    constructorThreshold: 12
+  TooManyFunctions:
+    active: true
+    # Feature controllers (ComplicationController, TimerController, AppViewModel, ...)
+    # intentionally aggregate many small single-purpose methods extracted from the VM;
+    # 35 comfortably covers the largest of them without grandfathering the count via baseline.
+    thresholdInClasses: 35
+style:
+  MaxLineLength:
+    active: true
+    maxLineLength: 120
+  MagicNumber:
+    excludes: ['**/ui/theme/Color.kt', '**/ui/theme/Type.kt', '**/ble/OlleeProtocol.kt', '**/sun/SunCalc.kt', '**/ble/TimerConfirm.kt', '**/ble/AlarmConfirm.kt', '**/ble/NotifyFrameReassembler.kt', '**/ble/WatchLink.kt', '**/prefs/IntervalOptions.kt', '**/ui/LcdReadout.kt']

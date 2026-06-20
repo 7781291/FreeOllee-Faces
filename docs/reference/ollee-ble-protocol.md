@@ -1,8 +1,9 @@
 # Ollee Watch BLE Protocol (reverse-engineered)
 
-Captured 2026-05-31 from the **official Ollee app** instrumented via the `ollee-graphene`
-capture harness (a `CAPTURE=1` build that logs every `BluetoothGattCharacteristic` write/notify
-as hex under logcat tag `OLLEE_BLE`). Raw log: [`ollee-capture-2026-05-31.log`](ollee-capture-2026-05-31.log).
+Originally captured 2026-05-31 from the **official Ollee app** instrumented via the
+`ollee-graphene` capture harness (a `CAPTURE=1` build that logs every
+`BluetoothGattCharacteristic` write/notify as hex under logcat tag `OLLEE_BLE`); kept current
+against `OlleeProtocol.kt` as the implementation has evolved.
 
 ## Transport
 - Nordic UART service `6e400001-b5a3-f393-e0a9-e50e24dcca9e`
@@ -28,22 +29,27 @@ with the **same data at `target + 0x20`** (`2A→4A`, `2E→4E`, `37→57`, …)
 
 ## Command catalogue (observed)
 
-| CMD·TARGET | Dir | Decoded payload | Meaning |
-|------------|-----|-----------------|---------|
-| `02 2A` → `4A` | R | `…DEADBEEF…01.05.0000.01.07…` | firmware / version string |
-| `02 2B` → `4B` | R | `00010017007E0A05C0FF0FFF` | (unknown config block) |
-| `02 2C` → `4C` | R | `00012800` | (unknown) |
-| **`02 2E` → `4E`** | R | ASCII `"  54 F"` | Ambient read-back cache. **Does NOT drive the Temperature face** (firmware-locked to the onboard sensor — see below) |
-| `02 2F` | W | ≤6 ASCII | **nameplate / "Name tag"** (hold ALARM on the Clock face); the field FreeOllee-Faces writes |
-| `02 30` → `50` | R | `0000138800` | (unknown) |
-| `02 32` → `52` | R | `0206 7182 0000 0078 FFFF 0000` | world-time config |
-| `02 33` | W | `0206 7182 …` | write world-time config |
-| `02 34` | W | `00007E90` + `"MOTUWETHFRSASU"` | write weekday-name strings |
-| `02 35` → `55` | R | `00007E90` + `"MOTUWETHFRSASU"` | read weekday-name strings |
-| `02 36` | W | face-record table (below) | **write enabled-faces config** |
-| `02 37` → `57` | R | face-record table | read enabled-faces config |
-| `02 39` → `59` | R | `002D` | (unknown) |
-| `02 23` | W | `xxxxxxxx A0AB FFFF CC9C 0000` + `"He…"` | set clock / time |
+Reply/ack targets follow `RESPONSE_TARGET_OFFSET = 0x20`: a read or write to `02 <target>` is
+answered/acked at `target + 0x20`.
+
+| CMD·TARGET | Dir | Decoded payload | Meaning | Confidence |
+|------------|-----|-----------------|---------|------------|
+| `02 2A` → `4A` | R | `…DEADBEEF…01.05.0000.01.07…` | firmware / version string | capture-confirmed (2026-05-31) |
+| `02 25` → `45` | W | alarm record (13 bytes, see below) | **TARGET_ALARM** — write the single alarm-face record; the chime "Try chime" preview shares this format (`playNow` byte) | on-device-verified (2026-06-11) |
+| `02 26` → `46` | W | 4-byte header + 10× LE-uint32 (see below) | **TARGET_TIMERS** — write the Timer face's 10 countdown slots; header byte 3 selects configure-only/single/interval start | on-device-verified (2026-06-17) |
+| `02 2B` → `4B` | R | `00010017007E0A05C0FF0FFF` | **TARGET_GET_ALARM** — read back the stored alarm record | derived (target verified in code; payload shape from 2026-05-31 capture) |
+| `02 2C` → `4C` | R | `00012800` | **TARGET_GET_TIMER** — read back the timer-face config | derived (target verified in code; payload shape from 2026-05-31 capture) |
+| **`02 2E` → `4E`** | R | ASCII `"  54 F"` | Ambient read-back cache. **Does NOT drive the Temperature face** (firmware-locked to the onboard sensor — see below) | on-device-verified (2026-06-01) |
+| `02 2F` | W | ≤6 ASCII | **nameplate / "Name tag"** (hold ALARM on the Clock face); the field FreeOllee-Faces writes | capture-confirmed (2026-05-31) |
+| `02 30` → `50` | R | `0000138800` | (unknown) | capture-confirmed (2026-05-31) |
+| `02 32` → `52` | R | `0206 7182 0000 0078 FFFF 0000` | **TARGET_GET_CONFIG** — settings + autosleep config register (read): 4-byte BE settings bitmask (`CONFIG_BIT_AUTOSLEEP` = bit 6) followed by a 4-byte BE autosleep period in seconds | on-device-verified (2026-06-18) |
+| `02 33` → `53` | W | settings bitmask + autosleep period (same layout as `0x52`) | **TARGET_SET_CONFIG** — read-modify-write of the config register; FreeOllee-Faces only touches the autosleep bit/period, leaving other bytes intact | on-device-verified (2026-06-18) |
+| `02 34` | W | `00007E90` + `"MOTUWETHFRSASU"` | write weekday-name strings | capture-confirmed (2026-05-31) |
+| `02 35` → `55` | R | `00007E90` + `"MOTUWETHFRSASU"` | read weekday-name strings | capture-confirmed (2026-05-31) |
+| `02 36` | W | face-record table (below) | **write enabled-faces config** | capture-confirmed (2026-05-31) |
+| `02 37` → `57` | R | face-record table | read enabled-faces config | capture-confirmed (2026-05-31) |
+| `02 39` → `59` | R | `002D` | (unknown) | capture-confirmed (2026-05-31) |
+| `02 23` | W | `xxxxxxxx A0AB FFFF CC9C 0000` + `"He…"` | set clock / time | capture-confirmed (2026-05-31) |
 
 ## Faces table (`02 36` write / `02 37`→`57` read)
 
@@ -70,6 +76,63 @@ no record):
 Cross-check: the disabled faces shown in the UI (Alarm, Stopwatch, Timer, Sunrise/Sunset,
 World Time) are exactly the records with `ENABLED=0` (IDs `05,07,09,11,06`).
 
+## Timer / Alarm / Config payloads
+
+Authoritative implementation: `OlleeProtocol.kt`. These three registers were added/clarified
+after the original 2026-05-31 capture and are documented here from the code plus the on-device
+verifications cited.
+
+### Timer (`TARGET_TIMERS = 0x26`, ack `0x46`)
+
+`buildTimerPacket()` emits a **4-byte header** followed by **ten little-endian uint32 countdown
+durations** (seconds; `0` = blank slot):
+
+```
+header: [HH, MM, SS, MODE]
+slots:  10 × uint32-LE seconds
+```
+
+- Header byte 0 = **hours** (not a flags/mode byte — hardware-verified 2026-06-15 by capturing
+  the official app sending 20h05m00s as `14 05 00 01`), byte 1 = minutes, byte 2 = seconds. This
+  seeds the Timer face's standalone **Quick-timer**, independent of the 10 slot durations.
+- Header byte 3 is the **start mode**, `TimerStartMode`:
+  - `0x00` (`SAVE`) — configure-only, persists the table without starting anything.
+  - `0x01` (`START_SINGLE`) — starts a single countdown of the header HH:MM:SS immediately.
+  - `0x02` (`START_INTERVAL`) — starts the 10-slot interval sequence immediately.
+
+  These byte3 values were verified on hardware 2026-06-13 and are the reverse of an earlier
+  (incorrect) design-doc guess.
+
+### Alarm (`TARGET_ALARM = 0x25`, ack `0x45`; `TARGET_GET_ALARM = 0x2B`, reply `0x4B`)
+
+`buildAlarmPacket()` writes a 13-byte record:
+
+```
+[enable, hourlyChime, snoozeEnable, hour, minute, dayMask, chime, snoozeMin, playNow,
+ hourMaskLo, hourMaskMid, hourMaskHi, FF]
+```
+
+`playNow` (byte 8) drives the **chime preview** ("Try chime") — a transient effect the firmware
+does not persist (it is absent from the `0x2B`/`0x4B` read-back), so the same write format is
+reused for both "save alarm" and "preview chime" without disturbing the stored alarm. See the
+`buildAlarmPacket` KDoc in `OlleeProtocol.kt` for the full byte-by-byte breakdown (day mask
+polarity, snooze fields, hourly-chime active-hours mask).
+
+### Config / autosleep (`TARGET_GET_CONFIG = 0x32`, reply `0x52`; `TARGET_SET_CONFIG = 0x33`)
+
+The config register is a settings bitmask followed by the autosleep period:
+
+```
+bytes 0-3: settings bitmask, big-endian uint32 (CONFIG_BIT_AUTOSLEEP = bit 6)
+bytes 4-7: autosleep_period, big-endian uint32 seconds
+```
+
+Confirmed on-device 2026-06-18. `WatchConfig.withAutoSleep()` performs a read-modify-write:
+it flips only the autosleep bit and rewrites the period bytes, leaving every other settings
+byte (DND, gestures, pedometer, BLE-continuous, …) untouched. Allowed period values, per the
+official app's picker: `5, 10, 30, 60, 120` seconds (`CONFIG_PERIOD_VALUES_SEC`); a period is
+only required/validated when autosleep is being enabled.
+
 ## Temperature face — can it show outdoor weather? (RESOLVED: no)
 
 **The Temperature face is firmware-locked to the onboard sensor and cannot be overridden over
@@ -90,5 +153,4 @@ FreeOllee-Faces approach and the ceiling for this feature.
 
 > Detail: an earlier experiment reported "CONFIRMED" because the official app read back our
 > `0x2E` write — a false positive that never checked the physical face. The
-> `experiment/temp-to-face-field` `0x2E` routing was reverted. Full write-up:
-> [`temp-face-experiment.md`](temp-face-experiment.md).
+> `experiment/temp-to-face-field` `0x2E` routing was reverted.

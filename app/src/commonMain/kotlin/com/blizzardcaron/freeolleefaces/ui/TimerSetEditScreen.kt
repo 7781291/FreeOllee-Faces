@@ -81,14 +81,20 @@ fun TimerSetEditScreen(
                 SlotEditor(
                     index = index,
                     slot = slot,
-                    onLabelChange = { newLabel -> updateSlot(index) { s -> s.copy(label = newLabel) } },
-                    onDurationChange = { secs -> updateSlot(index) { s -> s.copy(durationSeconds = secs) } },
-                    onFillDown = { working = working.copy(slots = TimerSetEditing.fillDown(working.slots, index)) },
-                    onDuplicate = { working = working.copy(slots = TimerSetEditing.duplicateToNext(working.slots, index)) },
                     canMoveUp = index > 0,
                     canMoveDown = index < working.slots.lastIndex,
-                    onMoveUp = { working = working.copy(slots = Reorder.moveUp(working.slots, index)) },
-                    onMoveDown = { working = working.copy(slots = Reorder.moveDown(working.slots, index)) },
+                    callbacks = SlotEditorCallbacks(
+                        onLabelChange = { newLabel -> updateSlot(index) { s -> s.copy(label = newLabel) } },
+                        onDurationChange = { secs -> updateSlot(index) { s -> s.copy(durationSeconds = secs) } },
+                        onFillDown = {
+                            working = working.copy(slots = TimerSetEditing.fillDown(working.slots, index))
+                        },
+                        onDuplicate = {
+                            working = working.copy(slots = TimerSetEditing.duplicateToNext(working.slots, index))
+                        },
+                        onMoveUp = { working = working.copy(slots = Reorder.moveUp(working.slots, index)) },
+                        onMoveDown = { working = working.copy(slots = Reorder.moveDown(working.slots, index)) },
+                    ),
                 )
             }
         }
@@ -105,14 +111,9 @@ fun TimerSetEditScreen(
 private fun SlotEditor(
     index: Int,
     slot: TimerSlot,
-    onLabelChange: (String) -> Unit,
-    onDurationChange: (Int) -> Unit,
-    onFillDown: () -> Unit,
-    onDuplicate: () -> Unit,
     canMoveUp: Boolean,
     canMoveDown: Boolean,
-    onMoveUp: () -> Unit,
-    onMoveDown: () -> Unit,
+    callbacks: SlotEditorCallbacks,
 ) {
     val (h, m, s) = TimerSetEditing.secondsToHms(slot.durationSeconds)
     var menu by remember { mutableStateOf(false) }
@@ -128,32 +129,41 @@ private fun SlotEditor(
             ) {
                 Text("Slot ${index + 1}", style = MaterialTheme.typography.titleSmall)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = onMoveUp, enabled = canMoveUp) { Text("▲") }
-                    TextButton(onClick = onMoveDown, enabled = canMoveDown) { Text("▼") }
+                    TextButton(onClick = callbacks.onMoveUp, enabled = canMoveUp) { Text("▲") }
+                    TextButton(onClick = callbacks.onMoveDown, enabled = canMoveDown) { Text("▼") }
                     Box {
                         TextButton(onClick = { menu = true }) { Text("...") }
                         DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                            DropdownMenuItem(text = { Text("Fill down") },
-                                onClick = { menu = false; onFillDown() })
-                            DropdownMenuItem(text = { Text("Duplicate to next") },
-                                onClick = { menu = false; onDuplicate() })
+                            DropdownMenuItem(
+                                text = { Text("Fill down") },
+                                onClick = {
+                                    menu = false
+                                    callbacks.onFillDown()
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Duplicate to next") },
+                                onClick = {
+                                    menu = false
+                                    callbacks.onDuplicate()
+                                }
+                            )
                         }
                     }
                 }
             }
             OutlinedTextField(
                 value = slot.label,
-                onValueChange = onLabelChange,
+                onValueChange = callbacks.onLabelChange,
                 label = { Text("Label (optional)") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                NumberField("H", h) { onDurationChange(TimerSetEditing.hmsToSeconds(it, m, s)) }
-                NumberField("M", m) { onDurationChange(TimerSetEditing.hmsToSeconds(h, it, s)) }
-                NumberField("S", s) { onDurationChange(TimerSetEditing.hmsToSeconds(h, m, it)) }
+                NumberField("H", h) { callbacks.onDurationChange(TimerSetEditing.hmsToSeconds(it, m, s)) }
+                NumberField("M", m) { callbacks.onDurationChange(TimerSetEditing.hmsToSeconds(h, it, s)) }
+                NumberField("S", s) { callbacks.onDurationChange(TimerSetEditing.hmsToSeconds(h, m, it)) }
             }
         }
     }
 }
-

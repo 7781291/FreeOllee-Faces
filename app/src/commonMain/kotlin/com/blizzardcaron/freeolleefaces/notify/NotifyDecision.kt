@@ -29,11 +29,10 @@ object NotifyDecision {
      *  - a failure during the sleep window is suppressed (state unchanged);
      *  - a new or changed failure notifies once; the same failure persisting does nothing.
      */
-    fun decide(current: FailureKind?, lastNotified: FailureKind?, inSleep: Boolean): NotifyAction {
-        if (current == null) {
-            return if (lastNotified != null) NotifyAction.Clear else NotifyAction.Nothing
-        }
-        if (inSleep) return NotifyAction.Nothing
-        return if (lastNotified != current) NotifyAction.Notify(current) else NotifyAction.Nothing
+    fun decide(current: FailureKind?, lastNotified: FailureKind?, inSleep: Boolean): NotifyAction = when {
+        current == null -> if (lastNotified != null) NotifyAction.Clear else NotifyAction.Nothing
+        inSleep -> NotifyAction.Nothing
+        lastNotified != current -> NotifyAction.Notify(current)
+        else -> NotifyAction.Nothing
     }
 }

@@ -21,6 +21,10 @@ object AutoUpdateScheduler {
     const val WORK_NAME = "auto_update_chain"
     const val WATCHDOG_NAME = "auto_update_watchdog"
 
+    private const val MINUTES_PER_HOUR = 60
+    private const val MILLIS_PER_MINUTE = 60_000L
+    private const val WATCHDOG_PERIOD_HOURS = 24L
+
     /** Re-arm the chain from current Prefs. Safe to call repeatedly (always REPLACEs). */
     fun reschedule(context: Context) {
         val ctx = context.applicationContext
@@ -49,12 +53,14 @@ object AutoUpdateScheduler {
         val now = Clock.System.now().toLocalDateTime(zone)
         val sleep = if (prefs.sleepEnabled) {
             SleepWindow(prefs.sleepStartMin, prefs.sleepEndMin)
-        } else null
-        val nowMinOfDay = now.hour * 60 + now.minute
+        } else {
+            null
+        }
+        val nowMinOfDay = now.hour * MINUTES_PER_HOUR + now.minute
         val inSleep = sleep != null &&
             AutoUpdateSchedule.isInSleepWindow(nowMinOfDay, sleep.startMin, sleep.endMin)
         val overdue = prefs.lastAutoSendMs
-            ?.let { it + intervalMinutes * 60_000L <= System.currentTimeMillis() } ?: true
+            ?.let { it + intervalMinutes * MILLIS_PER_MINUTE <= System.currentTimeMillis() } ?: true
         val delayMs = if (overdue && !inSleep) {
             0L
         } else {
@@ -83,7 +89,7 @@ object AutoUpdateScheduler {
     }
 
     private fun ensureWatchdog(wm: WorkManager) {
-        val req = PeriodicWorkRequestBuilder<WatchdogWorker>(24, TimeUnit.HOURS).build()
+        val req = PeriodicWorkRequestBuilder<WatchdogWorker>(WATCHDOG_PERIOD_HOURS, TimeUnit.HOURS).build()
         wm.enqueueUniquePeriodicWork(WATCHDOG_NAME, ExistingPeriodicWorkPolicy.KEEP, req)
     }
 }

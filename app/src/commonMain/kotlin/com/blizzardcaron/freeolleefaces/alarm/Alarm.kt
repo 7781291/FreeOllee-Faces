@@ -19,9 +19,9 @@ data class Alarm(
     val label: String = "",
 ) {
     init {
-        require(hour in 0..23) { "hour must be 0..23 (got $hour)" }
-        require(minute in 0..59) { "minute must be 0..59 (got $minute)" }
-        require(daysMask in 0..0x7F) { "daysMask is 7 bits (got $daysMask)" }
+        require(hour in 0..MAX_HOUR) { "hour must be 0..23 (got $hour)" }
+        require(minute in 0..MAX_MINUTE) { "minute must be 0..59 (got $minute)" }
+        require(daysMask in 0..ALL_DAYS) { "daysMask is 7 bits (got $daysMask)" }
         require(chimeIndex in AlarmSchedule.CHIME_NAMES.indices) {
             "chimeIndex must be in ${AlarmSchedule.CHIME_NAMES.indices} (got $chimeIndex)"
         }
@@ -31,7 +31,12 @@ data class Alarm(
     fun repeatsOn(day: DayOfWeek): Boolean = (daysMask shr (day.isoDayNumber - 1)) and 1 == 1
 
     companion object {
+        private const val MAX_HOUR = 23
+        private const val MAX_MINUTE = 59
+
+        /** 7 bits set — all weekdays Mon..Sun (bit0=Mon … bit6=Sun). */
         const val ALL_DAYS = 0x7F
+
         /** The single-bit mask for [day] (Mon=bit0 … Sun=bit6). */
         fun bit(day: DayOfWeek): Int = 1 shl (day.isoDayNumber - 1)
     }

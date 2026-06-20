@@ -9,14 +9,17 @@ data class TimerSlot(val label: String = "", val durationSeconds: Int = 0)
 /** A named set of exactly 10 timer slots, stored on the phone. */
 data class TimerSet(val id: String, val name: String, val slots: List<TimerSlot>) {
 
-    init { require(slots.size == 10) { "a timer set has exactly 10 slots (got ${slots.size})" } }
+    init { require(slots.size == SLOT_COUNT) { "a timer set has exactly 10 slots (got ${slots.size})" } }
 
     /** The 10 durations in slot order — the payload pushed to the watch. */
     fun durations(): List<Int> = slots.map { it.durationSeconds }
 
     companion object {
+        /** The watch's fixed number of timer slots per set. */
+        const val SLOT_COUNT = 10
+
         /** A set of 10 blank slots. */
         fun blank(id: String, name: String): TimerSet =
-            TimerSet(id, name, List(10) { TimerSlot() })
+            TimerSet(id, name, List(SLOT_COUNT) { TimerSlot() })
     }
 }

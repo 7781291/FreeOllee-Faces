@@ -21,15 +21,17 @@ object AlarmsJson {
     private val json = Json { ignoreUnknownKeys = true }
 
     fun encode(alarms: List<Alarm>): String = buildJsonArray {
-        for (a in alarms) add(buildJsonObject {
-            put("id", JsonPrimitive(a.id))
-            put("hour", JsonPrimitive(a.hour))
-            put("minute", JsonPrimitive(a.minute))
-            put("enabled", JsonPrimitive(a.enabled))
-            put("daysMask", JsonPrimitive(a.daysMask))
-            put("chime", JsonPrimitive(a.chimeIndex))
-            put("label", JsonPrimitive(a.label))
-        })
+        for (a in alarms) add(
+            buildJsonObject {
+                put("id", JsonPrimitive(a.id))
+                put("hour", JsonPrimitive(a.hour))
+                put("minute", JsonPrimitive(a.minute))
+                put("enabled", JsonPrimitive(a.enabled))
+                put("daysMask", JsonPrimitive(a.daysMask))
+                put("chime", JsonPrimitive(a.chimeIndex))
+                put("label", JsonPrimitive(a.label))
+            }
+        )
     }.toString()
 
     fun decode(raw: String?): List<Alarm> {
@@ -48,7 +50,7 @@ object AlarmsJson {
                         chimeIndex = obj["chime"]?.jsonPrimitive?.intOrNull ?: 0,
                         label = obj["label"]?.jsonPrimitive?.contentOrNull ?: "",
                     )
-                }.getOrNull()   // Alarm init{} threw on a bad range -> skip this entry
+                }.getOrNull() // Alarm init{} threw on a bad range -> skip this entry
             }
         }.getOrDefault(emptyList())
     }

@@ -1,7 +1,7 @@
 package com.blizzardcaron.freeolleefaces.weather
 
 /** Typed failures from a weather fetch, classified as transient (retry-worthy) or permanent. */
-sealed class WeatherFetchError(message: String) : Exception(message) {
+sealed class WeatherFetchError(message: String, cause: Throwable? = null) : Exception(message, cause) {
 
     abstract val isTransient: Boolean
 
@@ -15,13 +15,13 @@ sealed class WeatherFetchError(message: String) : Exception(message) {
     }
 
     /** Connect or read timed out. */
-    object Timeout : WeatherFetchError("Open-Meteo request timed out") {
+    class Timeout(cause: Throwable? = null) : WeatherFetchError("Open-Meteo request timed out", cause) {
         override val isTransient = true
     }
 
     /** Other network-level failure (no route, connection reset, etc.). */
-    data class Network(val detail: String) :
-        WeatherFetchError("Network error contacting Open-Meteo: $detail") {
+    data class Network(val detail: String, override val cause: Throwable? = null) :
+        WeatherFetchError("Network error contacting Open-Meteo: $detail", cause) {
         override val isTransient = true
     }
 
@@ -32,16 +32,21 @@ sealed class WeatherFetchError(message: String) : Exception(message) {
     }
 
     /** Response body was not the JSON we expected. */
-    data class Malformed(val detail: String) :
-        WeatherFetchError("Malformed Open-Meteo response: $detail") {
+    data class Malformed(val detail: String, override val cause: Throwable? = null) :
+        WeatherFetchError("Malformed Open-Meteo response: $detail", cause) {
         override val isTransient = false
     }
 
     companion object {
+        private const val HTTP_SUCCESS_MIN = 200
+        private const val HTTP_SUCCESS_MAX = 299
+        private const val HTTP_SERVER_ERROR_MIN = 500
+        private const val HTTP_SERVER_ERROR_MAX = 599
+
         /** Maps an HTTP status to an error, or null for 2xx. */
         fun fromHttpStatus(code: Int): WeatherFetchError? = when {
-            code in 200..299 -> null
-            code in 500..599 -> ServerError(code)
+            code in HTTP_SUCCESS_MIN..HTTP_SUCCESS_MAX -> null
+            code in HTTP_SERVER_ERROR_MIN..HTTP_SERVER_ERROR_MAX -> ServerError(code)
             else -> ClientError(code)
         }
     }

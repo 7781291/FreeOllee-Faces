@@ -24,9 +24,9 @@ class NotifyFrameReassembler {
                 buf.removeAt(0)
             }
         }
-        if (buf.size < 4) return null
-        val total = (buf[1].toInt() and 0xFF) + 2          // frame length = LEN + 2
-        if (buf.size < total) return null
+        // Frame length is LEN + 2; not yet known until 4 bytes (header) have arrived.
+        val total = if (buf.size >= 4) (buf[1].toInt() and 0xFF) + 2 else null
+        if (total == null || buf.size < total) return null
         val frameBytes = buf.subList(0, total).toByteArray()
         buf.clear()
         return OlleeProtocol.parseFrame(frameBytes)

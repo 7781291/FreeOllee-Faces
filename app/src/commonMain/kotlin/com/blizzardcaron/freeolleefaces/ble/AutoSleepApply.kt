@@ -14,16 +14,16 @@ object AutoSleepApply {
             address,
             OlleeProtocol.readRequest(OlleeProtocol.TARGET_GET_CONFIG),
             OlleeProtocol.TARGET_GET_CONFIG + OlleeProtocol.RESPONSE_TARGET_OFFSET,
-        ).getOrNull() ?: return false
-        val current = OlleeProtocol.parseConfig(frame) ?: return false
+        ).getOrNull()
+        val current = frame?.let { OlleeProtocol.parseConfig(it) } ?: return false
 
         val matches = current.autoSleepOn == desired.autoSleepOn &&
             (!desired.autoSleepOn || current.periodSec == desired.periodSec)
-        if (matches) return true
-
-        val packet = OlleeProtocol.buildConfigPacket(
-            current.withAutoSleep(desired.autoSleepOn, desired.periodSec),
-        )
-        return ble.sendPacket(address, packet).isSuccess
+        return if (matches) {
+            true
+        } else {
+            val packet = OlleeProtocol.buildConfigPacket(current.withAutoSleep(desired.autoSleepOn, desired.periodSec))
+            ble.sendPacket(address, packet).isSuccess
+        }
     }
 }

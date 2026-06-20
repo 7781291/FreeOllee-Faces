@@ -8,8 +8,13 @@ package com.blizzardcaron.freeolleefaces.ble
  */
 object AlarmReadback {
     suspend fun confirm(
-        ble: BleClient, address: String, packet: ByteArray,
-        enabled: Boolean, hour: Int, minute: Int, chimeIndex: Int,
+        ble: BleClient,
+        address: String,
+        packet: ByteArray,
+        enabled: Boolean,
+        hour: Int,
+        minute: Int,
+        chimeIndex: Int,
     ): Boolean {
         suspend fun reads(): Boolean {
             val reply = ble.sendAndAwait(
@@ -20,7 +25,7 @@ object AlarmReadback {
             return reply.getOrNull()?.let { AlarmConfirm.matches(enabled, hour, minute, chimeIndex, it) } ?: false
         }
         if (reads()) return true
-        ble.sendPacket(address, packet)   // heal once
+        ble.sendPacket(address, packet) // heal once
         return reads()
     }
 }

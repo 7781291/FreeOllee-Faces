@@ -1,11 +1,36 @@
 package com.blizzardcaron.freeolleefaces.ble
 
+// cohesive Ollee wire-protocol codec: one responsibility (frame build/parse/CRC) whose
+// functions are tightly coupled to the byte layout and don't split into separate types cleanly
+@Suppress("TooManyFunctions")
 object OlleeProtocol {
 
     const val MAX_VALUE_LENGTH = 6
 
+    /** Single-byte / ASCII bounds shared by several `require` guards below. */
+    private const val MAX_HOUR = 23
+    private const val MAX_MINUTE = 59
+    private const val ASCII_MAX = 127
+
+    /** Minimum length (bytes) of a parseable frame: 00, len, AA, 55, crcHi, crcLo, cmd, target. */
+    private const val MIN_FRAME_LENGTH = 8
+
+    /** CRC-16/CCITT-FALSE parameters used by [crc16]. */
+    private const val CRC16_INIT = 0xFFFF
+    private const val CRC16_MASK = 0xFFFF
+    private const val CRC16_HIGH_BIT = 0x8000
+    private const val CRC16_POLY = 0x1021
+    private const val CRC16_ROUNDS = 8
+
+    /** Time math for the Timer-face header (see [buildTimerPacket]). */
+    private const val SECONDS_PER_HOUR = 3600
+    private const val SECONDS_PER_MINUTE = 60
+    private const val MAX_TIMER_DURATION_SEC = 359_999
+    private const val TIMER_SLOT_COUNT = 10
+
     /** BLE field selectors (the second inner byte, after cmd 0x02). */
     const val TARGET_NAMEPLATE = 0x2f
+
     // Experimental: the Temperature face's field. The official app *reads* it at 0x2E
     // (response 0x4E, e.g. "  54 F"); whether *writing* 0x2E overrides what the face shows
     // is the open question this parameterization exists to test.
@@ -62,12 +87,14 @@ object OlleeProtocol {
     const val TARGET_SET_CONFIG = 0x33
 
     // Layout of the 0x52 config payload — confirmed on-device 2026-06-18 (see Task 1 note).
-    private const val CONFIG_BITMASK_OFFSET = 0   // 4-byte big-endian settings word
-    private const val CONFIG_PERIOD_OFFSET = 4    // autosleep_period, 4-byte big-endian uint32 (seconds)
+    private const val CONFIG_BITMASK_OFFSET = 0 // 4-byte big-endian settings word
+    private const val CONFIG_PERIOD_OFFSET = 4 // autosleep_period, 4-byte big-endian uint32 (seconds)
     private const val CONFIG_PERIOD_WIDTH = 4
-    private const val CONFIG_MIN_PAYLOAD = CONFIG_PERIOD_OFFSET + CONFIG_PERIOD_WIDTH  // 8
+    private const val CONFIG_MIN_PAYLOAD = CONFIG_PERIOD_OFFSET + CONFIG_PERIOD_WIDTH // 8
+
     /** Bit position within the big-endian bitmask word. */
     const val CONFIG_BIT_AUTOSLEEP = 6
+
     /** Allowed autosleep_period values (seconds), from the official app's picker. */
     val CONFIG_PERIOD_VALUES_SEC = listOf(5, 10, 30, 60, 120)
 
@@ -79,18 +106,18 @@ object OlleeProtocol {
     class WatchConfig(val raw: ByteArray) {
         private fun maskWord(): Int =
             ((raw[CONFIG_BITMASK_OFFSET].toInt() and 0xFF) shl 24) or
-            ((raw[CONFIG_BITMASK_OFFSET + 1].toInt() and 0xFF) shl 16) or
-            ((raw[CONFIG_BITMASK_OFFSET + 2].toInt() and 0xFF) shl 8) or
-            (raw[CONFIG_BITMASK_OFFSET + 3].toInt() and 0xFF)
+                ((raw[CONFIG_BITMASK_OFFSET + 1].toInt() and 0xFF) shl 16) or
+                ((raw[CONFIG_BITMASK_OFFSET + 2].toInt() and 0xFF) shl 8) or
+                (raw[CONFIG_BITMASK_OFFSET + 3].toInt() and 0xFF)
 
         private fun bit(i: Int): Boolean = (maskWord() ushr i) and 1 == 1
 
         val autoSleepOn: Boolean get() = bit(CONFIG_BIT_AUTOSLEEP)
         val periodSec: Int get() =
             ((raw[CONFIG_PERIOD_OFFSET].toInt() and 0xFF) shl 24) or
-            ((raw[CONFIG_PERIOD_OFFSET + 1].toInt() and 0xFF) shl 16) or
-            ((raw[CONFIG_PERIOD_OFFSET + 2].toInt() and 0xFF) shl 8) or
-            (raw[CONFIG_PERIOD_OFFSET + 3].toInt() and 0xFF)
+                ((raw[CONFIG_PERIOD_OFFSET + 1].toInt() and 0xFF) shl 16) or
+                ((raw[CONFIG_PERIOD_OFFSET + 2].toInt() and 0xFF) shl 8) or
+                (raw[CONFIG_PERIOD_OFFSET + 3].toInt() and 0xFF)
 
         fun withAutoSleep(on: Boolean, periodSec: Int): WatchConfig {
             require(!on || periodSec in CONFIG_PERIOD_VALUES_SEC) {
@@ -98,8 +125,11 @@ object OlleeProtocol {
             }
             val copy = raw.copyOf()
             var word = maskWord()
-            word = if (on) word or (1 shl CONFIG_BIT_AUTOSLEEP)
-                   else word and (1 shl CONFIG_BIT_AUTOSLEEP).inv()
+            word = if (on) {
+                word or (1 shl CONFIG_BIT_AUTOSLEEP)
+            } else {
+                word and (1 shl CONFIG_BIT_AUTOSLEEP).inv()
+            }
             copy[CONFIG_BITMASK_OFFSET] = ((word ushr 24) and 0xFF).toByte()
             copy[CONFIG_BITMASK_OFFSET + 1] = ((word ushr 16) and 0xFF).toByte()
             copy[CONFIG_BITMASK_OFFSET + 2] = ((word ushr 8) and 0xFF).toByte()
@@ -114,10 +144,10 @@ object OlleeProtocol {
 
     /** Parses a 0x52 config reply into a [WatchConfig], or null if target/CRC/length is wrong. */
     fun parseConfig(frame: Frame): WatchConfig? {
-        if (!frame.crcOk) return null
-        if (frame.target != TARGET_GET_CONFIG + RESPONSE_TARGET_OFFSET) return null
-        if (frame.payload.size < CONFIG_MIN_PAYLOAD) return null
-        return WatchConfig(frame.payload)
+        val isValid = frame.crcOk &&
+            frame.target == TARGET_GET_CONFIG + RESPONSE_TARGET_OFFSET &&
+            frame.payload.size >= CONFIG_MIN_PAYLOAD
+        return if (isValid) WatchConfig(frame.payload) else null
     }
 
     /** Builds the 0x33 config write from a (read-modified) [config]. */
@@ -125,15 +155,16 @@ object OlleeProtocol {
         buildRawPacket(TARGET_SET_CONFIG, config.raw)
 
     fun crc16(data: ByteArray): Int {
-        var crc = 0xFFFF
+        var crc = CRC16_INIT
         for (b in data) {
             crc = crc xor ((b.toInt() and 0xFF) shl 8)
-            repeat(8) {
-                crc = if ((crc and 0x8000) != 0)
-                    (crc shl 1) xor 0x1021
-                else
+            repeat(CRC16_ROUNDS) {
+                crc = if ((crc and CRC16_HIGH_BIT) != 0) {
+                    (crc shl 1) xor CRC16_POLY
+                } else {
                     crc shl 1
-                crc = crc and 0xFFFF
+                }
+                crc = crc and CRC16_MASK
             }
         }
         return crc
@@ -152,7 +183,7 @@ object OlleeProtocol {
         require(value.length <= MAX_VALUE_LENGTH) {
             "value must be <= $MAX_VALUE_LENGTH chars (got ${value.length})"
         }
-        require(value.all { it.code in 0..127 }) {
+        require(value.all { it.code in 0..ASCII_MAX }) {
             "value must be ASCII (got '$value')"
         }
 
@@ -194,7 +225,7 @@ object OlleeProtocol {
      */
     fun buildWeekdayPacket(slots: List<String>): ByteArray {
         require(slots.size == 7) { "weekday table needs 7 slots (got ${slots.size})" }
-        require(slots.all { it.length == 2 && it.all { c -> c.code in 0..127 } }) {
+        require(slots.all { it.length == 2 && it.all { c -> c.code in 0..ASCII_MAX } }) {
             "each slot must be exactly 2 ASCII chars (got $slots)"
         }
         val payload = WEEKDAY_PREFIX + slots.joinToString("").toByteArray(Charsets.US_ASCII)
@@ -222,18 +253,18 @@ object OlleeProtocol {
         headerSeconds: Int,
         startMode: TimerStartMode = TimerStartMode.SAVE,
     ): ByteArray {
-        require(durationsSeconds.size == 10) {
-            "timer table needs exactly 10 slots (got ${durationsSeconds.size})"
+        require(durationsSeconds.size == TIMER_SLOT_COUNT) {
+            "timer table needs exactly $TIMER_SLOT_COUNT slots (got ${durationsSeconds.size})"
         }
-        require(durationsSeconds.all { it in 0..359_999 }) {
-            "each duration must be 0..359999 s (got $durationsSeconds)"
+        require(durationsSeconds.all { it in 0..MAX_TIMER_DURATION_SEC }) {
+            "each duration must be 0..$MAX_TIMER_DURATION_SEC s (got $durationsSeconds)"
         }
         require(headerSeconds >= 0) { "headerSeconds must be >= 0 (got $headerSeconds)" }
-        val payload = ByteArray(4 + 10 * 4) // 4-byte header + 10 LE-uint32 words
-        payload[0] = (headerSeconds / 3600).coerceAtMost(0xFF).toByte() // HH (hours; clamp for safety)
-        payload[1] = ((headerSeconds % 3600) / 60).toByte()             // MM (0-59)
-        payload[2] = (headerSeconds % 60).toByte()                      // SS (0-59)
-        payload[3] = startMode.byte3.toByte()                           // start/mode selector
+        val payload = ByteArray(4 + TIMER_SLOT_COUNT * 4) // 4-byte header + 10 LE-uint32 words
+        payload[0] = (headerSeconds / SECONDS_PER_HOUR).coerceAtMost(0xFF).toByte() // HH (clamp for safety)
+        payload[1] = ((headerSeconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE).toByte() // MM (0-59)
+        payload[2] = (headerSeconds % SECONDS_PER_MINUTE).toByte() // SS (0-59)
+        payload[3] = startMode.byte3.toByte() // start/mode selector
         durationsSeconds.forEachIndexed { i, s ->
             val off = 4 + i * 4
             payload[off] = (s and 0xFF).toByte()
@@ -280,21 +311,21 @@ object OlleeProtocol {
         enabled: Boolean = false,
         hourlyChime: Boolean = true,
     ): ByteArray {
-        require(hour in 0..23) { "hour must be 0..23 (got $hour)" }
-        require(minute in 0..59) { "minute must be 0..59 (got $minute)" }
+        require(hour in 0..MAX_HOUR) { "hour must be 0..$MAX_HOUR (got $hour)" }
+        require(minute in 0..MAX_MINUTE) { "minute must be 0..$MAX_MINUTE (got $minute)" }
         require(chimeIndex in 0..0xFF) { "chimeIndex must be a single byte (got $chimeIndex)" }
         val payload = byteArrayOf(
             if (enabled) 0x01 else 0x00,
             if (hourlyChime) 0x01 else 0x00,
-            0x00,                       // snooze off
+            0x00, // snooze off
             hour.toByte(),
             minute.toByte(),
-            0xFE.toByte(),              // repeat every day — see KDoc; 0x00 would disable
+            0xFE.toByte(), // repeat every day — see KDoc; 0x00 would disable
             chimeIndex.toByte(),
-            0x05,                       // snooze period (minutes), stock value
+            0x05, // snooze period (minutes), stock value
             if (playNow) 0x01 else 0x00,
             0xC0.toByte(), 0xFF.toByte(), 0x0F, // hourly-chime hours 6:00-19:00
-            0xFF.toByte(),              // terminator
+            0xFF.toByte(), // terminator
         )
         return buildRawPacket(TARGET_ALARM, payload)
     }
@@ -313,8 +344,9 @@ object OlleeProtocol {
      * responses, e.g. a temperature read-back at target 0x4E with payload "  54 F".
      */
     fun parseFrame(bytes: ByteArray): Frame? {
-        if (bytes.size < 8) return null
-        if (bytes[2] != 0xAA.toByte() || bytes[3] != 0x55.toByte()) return null
+        val hasValidHeader = bytes.size >= MIN_FRAME_LENGTH &&
+            bytes[2] == 0xAA.toByte() && bytes[3] == 0x55.toByte()
+        if (!hasValidHeader) return null
         val crc = ((bytes[4].toInt() and 0xFF) shl 8) or (bytes[5].toInt() and 0xFF)
         val inner = bytes.copyOfRange(6, bytes.size)
         val cmd = inner[0].toInt() and 0xFF

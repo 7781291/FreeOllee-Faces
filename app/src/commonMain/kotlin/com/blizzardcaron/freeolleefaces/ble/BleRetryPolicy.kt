@@ -11,8 +11,14 @@ object BleRetryPolicy {
     /** Total connect+write attempts before surfacing failure. */
     const val MAX_ATTEMPTS = 3
 
+    /** Backoff before the first retry. */
+    private const val FIRST_RETRY_BACKOFF_MS = 2_000L
+
+    /** Backoff before the second retry. */
+    private const val SECOND_RETRY_BACKOFF_MS = 4_000L
+
     /** Wait before the retry that follows the (0-based) failed [attempt]: 2s, then 4s. */
-    private val BACKOFF_MS = listOf(2_000L, 4_000L)
+    private val BACKOFF_MS = listOf(FIRST_RETRY_BACKOFF_MS, SECOND_RETRY_BACKOFF_MS)
 
     fun backoffForAttempt(attempt: Int): Long =
         BACKOFF_MS.getOrElse(attempt) { BACKOFF_MS.lastOrNull() ?: 0L }
@@ -22,6 +28,6 @@ object BleRetryPolicy {
      * is preferable to a false "watch unreachable". (Kept as a predicate for symmetry with
      * `weather/Retry.kt` and to localize any future non-retryable cases.)
      */
-    @Suppress("UNUSED_PARAMETER")
+    @Suppress("UNUSED_PARAMETER", "FunctionOnlyReturningConstant")
     fun isRetryable(error: Throwable): Boolean = true
 }

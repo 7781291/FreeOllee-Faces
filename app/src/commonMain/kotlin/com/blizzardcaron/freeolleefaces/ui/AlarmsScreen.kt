@@ -36,30 +36,28 @@ import com.blizzardcaron.freeolleefaces.alarm.AlarmsRepository
 import com.blizzardcaron.freeolleefaces.ble.ConnectionStatus
 import kotlinx.datetime.DayOfWeek
 
+private const val MAX_LABEL_LENGTH = 24
+private const val MAX_MINUTE = 59
+
 @Composable
 fun AlarmsScreen(
     alarms: List<Alarm>,
     nextSummary: String,
-    onAdd: () -> Unit,
-    onSave: (Alarm) -> Unit,
-    onToggle: (String, Boolean) -> Unit,
-    onDelete: (String) -> Unit,
-    onBack: () -> Unit,
+    callbacks: AlarmsCallbacks,
     connectionStatus: ConnectionStatus,
-    onReconnect: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    BackHandler { onBack() }
+    BackHandler { callbacks.onBack() }
     Column(
         modifier = modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        AppBar(title = "Alarms", connectionStatus = connectionStatus, onReconnect = onReconnect)
+        AppBar(title = "Alarms", connectionStatus = connectionStatus, onReconnect = callbacks.onReconnect)
 
         Text(nextSummary, style = MaterialTheme.typography.titleMedium)
 
         val atMax = alarms.size >= AlarmsRepository.MAX_ALARMS
-        Button(onClick = onAdd, enabled = !atMax, modifier = Modifier.fillMaxWidth()) {
+        Button(onClick = callbacks.onAdd, enabled = !atMax, modifier = Modifier.fillMaxWidth()) {
             Text(if (atMax) "Max ${AlarmsRepository.MAX_ALARMS} alarms" else "Add alarm")
         }
 
@@ -68,8 +66,10 @@ fun AlarmsScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             if (alarms.isEmpty()) {
-                Text("No alarms yet. Tap \"Add alarm\" to create one.",
-                    style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    "No alarms yet. Tap \"Add alarm\" to create one.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
             for (alarm in alarms) {
                 // Key by id so deleting a card doesn't hand its remembered state (open chime
@@ -77,9 +77,9 @@ fun AlarmsScreen(
                 key(alarm.id) {
                     AlarmCard(
                         alarm = alarm,
-                        onSave = onSave,
-                        onToggle = { onToggle(alarm.id, it) },
-                        onDelete = { onDelete(alarm.id) },
+                        onSave = callbacks.onSave,
+                        onToggle = { callbacks.onToggle(alarm.id, it) },
+                        onDelete = { callbacks.onDelete(alarm.id) },
                     )
                 }
             }
@@ -111,7 +111,7 @@ private fun AlarmCard(
                     val isPm = isPm(alarm.hour)
                     val hour12 = hour12Of(alarm.hour)
                     HourField(hour12) { onSave(alarm.copy(hour = hour24(it, isPm))) }
-                    NumberField("M", alarm.minute) { onSave(alarm.copy(minute = it.coerceIn(0, 59))) }
+                    NumberField("M", alarm.minute) { onSave(alarm.copy(minute = it.coerceIn(0, MAX_MINUTE))) }
                     TextButton(onClick = { onSave(alarm.copy(hour = hour24(hour12, !isPm))) }) {
                         Text(if (isPm) "PM" else "AM")
                     }
@@ -132,7 +132,7 @@ private fun AlarmCard(
 
             OutlinedTextField(
                 value = alarm.label,
-                onValueChange = { onSave(alarm.copy(label = it.take(24))) },
+                onValueChange = { onSave(alarm.copy(label = it.take(MAX_LABEL_LENGTH))) },
                 label = { Text("Label (optional)") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
@@ -179,7 +179,10 @@ private fun ChimePicker(index: Int, onChange: (Int) -> Unit) {
             AlarmSchedule.CHIME_NAMES.forEachIndexed { i, name ->
                 DropdownMenuItem(
                     text = { Text(name) },
-                    onClick = { onChange(i); open = false },
+                    onClick = {
+                        onChange(i)
+                        open = false
+                    },
                 )
             }
         }

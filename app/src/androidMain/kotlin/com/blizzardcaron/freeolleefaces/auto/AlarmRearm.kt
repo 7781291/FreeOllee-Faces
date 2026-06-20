@@ -51,9 +51,11 @@ object AlarmRearm {
 
     const val TAG = "ALARM_REARM"
     const val EXTRA_ATTEMPT = "rearm_attempt"
-    private const val REQUEST_CODE = 4025           // fire+60s trigger: one slot, each schedule replaces the last
-    private const val BACKSTOP_REQUEST_CODE = 4026  // failed-push backstop: separate slot, same receiver
+    private const val REQUEST_CODE = 4025 // fire+60s trigger: one slot, each schedule replaces the last
+    private const val BACKSTOP_REQUEST_CODE = 4026 // failed-push backstop: separate slot, same receiver
     private const val PUSH_DEBOUNCE_MS = 750L
+    private const val POST_FIRE_TRIGGER_DELAY_MS = 60_000L
+    private const val MILLIS_PER_SECOND = 1000
     private val generation = AtomicInteger()
     private val pushMutex = Mutex()
 
@@ -76,17 +78,49 @@ object AlarmRearm {
 
         // Schedule the trigger first — it must survive even if the push below fails.
         val am = ctx.getSystemService(AlarmManager::class.java)
+        val zone = TimeZone.currentSystemDefault()
+        scheduleReArmTrigger(ctx, am, zone)
+
+        val address = Prefs(appSettings(ctx)).watchAddress
+        val myGen = generation.incrementAndGet()
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                delay(PUSH_DEBOUNCE_MS)
+                if (generation.get() != myGen) return@launch // superseded by a newer rearm
+                if (address == null) {
+                    // Inside the debounce so an edit burst surfaces ONE snackbar, not one per tap.
+                    // Same message the manual send path shows (AppViewModel.pushTimerFrame).
+                    Log.w(TAG, "no watch selected — skipping push")
+                    pushResults.tryEmit("No watch selected — open Settings (⚙)")
+                    return@launch
+                }
+                // Serialize pushes: GATT round-trips run seconds — far longer than the debounce —
+                // so without the lock an older push still in flight can land AFTER a newer one and
+                // leave the watch holding stale state (observed on-device 2026-06-11).
+                pushMutex.withLock {
+                    if (generation.get() != myGen) return@launch // superseded while waiting
+                    pushAndRecover(ctx, am, address, attempt, zone)
+                }
+            } finally {
+                onComplete()
+            }
+        }
+    }
+
+    /** Computes the next-fire-plus-60s trigger and schedules it, or cancels it if no alarm is due. */
+    private fun scheduleReArmTrigger(ctx: Context, am: AlarmManager, zone: TimeZone) {
         val trigger = PendingIntent.getBroadcast(
-            ctx, REQUEST_CODE, Intent(ctx, AlarmRearmReceiver::class.java),
+            ctx,
+            REQUEST_CODE,
+            Intent(ctx, AlarmRearmReceiver::class.java),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
-        val zone = TimeZone.currentSystemDefault()
         val next = AlarmSchedule.nextFire(
             AlarmsRepository(alarmSettings(ctx)).getAll(),
             Clock.System.now().toLocalDateTime(zone),
         )
         if (next != null) {
-            val atMs = next.dateTime.toInstant(zone).toEpochMilliseconds() + 60_000L
+            val atMs = next.dateTime.toInstant(zone).toEpochMilliseconds() + POST_FIRE_TRIGGER_DELAY_MS
             if (am.canScheduleExactAlarms()) {
                 am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, atMs, trigger)
                 Log.i(TAG, "next fire ${next.dateTime}; trigger set for fire+60s")
@@ -100,60 +134,44 @@ object AlarmRearm {
             am.cancel(trigger)
             Log.i(TAG, "no alarms due; trigger cancelled, will push disarm")
         }
+    }
 
-        val address = Prefs(appSettings(ctx)).watchAddress
-        val myGen = generation.incrementAndGet()
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                delay(PUSH_DEBOUNCE_MS)
-                if (generation.get() != myGen) return@launch   // superseded by a newer rearm
-                if (address == null) {
-                    // Inside the debounce so an edit burst surfaces ONE snackbar, not one per tap.
-                    // Same message the manual send path shows (AppViewModel.pushTimerFrame).
-                    Log.w(TAG, "no watch selected — skipping push")
-                    pushResults.tryEmit("No watch selected — open Settings (⚙)")
-                    return@launch
-                }
-                // Serialize pushes: GATT round-trips run seconds — far longer than the debounce —
-                // so without the lock an older push still in flight can land AFTER a newer one and
-                // leave the watch holding stale state (observed on-device 2026-06-11).
-                pushMutex.withLock {
-                    if (generation.get() != myGen) return@launch   // superseded while waiting
-                    // Recompute at push time so a burst of edits sends the final state.
-                    val latest = AlarmSchedule.nextFire(
-                        AlarmsRepository(alarmSettings(ctx)).getAll(),
-                        Clock.System.now().toLocalDateTime(zone),
-                    )
-                    val ble = AndroidBleClient(ctx)
-                    val packet = AlarmSchedule.packetFor(latest)
-                    val sent = ble.sendPacket(address, packet)
-                    val confirmed = sent.isSuccess && AlarmReadback.confirm(
-                        ble, address, packet,
-                        enabled = latest != null,
-                        hour = latest?.hour ?: 0, minute = latest?.minute ?: 0, chimeIndex = latest?.chimeIndex ?: 0,
-                    )
-                    Log.i(
-                        TAG,
-                        if (confirmed) "push+confirm OK (${if (latest != null) "armed ${latest.dateTime}" else "disarm"}) [attempt $attempt]"
-                        else "push/confirm FAIL ${sent.exceptionOrNull()?.message ?: "read-back mismatch"} [attempt $attempt]",
-                    )
-                    val action = AlarmRearmRecovery.afterPush(confirmed, attempt)
-                    applyRecovery(ctx, am, action)
-                    pushResults.tryEmit(
-                        when {
-                            !confirmed && action is AlarmRearmRecovery.Action.ScheduleRetry ->
-                                "Alarm send failed — long-press ALARM to wake the watch (retrying automatically)"
-                            !confirmed ->
-                                "Alarm send failed after several tries — long-press ALARM to wake the watch, then tap Retry in the notification"
-                            latest != null -> "Sent to watch — ${AlarmSchedule.formatNext(latest)}"
-                            else -> "Sent to watch — alarm off"
-                        },
-                    )
-                }
-            } finally {
-                onComplete()
-            }
+    /** Recomputes the final state at push time, sends + confirms the `0x25` frame, and recovers. */
+    private suspend fun pushAndRecover(ctx: Context, am: AlarmManager, address: String, attempt: Int, zone: TimeZone) {
+        // Recompute at push time so a burst of edits sends the final state.
+        val latest = AlarmSchedule.nextFire(
+            AlarmsRepository(alarmSettings(ctx)).getAll(),
+            Clock.System.now().toLocalDateTime(zone),
+        )
+        val ble = AndroidBleClient(ctx)
+        val packet = AlarmSchedule.packetFor(latest)
+        val sent = ble.sendPacket(address, packet)
+        val confirmed = sent.isSuccess && AlarmReadback.confirm(
+            ble, address, packet,
+            enabled = latest != null,
+            hour = latest?.hour ?: 0, minute = latest?.minute ?: 0, chimeIndex = latest?.chimeIndex ?: 0,
+        )
+        val outcome = if (confirmed) {
+            val detail = if (latest != null) "armed ${latest.dateTime}" else "disarm"
+            "push+confirm OK ($detail) [attempt $attempt]"
+        } else {
+            val reason = sent.exceptionOrNull()?.message ?: "read-back mismatch"
+            "push/confirm FAIL $reason [attempt $attempt]"
         }
+        Log.i(TAG, outcome)
+        val action = AlarmRearmRecovery.afterPush(confirmed, attempt)
+        applyRecovery(ctx, am, action)
+        pushResults.tryEmit(
+            when {
+                !confirmed && action is AlarmRearmRecovery.Action.ScheduleRetry ->
+                    "Alarm send failed — long-press ALARM to wake the watch (retrying automatically)"
+                !confirmed ->
+                    "Alarm send failed after several tries — long-press ALARM to wake the watch, " +
+                        "then tap Retry in the notification"
+                latest != null -> "Sent to watch — ${AlarmSchedule.formatNext(latest)}"
+                else -> "Sent to watch — alarm off"
+            },
+        )
     }
 
     /** Applies one [AlarmRearmRecovery] outcome: backstop scheduling, cleanup, or notification. */
@@ -171,7 +189,7 @@ object AlarmRearm {
                 } else {
                     am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, atMs, pi)
                 }
-                Log.i(TAG, "backstop retry ${action.nextAttempt} in ${action.delayMs / 1000}s")
+                Log.i(TAG, "backstop retry ${action.nextAttempt} in ${action.delayMs / MILLIS_PER_SECOND}s")
             }
             AlarmRearmRecovery.Action.NotifyFailure -> {
                 Log.w(TAG, "backstop budget spent — posting alarm-failure notification")
@@ -183,7 +201,8 @@ object AlarmRearm {
     /** Extras don't participate in PendingIntent matching, so the same shape serves cancel(). */
     private fun backstopTrigger(ctx: Context, nextAttempt: Int): PendingIntent =
         PendingIntent.getBroadcast(
-            ctx, BACKSTOP_REQUEST_CODE,
+            ctx,
+            BACKSTOP_REQUEST_CODE,
             Intent(ctx, AlarmRearmReceiver::class.java).putExtra(EXTRA_ATTEMPT, nextAttempt),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
