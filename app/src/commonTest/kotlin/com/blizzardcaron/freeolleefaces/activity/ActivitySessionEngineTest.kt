@@ -1,0 +1,103 @@
+package com.blizzardcaron.freeolleefaces.activity
+
+import com.blizzardcaron.freeolleefaces.ble.OlleeProtocol
+import com.blizzardcaron.freeolleefaces.fakes.FakeActivityTrackStore
+import com.blizzardcaron.freeolleefaces.fakes.FakeBleClient
+import com.blizzardcaron.freeolleefaces.fakes.FakeSessionAutoSleep
+import com.blizzardcaron.freeolleefaces.location.Coords
+import com.blizzardcaron.freeolleefaces.prefs.Prefs
+import com.russhwolf.settings.MapSettings
+import kotlinx.coroutines.test.runTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
+
+class ActivitySessionEngineTest {
+
+    private class Harness {
+        val ble = FakeBleClient()
+        val store = FakeActivityTrackStore()
+        val autoSleep = FakeSessionAutoSleep()
+        val prefs = Prefs(MapSettings())
+        var clockMs = 0L
+        val engine = ActivitySessionEngine(
+            ble = ble, store = store, prefs = prefs, autoSleep = autoSleep,
+            watchAddress = { "AA:BB" }, now = { clockMs }, newId = { "trk" },
+        )
+        fun fix(lat: Double, lng: Double) = Coords(lat, lng, 5f, "gps")
+    }
+
+    @Test fun start_marks_running_and_disables_autosleep() = runTest {
+        val h = Harness()
+        h.engine.start()
+        assertTrue(h.engine.state.value.running)
+        assertEquals(listOf("disable(AA:BB)"), h.autoSleep.calls)
+    }
+
+    @Test fun ingest_records_a_track_point_and_updates_distance() = runTest {
+        val h = Harness()
+        h.engine.start()
+        h.engine.ingest(h.fix(0.0, 0.0), 0L)
+        h.engine.ingest(h.fix(0.001, 0.0), 10_000L) // ~111 m
+        assertTrue(h.engine.state.value.distanceMeters > 100.0)
+    }
+
+    @Test fun tick_pushes_rendered_metric_to_nameplate() = runTest {
+        val h = Harness()
+        h.engine.start()
+        h.engine.ingest(h.fix(0.0, 0.0), 0L)
+        h.engine.tick(1_000L)
+        assertTrue(
+            h.ble.sentNameplate().isNotEmpty(),
+            "expected a nameplate write, got ${h.ble.sentNameplate()}",
+        )
+    }
+
+    @Test fun unchanged_render_within_heartbeat_pushes_only_once() = runTest {
+        val h = Harness()
+        h.engine.start()
+        h.engine.tick(0L)        // first push (TIME defaults? no — PACE warmup "P --:-")
+        val firstCount = h.ble.sentNameplate().size
+        h.engine.tick(1_000L)    // identical render, within 3s heartbeat
+        assertEquals(firstCount, h.ble.sentNameplate().size)
+    }
+
+    @Test fun cycle_metric_forces_immediate_push_of_new_metric() = runTest {
+        val h = Harness()
+        h.engine.start()
+        h.engine.tick(0L)
+        val before = h.ble.sentNameplate().size
+        h.engine.cycleMetric()   // PACE -> DISTANCE
+        h.engine.tick(500L)      // within heartbeat, but forced
+        assertEquals(before + 1, h.ble.sentNameplate().size)
+        assertEquals(ActivityMetric.DISTANCE, h.engine.state.value.selectedMetric)
+    }
+
+    @Test fun push_failure_marks_unreachable_but_keeps_state_running() = runTest {
+        val h = Harness()
+        h.ble.sendResult = Result.failure(IllegalStateException("link down"))
+        h.engine.start()
+        h.engine.tick(0L)
+        assertFalse(h.engine.state.value.watchReachable)
+        assertTrue(h.engine.state.value.running)
+    }
+
+    @Test fun stop_saves_finalized_track_and_restores_autosleep() = runTest {
+        val h = Harness()
+        h.engine.start()
+        h.engine.ingest(h.fix(0.0, 0.0), 0L)
+        h.engine.ingest(h.fix(0.001, 0.0), 10_000L)
+        h.clockMs = 12_000L
+        h.engine.stop()
+        val saved = h.store.latest()
+        assertNotNull(saved)
+        assertEquals("trk", saved.id)
+        assertNotNull(saved.endedAtMs)
+        assertNotNull(saved.summary)
+        assertTrue(saved.points.size >= 2)
+        assertEquals("restore(AA:BB)", h.autoSleep.calls.last())
+        assertFalse(h.engine.state.value.running)
+    }
+}

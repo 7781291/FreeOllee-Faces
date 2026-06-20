@@ -14,8 +14,8 @@ import com.blizzardcaron.freeolleefaces.prefs.Prefs
 class ActivityAutoSleepManager(
     private val ble: BleClient,
     private val prefs: Prefs,
-) {
-    suspend fun disableForActivity(address: String): Boolean {
+) : SessionAutoSleep {
+    override suspend fun disableForActivity(address: String): Boolean {
         val current = readConfig(address) ?: return false
         prefs.savedAutoSleepProfile = AutoSleepProfile(current.autoSleepOn, current.periodSec)
         prefs.activityActive = true
@@ -26,7 +26,7 @@ class ActivityAutoSleepManager(
         )
     }
 
-    suspend fun restoreAfterActivity(address: String): Boolean {
+    override suspend fun restoreAfterActivity(address: String): Boolean {
         val saved = prefs.savedAutoSleepProfile
         val ok = saved == null || AutoSleepApply.reconcile(ble, address, saved)
         if (ok) {
