@@ -8,6 +8,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.datetime.Clock
+import kotlin.random.Random
+
+// Upper bound for the random suffix on a default track id, so two sessions started within the
+// same millisecond don't collide on the store's id-keyed filename (silently overwriting a track).
+private const val ID_RANDOM_BOUND = 1_000_000
 
 /**
  * Orchestrates a live activity: feeds GPS fixes into [ActivitySession], renders the selected
@@ -21,7 +26,9 @@ class ActivitySessionEngine(
     private val autoSleep: SessionAutoSleep,
     private val watchAddress: () -> String?,
     private val now: () -> Long = { Clock.System.now().toEpochMilliseconds() },
-    private val newId: () -> String = { Clock.System.now().toEpochMilliseconds().toString() },
+    private val newId: () -> String = {
+        "${Clock.System.now().toEpochMilliseconds()}-${Random.nextInt(ID_RANDOM_BOUND)}"
+    },
 ) {
     private val _state = MutableStateFlow(ActivityState())
     val state: StateFlow<ActivityState> = _state.asStateFlow()
