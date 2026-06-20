@@ -292,6 +292,16 @@ private suspend fun runStartupLocation(viewModel: AppViewModel, context: Context
 
     viewModel.complications.refreshActive(force = false, push = false)
     viewModel.onStart()
+
+    val prefs = Prefs(appSettings(context))
+    val ble = AndroidBleClient(context)
+    com.blizzardcaron.freeolleefaces.activity.ActivityRecovery.recoverIfStranded(
+        prefs = prefs,
+        store = AndroidActivityTrackStore(context),
+        autoSleep = com.blizzardcaron.freeolleefaces.activity.ActivityAutoSleepManager(ble, prefs),
+        watchAddress = prefs.watchAddress,
+        sessionRunning = com.blizzardcaron.freeolleefaces.activity.ActivitySessionHost.isRunning,
+    )
 }
 
 @Composable
