@@ -5,6 +5,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.blizzardcaron.freeolleefaces.activity.ActivitySessionLauncher
+import com.blizzardcaron.freeolleefaces.activity.NoopActivitySessionLauncher
 import com.blizzardcaron.freeolleefaces.alarm.AlarmsRepository
 import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
 import com.blizzardcaron.freeolleefaces.auto.AlarmScheduler
@@ -25,6 +27,7 @@ import com.blizzardcaron.freeolleefaces.timer.TimerSetsRepository
 import com.blizzardcaron.freeolleefaces.ui.HomeState
 import com.blizzardcaron.freeolleefaces.ui.PreviewState
 import com.blizzardcaron.freeolleefaces.ui.Screen
+import com.blizzardcaron.freeolleefaces.vm.ActivityController
 import com.blizzardcaron.freeolleefaces.vm.AlarmController
 import com.blizzardcaron.freeolleefaces.vm.ComplicationController
 import com.blizzardcaron.freeolleefaces.vm.SettingsController
@@ -61,6 +64,8 @@ class AppViewModel(
     private val versionLabel: String = "",
     private val watchConnection: WatchConnection = NoopWatchConnection,
     private val clock: Clock = Clock.System,
+    private val activityLauncher: ActivitySessionLauncher = NoopActivitySessionLauncher,
+    private val hasLocationPermission: () -> Boolean = { true },
 ) : ViewModel() {
 
     var state by mutableStateOf(initialState())
@@ -107,6 +112,13 @@ class AppViewModel(
         tempNextText = { complications.tempNextText() },
         refreshActive = { force, push -> complications.refreshActive(force, push) },
         clock = clock,
+    )
+
+    val activity = ActivityController(
+        launcher = activityLauncher,
+        prefs = prefs,
+        hasLocationPermission = hasLocationPermission,
+        showSnackbar = ::emitEvent,
     )
 
     private val _events = Channel<String>(Channel.BUFFERED) // snackbar messages
