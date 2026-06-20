@@ -32,6 +32,8 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.blizzardcaron.freeolleefaces.activity.AndroidActivitySessionLauncher
+import com.blizzardcaron.freeolleefaces.activity.AndroidActivityTrackStore
 import com.blizzardcaron.freeolleefaces.alarm.AlarmsRepository
 import com.blizzardcaron.freeolleefaces.auto.AlarmRearm
 import com.blizzardcaron.freeolleefaces.auto.AndroidAlarmScheduler
@@ -188,6 +190,12 @@ private fun rememberAppViewModel(context: Context): AppViewModel = remember {
         alarmRepo = AlarmsRepository(alarmSettings(context)),
         alarmScheduler = AndroidAlarmScheduler(context),
         versionLabel = versionLabel(versionName, context.packageName),
+        activityLauncher = AndroidActivitySessionLauncher(context),
+        hasLocationPermission = {
+            ContextCompat.checkSelfPermission(
+                context, Manifest.permission.ACCESS_FINE_LOCATION,
+            ) == PackageManager.PERMISSION_GRANTED
+        },
     )
 }
 
@@ -364,16 +372,28 @@ private fun AppContent(
 ) {
     @Composable
     fun ActivityTab() {
+        val context = LocalContext.current
         val activityState by viewModel.activity.state.collectAsState()
-        // Task 14: lastSummary should read latestActivitySummary(context); onStart should call
-        // startActivityWithPermission(context, viewModel) instead of onStart() directly.
+        val activityPermissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+            androidx.activity.result.contract.ActivityResultContracts.RequestPermission(),
+        ) { granted -> if (granted) viewModel.activity.onStart() }
+        val startActivityWithPermission: () -> Unit = {
+            val granted = ContextCompat.checkSelfPermission(
+                context, Manifest.permission.ACCESS_FINE_LOCATION,
+            ) == PackageManager.PERMISSION_GRANTED
+            if (granted) {
+                viewModel.activity.onStart()
+            } else {
+                activityPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            }
+        }
         ActivityScreen(
             state = activityState,
             unit = viewModel.activity.activityUnit,
             watchSelected = viewModel.activity.watchSelected,
-            lastSummary = null,
+            lastSummary = AndroidActivityTrackStore(context).latest()?.summary,
             callbacks = ActivityCallbacks(
-                onStart = { viewModel.activity.onStart() },
+                onStart = startActivityWithPermission,
                 onStop = { viewModel.activity.onStop() },
                 onMode = { viewModel.activity.onMode() },
                 onToggleUnit = { viewModel.activity.toggleUnit() },
