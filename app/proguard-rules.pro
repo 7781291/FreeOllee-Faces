@@ -10,6 +10,13 @@
 -keepclasseswithmembers class com.blizzardcaron.freeolleefaces.** {
     kotlinx.serialization.KSerializer serializer(...);
 }
+# WorkManager bundles a Room database (WorkDatabase) whose generated *_Impl
+# class is instantiated by reflection from androidx.startup at app boot. R8
+# (full mode) strips its no-arg constructor, throwing NoSuchMethodException:
+# androidx.work.impl.WorkDatabase_Impl.<init> []. Keep Room impl constructors.
+-keep class * extends androidx.room.RoomDatabase { <init>(); }
+-keep class androidx.work.impl.WorkDatabase_Impl { <init>(); }
+
 # ktor (OkHttp engine)
 -keep class io.ktor.** { *; }
 -keep class kotlinx.coroutines.** { *; }
