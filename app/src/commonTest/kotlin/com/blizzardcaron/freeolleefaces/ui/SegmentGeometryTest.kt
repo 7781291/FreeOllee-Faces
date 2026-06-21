@@ -25,4 +25,32 @@ class SegmentGeometryTest {
         assertEquals(setOf(Segment.A, Segment.B, Segment.F, Segment.G), cells[4])   // # 0x63
         assertEquals(setOf(Segment.A, Segment.E, Segment.F, Segment.G), cells[5])   // F 0x71
     }
+
+    @Test
+    fun `medium cells are scaled and baseline-aligned`() {
+        val rects = nameplateCellRects(100f)
+        assertEquals(6, rects.size)
+        rects.subList(0, 4).forEach {
+            assertEquals(100f, it.h, 0.01f); assertEquals(0f, it.y, 0.01f)
+        }
+        val mediumH = com.blizzardcaron.freeolleefaces.glyph.NameplateLayout.MEDIUM_SCALE * rects[0].h
+        assertEquals(mediumH, rects[4].h, 0.01f)
+        assertEquals(rects[0].h - mediumH, rects[4].y, 0.01f) // bottom-aligned to the large baseline
+        assertEquals(com.blizzardcaron.freeolleefaces.glyph.NameplateLayout.MEDIUM_SCALE * rects[0].w, rects[4].w, 0.01f)
+    }
+
+    @Test
+    fun `colon gap adds extra advance after cell 1`() {
+        val rects = nameplateCellRects(100f)
+        val normalGap = rects[1].x - (rects[0].x + rects[0].w)
+        val colonGap = rects[2].x - (rects[1].x + rects[1].w)
+        val extra = com.blizzardcaron.freeolleefaces.glyph.NameplateLayout.COLON_EXTRA_GAP_FRACTION * rects[0].w
+        assertEquals(extra, colonGap - normalGap, 0.01f)
+    }
+
+    @Test
+    fun `readout width spans all cells without trailing gap`() {
+        val rects = nameplateCellRects(100f)
+        assertEquals(rects.last().x + rects.last().w, nameplateReadoutWidth(100f), 0.01f)
+    }
 }
