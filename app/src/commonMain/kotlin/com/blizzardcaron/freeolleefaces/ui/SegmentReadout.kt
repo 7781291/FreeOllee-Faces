@@ -17,14 +17,18 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.blizzardcaron.freeolleefaces.glyph.NameplateGlyphs
+import com.blizzardcaron.freeolleefaces.glyph.NameplateLayout
 import com.blizzardcaron.freeolleefaces.glyph.Segment
 import com.blizzardcaron.freeolleefaces.ui.theme.BrandColors
 
-/** Cell-by-cell lit segments for [value], left-aligned and blank-padded to [cellCount]. Pure. */
-fun litSegments(value: String, cellCount: Int): List<Set<Segment>> =
-    (0 until cellCount).map { i ->
-        value.getOrNull(i)?.let { NameplateGlyphs.segmentsFor(it) } ?: emptySet()
+/** Right-aligned, per-cell-font lit segments for [value] across the fixed nameplate layout. Pure. */
+fun litSegments(value: String): List<Set<Segment>> {
+    val cells = NameplateLayout.CELLS
+    val start = cells.size - value.length // negative when value > 6 -> takes the last 6 chars
+    return cells.indices.map { i ->
+        value.getOrNull(i - start)?.let { NameplateGlyphs.segmentsFor(it, cells[i].font) } ?: emptySet()
     }
+}
 
 private const val CELLS = 6
 private const val CELL_ASPECT = 0.6f // width / height of one cell
@@ -53,7 +57,7 @@ fun SegmentReadout(
 ) {
     val lit = if (tone == LcdTone.Aqua) BrandColors.LcdOnAqua else BrandColors.LcdOn
     val off = BrandColors.LcdOff
-    val cells = litSegments(value, CELLS)
+    val cells = litSegments(value)
     // Size the readout to exactly the 6 cells so none get clipped (Canvas has no intrinsic size).
     val cellW = cellHeight * CELL_ASPECT
     val readoutWidth = cellW * (1f + CELL_GAP_FRACTION) * (CELLS - 1) + cellW
