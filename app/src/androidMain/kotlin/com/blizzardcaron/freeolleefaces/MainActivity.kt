@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,6 +32,8 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.blizzardcaron.freeolleefaces.activity.AndroidActivitySessionLauncher
+import com.blizzardcaron.freeolleefaces.activity.AndroidActivityTrackStore
 import com.blizzardcaron.freeolleefaces.alarm.AlarmsRepository
 import com.blizzardcaron.freeolleefaces.auto.AlarmRearm
 import com.blizzardcaron.freeolleefaces.auto.AndroidAlarmScheduler
@@ -45,6 +48,8 @@ import com.blizzardcaron.freeolleefaces.prefs.alarmSettings
 import com.blizzardcaron.freeolleefaces.prefs.appSettings
 import com.blizzardcaron.freeolleefaces.prefs.timerSettings
 import com.blizzardcaron.freeolleefaces.timer.TimerSetsRepository
+import com.blizzardcaron.freeolleefaces.ui.ActivityCallbacks
+import com.blizzardcaron.freeolleefaces.ui.ActivityScreen
 import com.blizzardcaron.freeolleefaces.ui.AlarmsCallbacks
 import com.blizzardcaron.freeolleefaces.ui.AlarmsScreen
 import com.blizzardcaron.freeolleefaces.ui.BondedDevice
@@ -185,6 +190,12 @@ private fun rememberAppViewModel(context: Context): AppViewModel = remember {
         alarmRepo = AlarmsRepository(alarmSettings(context)),
         alarmScheduler = AndroidAlarmScheduler(context),
         versionLabel = versionLabel(versionName, context.packageName),
+        activityLauncher = AndroidActivitySessionLauncher(context),
+        hasLocationPermission = {
+            ContextCompat.checkSelfPermission(
+                context, Manifest.permission.ACCESS_FINE_LOCATION,
+            ) == PackageManager.PERMISSION_GRANTED
+        },
     )
 }
 
@@ -281,6 +292,16 @@ private suspend fun runStartupLocation(viewModel: AppViewModel, context: Context
 
     viewModel.complications.refreshActive(force = false, push = false)
     viewModel.onStart()
+
+    val prefs = Prefs(appSettings(context))
+    val ble = AndroidBleClient(context)
+    com.blizzardcaron.freeolleefaces.activity.ActivityRecovery.recoverIfStranded(
+        prefs = prefs,
+        store = AndroidActivityTrackStore(context),
+        autoSleep = com.blizzardcaron.freeolleefaces.activity.ActivityAutoSleepManager(ble, prefs),
+        watchAddress = prefs.watchAddress,
+        sessionRunning = com.blizzardcaron.freeolleefaces.activity.ActivitySessionHost.isRunning,
+    )
 }
 
 @Composable
@@ -359,8 +380,41 @@ private fun AppContent(
     settingsCallbacks: SettingsCallbacks,
     modifier: Modifier,
 ) {
+    @Composable
+    fun ActivityTab() {
+        val context = LocalContext.current
+        val activityState by viewModel.activity.state.collectAsState()
+        val activityPermissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+            androidx.activity.result.contract.ActivityResultContracts.RequestPermission(),
+        ) { granted -> if (granted) viewModel.activity.onStart() }
+        val startActivityWithPermission: () -> Unit = {
+            val granted = ContextCompat.checkSelfPermission(
+                context, Manifest.permission.ACCESS_FINE_LOCATION,
+            ) == PackageManager.PERMISSION_GRANTED
+            if (granted) {
+                viewModel.activity.onStart()
+            } else {
+                activityPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            }
+        }
+        ActivityScreen(
+            state = activityState,
+            unit = viewModel.activity.activityUnit,
+            watchSelected = viewModel.activity.watchSelected,
+            lastSummary = AndroidActivityTrackStore(context).latest()?.summary,
+            callbacks = ActivityCallbacks(
+                onStart = startActivityWithPermission,
+                onStop = { viewModel.activity.onStop() },
+                onMode = { viewModel.activity.onMode() },
+                onToggleUnit = { viewModel.activity.toggleUnit() },
+            ),
+            modifier = modifier,
+        )
+    }
+
     when (screen) {
         Screen.Home -> HomeScreen(state = state, callbacks = homeCallbacks, modifier = modifier)
+        Screen.Activity -> ActivityTab()
         Screen.Settings -> SettingsScreen(
             state = state,
             callbacks = settingsCallbacks,

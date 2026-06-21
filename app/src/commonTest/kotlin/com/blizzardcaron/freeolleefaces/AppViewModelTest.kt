@@ -161,4 +161,12 @@ class AppViewModelTest {
         assertEquals(1, fake.connectCount, "selecting a watch should establish the link")
         assertEquals(watchAddress, fake.connectedAddresses.last())
     }
+
+    @Test
+    fun exposes_an_activity_controller() {
+        val fake = FakeWatchConnection()
+        val vm = vmWith(fake, Prefs(MapSettings()))
+
+        assertEquals(false, vm.activity.state.value.running)
+    }
 }

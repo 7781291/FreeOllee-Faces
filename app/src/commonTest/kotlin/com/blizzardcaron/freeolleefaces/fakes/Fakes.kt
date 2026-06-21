@@ -36,6 +36,10 @@ class FakeBleClient(
     /** Every packet passed to [sendPacket], in order — lets tests assert on the framed bytes. */
     val sentPackets: MutableList<ByteArray> = mutableListOf()
 
+    /** Nameplate (0x2F) text writes recorded by the targeted send overload. */
+    val nameplateWrites: MutableList<String> = mutableListOf()
+    fun sentNameplate(): List<String> = nameplateWrites
+
     override suspend fun send(deviceAddress: String, value: String): Result<Unit> {
         gate?.await()
         callLog += "ble.send($deviceAddress,$value)"
@@ -45,6 +49,7 @@ class FakeBleClient(
     override suspend fun send(deviceAddress: String, value: String, target: Int): Result<Unit> {
         gate?.await()
         callLog += "ble.send($deviceAddress,$value,target=$target)"
+        if (target == OlleeProtocol.TARGET_NAMEPLATE) nameplateWrites += value
         return sendResult
     }
 
@@ -180,5 +185,38 @@ class FakeWatchConnection(
         disconnectCount++
         callLog += "watch.disconnect"
         _status.value = ConnectionStatus.NotReachable
+    }
+}
+
+// ---------------------------------------------------------------------------
+// FakeActivityTrackStore
+// ---------------------------------------------------------------------------
+
+class FakeActivityTrackStore : com.blizzardcaron.freeolleefaces.activity.ActivityTrackStore {
+    private val saved = mutableListOf<com.blizzardcaron.freeolleefaces.activity.ActivityTrack>()
+    override fun save(track: com.blizzardcaron.freeolleefaces.activity.ActivityTrack) {
+        saved.removeAll { it.id == track.id }
+        saved += track
+    }
+    override fun latest(): com.blizzardcaron.freeolleefaces.activity.ActivityTrack? =
+        saved.maxByOrNull { it.startedAtMs }
+    override fun list(): List<com.blizzardcaron.freeolleefaces.activity.ActivityTrack> =
+        saved.sortedByDescending { it.startedAtMs }
+}
+
+// ---------------------------------------------------------------------------
+// FakeSessionAutoSleep
+// ---------------------------------------------------------------------------
+
+class FakeSessionAutoSleep(
+    var disableResult: Boolean = true,
+    var restoreResult: Boolean = true,
+) : com.blizzardcaron.freeolleefaces.activity.SessionAutoSleep {
+    val calls = mutableListOf<String>()
+    override suspend fun disableForActivity(address: String): Boolean {
+        calls += "disable($address)"; return disableResult
+    }
+    override suspend fun restoreAfterActivity(address: String): Boolean {
+        calls += "restore($address)"; return restoreResult
     }
 }

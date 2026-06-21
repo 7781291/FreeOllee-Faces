@@ -1,5 +1,6 @@
 package com.blizzardcaron.freeolleefaces.prefs
 
+import com.blizzardcaron.freeolleefaces.activity.ActivityUnit
 import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 import com.blizzardcaron.freeolleefaces.notify.FailureKind
@@ -56,6 +57,43 @@ class Prefs(
     var notificationsEnabled: Boolean
         get() = settings.getBoolean(KEY_NOTIFICATIONS_ENABLED, false)
         set(value) = settings.putBoolean(KEY_NOTIFICATIONS_ENABLED, value)
+
+    /** True while an activity session is live; a crash-safety breadcrumb the watchdog reconciles. */
+    var activityActive: Boolean
+        get() = settings.getBoolean(KEY_ACTIVITY_ACTIVE, false)
+        set(value) = settings.putBoolean(KEY_ACTIVITY_ACTIVE, value)
+
+    /** Distance/pace unit system for activity mode (independent of the temperature unit). */
+    var activityUnit: ActivityUnit
+        get() = settings.getStringOrNull(KEY_ACTIVITY_UNIT)
+            ?.let { runCatching { ActivityUnit.valueOf(it) }.getOrNull() }
+            ?: ActivityUnit.IMPERIAL
+        set(value) = settings.putString(KEY_ACTIVITY_UNIT, value.name)
+
+    /**
+     * The watch auto-sleep profile captured at activity start, restored on stop. Null when no
+     * session has stashed one. Stored as a present-flag + on-flag + period triple.
+     */
+    var savedAutoSleepProfile: AutoSleepProfile?
+        get() = if (!settings.getBoolean(KEY_SAVED_AS_PRESENT, false)) {
+            null
+        } else {
+            AutoSleepProfile(
+                autoSleepOn = settings.getBoolean(KEY_SAVED_AS_ON, false),
+                periodSec = settings.getInt(KEY_SAVED_AS_PERIOD, 0),
+            )
+        }
+        set(value) {
+            if (value == null) {
+                settings.remove(KEY_SAVED_AS_PRESENT)
+                settings.remove(KEY_SAVED_AS_ON)
+                settings.remove(KEY_SAVED_AS_PERIOD)
+            } else {
+                settings.putBoolean(KEY_SAVED_AS_PRESENT, true)
+                settings.putBoolean(KEY_SAVED_AS_ON, value.autoSleepOn)
+                settings.putInt(KEY_SAVED_AS_PERIOD, value.periodSec)
+            }
+        }
 
     var tempValue: Double?
         get() = if (settings.hasKey(KEY_TEMP_VALUE)) settings.getFloat(KEY_TEMP_VALUE, 0f).toDouble() else null
@@ -299,6 +337,11 @@ class Prefs(
         private const val KEY_CUSTOM_SENT_MS = "custom_sent_ms"
         private const val KEY_NOTIFICATION_COUNT = "notification_count"
         private const val KEY_NOTIFICATIONS_ENABLED = "notifications_enabled"
+        private const val KEY_ACTIVITY_ACTIVE = "activity_active"
+        private const val KEY_ACTIVITY_UNIT = "activity_unit"
+        private const val KEY_SAVED_AS_PRESENT = "activity_saved_as_present"
+        private const val KEY_SAVED_AS_ON = "activity_saved_as_on"
+        private const val KEY_SAVED_AS_PERIOD = "activity_saved_as_period"
 
         /** Legacy `active_face` value from when notifications was a mutually-exclusive face. */
         private const val LEGACY_NOTIFICATIONS_COMPLICATION = "NOTIFICATIONS"

@@ -1,0 +1,188 @@
+package com.blizzardcaron.freeolleefaces.activity
+
+import android.annotation.SuppressLint
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.Service
+import android.content.Context
+import android.content.Intent
+import android.content.pm.ServiceInfo
+import android.os.Build
+import android.os.IBinder
+import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
+import com.blizzardcaron.freeolleefaces.R
+import com.blizzardcaron.freeolleefaces.ble.AndroidBleClient
+import com.blizzardcaron.freeolleefaces.location.AndroidLocationStream
+import com.blizzardcaron.freeolleefaces.prefs.Prefs
+import com.blizzardcaron.freeolleefaces.prefs.appSettings
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+
+/**
+ * Foreground service that hosts an [ActivitySessionEngine] for the lifetime of an activity. Owns
+ * the location-collect loop and the 1s push/flush ticker; routes control via start intents.
+ */
+class ActivitySessionService : Service() {
+
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private lateinit var prefs: Prefs
+    private lateinit var engine: ActivitySessionEngine
+    private var loops: Job? = null
+
+    override fun onCreate() {
+        super.onCreate()
+        prefs = Prefs(appSettings(this))
+        val ble = AndroidBleClient(this)
+        engine = ActivitySessionEngine(
+            ble = ble,
+            store = AndroidActivityTrackStore(this),
+            prefs = prefs,
+            autoSleep = ActivityAutoSleepManager(ble, prefs),
+            watchAddress = { prefs.watchAddress },
+            now = { System.currentTimeMillis() },
+        )
+        engine.state
+            .onEach {
+                ActivitySessionHost.mutableState.value = it
+                updateNotification(it)
+            }
+            .launchIn(scope)
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        when (intent?.action) {
+            ACTION_START -> startSession()
+            ACTION_STOP -> stopSession(abnormal = false)
+            ACTION_CYCLE -> engine.cycleMetric()
+            ACTION_SET_UNIT -> engine.setUnit(prefs.activityUnit)
+        }
+        return START_STICKY
+    }
+
+    // The location permission is gated upstream by ActivityController.onStart() — the engine
+    // never reaches the service's ACTION_START without ACCESS_FINE_LOCATION already granted.
+    @SuppressLint("MissingPermission")
+    private fun startSession() {
+        if (ActivitySessionHost.isRunning) return
+        ActivitySessionHost.isRunning = true
+        startForegroundCompat()
+        loops = scope.launch {
+            engine.start()
+            val location = launch {
+                AndroidLocationStream(this@ActivitySessionService).stream()
+                    .onEach { engine.ingest(it, System.currentTimeMillis()) }
+                    .launchIn(this)
+            }
+            val ticker = launch {
+                var ticks = 0
+                while (isActive) {
+                    engine.tick(System.currentTimeMillis())
+                    if (++ticks % FLUSH_EVERY_TICKS == 0) engine.flush()
+                    delay(TICK_MS)
+                }
+            }
+            location.join()
+            ticker.join()
+        }
+    }
+
+    private fun stopSession(abnormal: Boolean) {
+        scope.launch {
+            loops?.cancel()
+            engine.stop(abnormal)
+            ActivitySessionHost.isRunning = false
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            stopSelf()
+        }
+    }
+
+    private fun startForegroundCompat() {
+        val n = baseNotification("Starting…")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(
+                NOTIF_ID,
+                n,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION or
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE,
+            )
+        } else {
+            startForeground(NOTIF_ID, n)
+        }
+    }
+
+    private fun updateNotification(state: ActivityState) {
+        if (!ActivitySessionHost.isRunning) return
+        val text = "${state.selectedMetric.name.lowercase()} · ${state.lastPushText ?: "…"}"
+        ContextCompat.getSystemService(this, NotificationManager::class.java)
+            ?.notify(NOTIF_ID, baseNotification(text))
+    }
+
+    private fun baseNotification(text: String): Notification {
+        ensureChannel()
+        val stopIntent = android.app.PendingIntent.getService(
+            this,
+            0,
+            Intent(this, ActivitySessionService::class.java).setAction(ACTION_STOP),
+            android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentTitle("Activity in progress")
+            .setContentText(text)
+            .setOngoing(true)
+            .addAction(0, "Stop", stopIntent)
+            .build()
+    }
+
+    private fun ensureChannel() {
+        val mgr = ContextCompat.getSystemService(this, NotificationManager::class.java) ?: return
+        if (mgr.getNotificationChannel(CHANNEL_ID) == null) {
+            mgr.createNotificationChannel(
+                NotificationChannel(CHANNEL_ID, "Activity", NotificationManager.IMPORTANCE_LOW),
+            )
+        }
+    }
+
+    override fun onDestroy() {
+        ActivitySessionHost.isRunning = false
+        scope.cancel()
+        super.onDestroy()
+    }
+
+    override fun onBind(intent: Intent?): IBinder? = null
+
+    companion object {
+        private const val NOTIF_ID = 4201
+        private const val CHANNEL_ID = "activity_session"
+        private const val TICK_MS = 1000L
+        private const val FLUSH_EVERY_TICKS = 10 // flush the track ~every 10s
+        const val ACTION_START = "com.blizzardcaron.freeolleefaces.activity.START"
+        const val ACTION_STOP = "com.blizzardcaron.freeolleefaces.activity.STOP"
+        const val ACTION_CYCLE = "com.blizzardcaron.freeolleefaces.activity.CYCLE"
+        const val ACTION_SET_UNIT = "com.blizzardcaron.freeolleefaces.activity.SET_UNIT"
+
+        private fun send(context: Context, action: String, foreground: Boolean) {
+            val intent = Intent(context, ActivitySessionService::class.java).setAction(action)
+            if (foreground) {
+                ContextCompat.startForegroundService(context, intent)
+            } else {
+                context.startService(intent)
+            }
+        }
+
+        fun start(context: Context) = send(context, ACTION_START, foreground = true)
+        fun stop(context: Context) = send(context, ACTION_STOP, foreground = false)
+        fun cycle(context: Context) = send(context, ACTION_CYCLE, foreground = false)
+        fun setUnit(context: Context) = send(context, ACTION_SET_UNIT, foreground = false)
+    }
+}
