@@ -18,7 +18,7 @@ object NameplateGlyphs {
     // bit0=A..bit6=G, bit7=DP. Ground truth: extracted from the official app preview, calibrated so
     // digits 0-9 decode to canonical masks. Kept in sync with glyph-map.json (NameplateGlyphsTest).
     private val MASKS: Map<Char, Int> = mapOf(
-        ' ' to 0x00, '!' to 0x60, '"' to 0x22, '#' to 0x6B, '$' to 0x2D, '%' to 0x00,
+        ' ' to 0x00, '!' to 0x60, '"' to 0x22, '#' to 0x63, '$' to 0x2D, '%' to 0x00,
         '&' to 0x44, '\'' to 0x20, '(' to 0x39, ')' to 0x0F, '*' to 0x40, '+' to 0x70,
         ',' to 0x04, '-' to 0x40, '.' to 0x40, '/' to 0x12, '0' to 0x3F, '1' to 0x06,
         '2' to 0x5B, '3' to 0x4F, '4' to 0x66, '5' to 0x6D, '6' to 0x7D, '7' to 0x07,

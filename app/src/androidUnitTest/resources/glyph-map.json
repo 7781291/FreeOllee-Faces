@@ -74,20 +74,19 @@
       "ascii": 35,
       "char": "#",
       "hex": "0x23",
-      "mask": "0x6B",
+      "mask": "0x63",
       "segments": [
         "a",
-        "f",
         "b",
-        "g",
-        "d"
+        "f",
+        "g"
       ],
       "tier": "clear",
       "looksLike": "°",
       "confusableWith": [],
       "positionSensitive": false,
       "capture": "captures/glyphs/sweep_21.png",
-      "notes": "renders as the flat-top box (degree symbol); confirmed on-device per firmware doc (66#F -> 66°F)"
+      "notes": "renders as the flat-top box (degree symbol); confirmed on-device per firmware doc (66#F -> 66°F) [corrected 0x6B->0x63: real app renders clean degree, no underline]"
     },
     {
       "ascii": 36,

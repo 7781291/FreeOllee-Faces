@@ -4,6 +4,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -53,11 +54,15 @@ fun SegmentReadout(
     val lit = if (tone == LcdTone.Aqua) BrandColors.LcdOnAqua else BrandColors.LcdOn
     val off = BrandColors.LcdOff
     val cells = litSegments(value, CELLS)
+    // Size the readout to exactly the 6 cells so none get clipped (Canvas has no intrinsic size).
+    val cellW = cellHeight * CELL_ASPECT
+    val readoutWidth = cellW * (1f + CELL_GAP_FRACTION) * (CELLS - 1) + cellW
     Canvas(
         modifier = modifier
             .clip(RoundedCornerShape(SCREEN_CORNER_RADIUS_DP.dp))
             .background(BrandColors.LcdScreen)
             .padding(horizontal = SCREEN_PADDING_HORIZONTAL_DP.dp, vertical = SCREEN_PADDING_VERTICAL_DP.dp)
+            .width(readoutWidth)
             .height(cellHeight),
     ) {
         val h = size.height
