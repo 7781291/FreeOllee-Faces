@@ -3,7 +3,8 @@
   "provenance": {
     "firmwareImage": "OW-FW-APP_HW_01.05.00_FW_00.01.07.bin",
     "officialAppVersion": "app.ollee.ollee_watch.ollee_watch",
-    "tableDoc": "ollee-segment-font.md"
+    "tableDoc": "ollee-segment-font.md",
+    "tensMaskNote": "tensMask (where present) is the tens-cell (pos4/pos6) font variant, empirically recovered from the live official-app nameplate preview 2026-06-21; it is NOT a transform of the canonical mask field — it comes from a separate ROM and must be captured independently per glyph."
   },
   "bitLayout": {
     "0": "a",
@@ -438,6 +439,7 @@
       "char": "7",
       "hex": "0x37",
       "mask": "0x07",
+      "tensMask": "0x44",
       "segments": [
         "a",
         "b",
@@ -628,6 +630,7 @@
       "char": "A",
       "hex": "0x41",
       "mask": "0x77",
+      "tensMask": "0x5F",
       "segments": [
         "a",
         "b",
@@ -735,6 +738,7 @@
       "char": "F",
       "hex": "0x46",
       "mask": "0x71",
+      "tensMask": "0x79",
       "segments": [
         "a",
         "e",
@@ -813,6 +817,7 @@
       "char": "J",
       "hex": "0x4A",
       "mask": "0x1E",
+      "tensMask": "0x42",
       "segments": [
         "b",
         "c",
@@ -834,6 +839,7 @@
       "char": "K",
       "hex": "0x4B",
       "mask": "0x75",
+      "tensMask": "0x7D",
       "segments": [
         "a",
         "c",
@@ -856,6 +862,7 @@
       "char": "L",
       "hex": "0x4C",
       "mask": "0x38",
+      "tensMask": "0x60",
       "segments": [
         "d",
         "e",
@@ -873,6 +880,7 @@
       "char": "M",
       "hex": "0x4D",
       "mask": "0x37",
+      "tensMask": "0x54",
       "segments": [
         "a",
         "b",
@@ -895,6 +903,7 @@
       "char": "N",
       "hex": "0x4E",
       "mask": "0x37",
+      "tensMask": "0x54",
       "segments": [
         "a",
         "b",
@@ -940,6 +949,7 @@
       "char": "P",
       "hex": "0x50",
       "mask": "0x73",
+      "tensMask": "0x7B",
       "segments": [
         "a",
         "b",
@@ -961,6 +971,7 @@
       "char": "Q",
       "hex": "0x51",
       "mask": "0x67",
+      "tensMask": "0x6F",
       "segments": [
         "a",
         "b",
@@ -1022,6 +1033,7 @@
       "char": "T",
       "hex": "0x54",
       "mask": "0x78",
+      "tensMask": "0x79",
       "segments": [
         "d",
         "e",
@@ -1042,6 +1054,7 @@
       "char": "U",
       "hex": "0x55",
       "mask": "0x3E",
+      "tensMask": "0x62",
       "segments": [
         "b",
         "c",
@@ -1063,6 +1076,7 @@
       "char": "V",
       "hex": "0x56",
       "mask": "0x3E",
+      "tensMask": "0x62",
       "segments": [
         "b",
         "c",
@@ -1084,6 +1098,7 @@
       "char": "W",
       "hex": "0x57",
       "mask": "0x3E",
+      "tensMask": "0x62",
       "segments": [
         "b",
         "c",
@@ -1106,6 +1121,7 @@
       "char": "X",
       "hex": "0x58",
       "mask": "0x7E",
+      "tensMask": "0x7F",
       "segments": [
         "b",
         "c",
@@ -1129,6 +1145,7 @@
       "char": "Y",
       "hex": "0x59",
       "mask": "0x6E",
+      "tensMask": "0x6F",
       "segments": [
         "b",
         "c",
@@ -1302,6 +1319,7 @@
       "char": "b",
       "hex": "0x62",
       "mask": "0x7C",
+      "tensMask": "0x7D",
       "segments": [
         "c",
         "d",
@@ -1323,6 +1341,7 @@
       "char": "c",
       "hex": "0x63",
       "mask": "0x58",
+      "tensMask": "0x39",
       "segments": [
         "d",
         "e",
@@ -1342,6 +1361,7 @@
       "char": "d",
       "hex": "0x64",
       "mask": "0x5E",
+      "tensMask": "0x5F",
       "segments": [
         "b",
         "c",
@@ -1381,6 +1401,7 @@
       "char": "f",
       "hex": "0x66",
       "mask": "0x71",
+      "tensMask": "0x79",
       "segments": [
         "a",
         "e",
@@ -1457,6 +1478,7 @@
       "char": "j",
       "hex": "0x6A",
       "mask": "0x1E",
+      "tensMask": "0x42",
       "segments": [
         "b",
         "c",
@@ -1477,6 +1499,7 @@
       "char": "k",
       "hex": "0x6B",
       "mask": "0x75",
+      "tensMask": "0x7D",
       "segments": [
         "a",
         "c",
@@ -1518,6 +1541,7 @@
       "char": "m",
       "hex": "0x6D",
       "mask": "0x37",
+      "tensMask": "0x54",
       "segments": [
         "a",
         "b",
@@ -1557,6 +1581,7 @@
       "char": "o",
       "hex": "0x6F",
       "mask": "0x5C",
+      "tensMask": "0x3F",
       "segments": [
         "c",
         "d",
@@ -1578,6 +1603,7 @@
       "char": "p",
       "hex": "0x70",
       "mask": "0x73",
+      "tensMask": "0x7B",
       "segments": [
         "a",
         "b",
@@ -1599,6 +1625,7 @@
       "char": "q",
       "hex": "0x71",
       "mask": "0x67",
+      "tensMask": "0x6F",
       "segments": [
         "a",
         "b",
@@ -1661,6 +1688,7 @@
       "char": "t",
       "hex": "0x74",
       "mask": "0x78",
+      "tensMask": "0x79",
       "segments": [
         "d",
         "e",
@@ -1681,6 +1709,7 @@
       "char": "u",
       "hex": "0x75",
       "mask": "0x1C",
+      "tensMask": "0x62",
       "segments": [
         "c",
         "d",
@@ -1698,6 +1727,7 @@
       "char": "v",
       "hex": "0x76",
       "mask": "0x1C",
+      "tensMask": "0x62",
       "segments": [
         "c",
         "d",
@@ -1718,6 +1748,7 @@
       "char": "w",
       "hex": "0x77",
       "mask": "0x3E",
+      "tensMask": "0x62",
       "segments": [
         "b",
         "c",
@@ -1741,6 +1772,7 @@
       "char": "x",
       "hex": "0x78",
       "mask": "0x7E",
+      "tensMask": "0x7F",
       "segments": [
         "b",
         "c",
@@ -1764,6 +1796,7 @@
       "char": "y",
       "hex": "0x79",
       "mask": "0x6E",
+      "tensMask": "0x6F",
       "segments": [
         "b",
         "c",
