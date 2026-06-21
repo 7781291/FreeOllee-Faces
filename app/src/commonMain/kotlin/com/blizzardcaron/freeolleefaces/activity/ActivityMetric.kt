@@ -26,26 +26,30 @@ enum class ActivityMetric {
         const val MAX_HOURS = 99
         const val MAX_DISTANCE_UNITS = 9999.0
         const val NAMEPLATE_WIDTH = 6
-        const val PACE_BODY_WIDTH = 5 // 6 minus the leading 'P'
         const val MILLIS_PER_SECOND = 1000L
+        const val DISTANCE_TAG = "d" // lowercase d is legible & distinct; uppercase 'D' looks like '0'
 
+        // The watch nameplate cells render ':' blank and '.' as a dash, and have no legible mi/km
+        // glyphs. So min/sec separators use a space (renders identically to the blank colon),
+        // distance keeps its '.' (renders as a dash separator), the unit is shown only in-app, and
+        // tags use legible glyphs: 'P' pace, lowercase 'd' distance, lowercase 't' time ('h' hours).
         fun renderPace(state: ActivityState, unit: ActivityUnit): String {
             val secPerKm = state.recentPaceSecPerKm
-            if (secPerKm == null || secPerKm <= 0.0) return "P --:-"
+            if (secPerKm == null || secPerKm <= 0.0) return "P --"
             val secs = unit.paceSecondsPerUnit(secPerKm).roundToInt().coerceIn(0, MAX_PACE_SECONDS)
             val mm = secs / SECONDS_PER_MINUTE
             val ss = (secs % SECONDS_PER_MINUTE).toString().padStart(2, '0')
-            return "P" + "$mm:$ss".padStart(PACE_BODY_WIDTH)
+            return "P$mm $ss"
         }
 
         fun renderDistance(state: ActivityState, unit: ActivityUnit): String {
             val value = unit.distance(state.distanceMeters).coerceIn(0.0, MAX_DISTANCE_UNITS)
-            val avail = NAMEPLATE_WIDTH - unit.distanceSuffix.length
+            val avail = NAMEPLATE_WIDTH - DISTANCE_TAG.length
             val num = listOf(2, 1, 0)
                 .map { formatDecimal(value, it) }
                 .firstOrNull { it.length <= avail }
                 ?: formatDecimal(value, 0)
-            return num + unit.distanceSuffix
+            return DISTANCE_TAG + num
         }
 
         fun renderTime(state: ActivityState): String {
@@ -53,11 +57,11 @@ enum class ActivityMetric {
             if (totalSec < SECONDS_PER_HOUR) {
                 val mm = (totalSec / SECONDS_PER_MINUTE).toString().padStart(2, '0')
                 val ss = (totalSec % SECONDS_PER_MINUTE).toString().padStart(2, '0')
-                return "T$mm:$ss"
+                return "t$mm $ss"
             }
             val h = (totalSec / SECONDS_PER_HOUR).coerceAtMost(MAX_HOURS.toLong())
             val m = ((totalSec % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE).toString().padStart(2, '0')
-            return "$h:${m}h"
+            return "${h}h$m"
         }
     }
 }

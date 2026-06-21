@@ -48,13 +48,14 @@ object DisplayFormatter {
         val eventChar = if (kind == SunEventKind.SUNRISE) 'r' else 's'
 
         val mm = minute.toString().padStart(2, '0')
+        // The watch renders ':' as a blank cell, so use a space separator (same look, legible).
         val fresh = if (hour12 < SINGLE_DIGIT_HOUR_MAX) {
-            // single-digit hour: include am/pm marker -> "H:MMar" or "H:MMps"
+            // single-digit hour: include am/pm marker -> "H MMar" or "H MMps"
             val ampm = if (isAm) 'a' else 'p'
-            "$hour12:$mm$ampm$eventChar"
+            "$hour12 $mm$ampm$eventChar"
         } else {
-            // two-digit hour (10, 11, 12): drop am/pm -> "HH:MMr" or "HH:MMs"
-            "$hour12:$mm$eventChar"
+            // two-digit hour (10, 11, 12): drop am/pm -> "HH MMr" or "HH MMs"
+            "$hour12 $mm$eventChar"
         }
         // Sun fills all 6 chars (no pad) — to mark stale, drop the trailing r/s and prefix 'E'.
         return if (stale) "E" + fresh.dropLast(1) else fresh

@@ -7,8 +7,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.blizzardcaron.freeolleefaces.resources.Res
-import com.blizzardcaron.freeolleefaces.resources.dseg7_bold
-import com.blizzardcaron.freeolleefaces.resources.dseg7_regular
 import com.blizzardcaron.freeolleefaces.resources.jetbrainsmono_bold
 import com.blizzardcaron.freeolleefaces.resources.jetbrainsmono_regular
 import com.blizzardcaron.freeolleefaces.resources.nunito_black
@@ -25,12 +23,6 @@ internal fun nunitoFamily() = FontFamily(
     Font(Res.font.nunito_semibold, FontWeight.SemiBold),
     Font(Res.font.nunito_bold, FontWeight.Bold),
     Font(Res.font.nunito_black, FontWeight.ExtraBold),
-)
-
-@Composable
-internal fun dseg7Family() = FontFamily(
-    Font(Res.font.dseg7_regular, FontWeight.Normal),
-    Font(Res.font.dseg7_bold, FontWeight.Bold),
 )
 
 @Composable

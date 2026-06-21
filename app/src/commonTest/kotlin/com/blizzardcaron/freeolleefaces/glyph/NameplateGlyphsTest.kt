@@ -14,9 +14,11 @@ private data class Entry(val ascii: Int, val char: String, val mask: String, val
 
 /** Guards that NameplateGlyphs stays in sync with the ground-truth contract (glyph-map.json). */
 class NameplateGlyphsTest {
+    private val json = Json { ignoreUnknownKeys = true }
+
     private fun load(): GlyphFile {
         val text = this::class.java.classLoader!!.getResource("glyph-map.json")!!.readText()
-        return Json { ignoreUnknownKeys = true }.decodeFromString(GlyphFile.serializer(), text)
+        return json.decodeFromString(GlyphFile.serializer(), text)
     }
 
     @Test

@@ -41,8 +41,6 @@ private const val BAR_CORNER_FRACTION = 0.4f // rounded-bar corner radius relati
 private const val H_BAR_INSET_FRACTION = 0.12f // horizontal bar inset from the cell's side edges
 private const val V_BAR_INSET_FRACTION = 0.08f // vertical bar inset from the cell's top/bottom/middle
 private const val MIDLINE_FRACTION = 0.5f // vertical position of the middle (g) bar / half split
-private const val DP_RADIUS_FRACTION = 0.07f // decimal-point dot radius relative to cell height
-private const val DP_MARGIN_FRACTION = 0.06f // dp dot margin from the cell's bottom-right corner
 
 /** Faithful 7-segment readout: draws exactly the firmware segments, off segments as faint ghosts. */
 @Composable
@@ -99,8 +97,8 @@ private fun DrawScope.drawCell(
     drawVerticalBar(geo, left = false, upper = true, color = colorOf(Segment.B))
     drawVerticalBar(geo, left = true, upper = false, color = colorOf(Segment.E))
     drawVerticalBar(geo, left = false, upper = false, color = colorOf(Segment.C))
-
-    drawDp(geo, color = colorOf(Segment.DP))
+    // No dp/8th segment: this watch never renders it (NameplateGlyphs.DP_CELLS is empty), so we
+    // don't even draw an off-ghost dot — that would be a cell the hardware doesn't have.
 }
 
 private fun colorFor(segment: Segment, lit: Set<Segment>, on: Color, off: Color): Color =
@@ -124,15 +122,5 @@ private fun DrawScope.drawVerticalBar(geo: CellGeometry, left: Boolean, upper: B
         topLeft = geo.origin + Offset(x, top),
         size = Size(geo.thickness, bottom - top),
         cornerRadius = geo.corner,
-    )
-}
-
-private fun DrawScope.drawDp(geo: CellGeometry, color: Color) {
-    val radius = geo.size.height * DP_RADIUS_FRACTION
-    val margin = geo.size.height * DP_MARGIN_FRACTION
-    drawCircle(
-        color = color,
-        radius = radius,
-        center = geo.origin + Offset(geo.size.width - margin - radius, geo.size.height - margin - radius),
     )
 }

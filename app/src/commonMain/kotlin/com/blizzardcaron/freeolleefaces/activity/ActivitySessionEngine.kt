@@ -2,6 +2,7 @@ package com.blizzardcaron.freeolleefaces.activity
 
 import com.blizzardcaron.freeolleefaces.ble.BleClient
 import com.blizzardcaron.freeolleefaces.ble.OlleeProtocol
+import com.blizzardcaron.freeolleefaces.glyph.NameplateSanitizer
 import com.blizzardcaron.freeolleefaces.location.Coords
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -69,7 +70,9 @@ class ActivitySessionEngine(
     suspend fun tick(nowMs: Long) {
         val s = session ?: return
         val st = s.state(selectedMetric, nowMs)
-        val text = selectedMetric.render(st, unit)
+        // Backstop: producers are legible by construction (NameplateLegibilityTest), but never
+        // let a stray glyph reach the watch as garbage.
+        val text = NameplateSanitizer.sanitize(selectedMetric.render(st, unit))
         var reachable = _state.value.watchReachable
         val addr = watchAddress()
         if (addr != null &&
