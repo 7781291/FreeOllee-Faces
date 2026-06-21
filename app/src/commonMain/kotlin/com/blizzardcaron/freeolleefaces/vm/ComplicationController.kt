@@ -3,7 +3,6 @@ package com.blizzardcaron.freeolleefaces.vm
 import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
 import com.blizzardcaron.freeolleefaces.auto.AutoUpdateSchedule
 import com.blizzardcaron.freeolleefaces.auto.Scheduler
-import com.blizzardcaron.freeolleefaces.auto.SleepWindow
 import com.blizzardcaron.freeolleefaces.auto.isTempCacheFresh
 import com.blizzardcaron.freeolleefaces.ble.BleClient
 import com.blizzardcaron.freeolleefaces.ble.OlleeProtocol
@@ -38,8 +37,9 @@ import kotlinx.datetime.toLocalDateTime
  * `Clock.System` -> the injected [clock] (matching the [vm.AlarmController]/[vm.TimerController]
  * precedent). The
  * `scheduler` dependency (used only by [activate]) is injected here since [activate] is the only
- * complication-cluster method that calls `scheduler.reschedule()` — the VM's other 5 call sites
- * (setInterval/setSleepEnabled/setSleepStart/setSleepEnd/onStart) are outside this cluster and keep
+ * complication-cluster method that calls `scheduler.reschedule()` — the VM's other 6 call sites
+ * (setInterval/setPowerSavingEnabled/setQuietHoursEnabled/setQuietHoursStart/setQuietHoursEnd/onStart)
+ * are outside this cluster and keep
  * their own reference. The shared `HomeState.sending` flag is NOT duplicated here — [state]/[update]
  * read and write the VM's single shared flag (also used by the VM's own `sendAndReport` and
  * [vm.TimerController]'s `pushTimerFrame`), via the injected accessors.
@@ -104,7 +104,7 @@ class ComplicationController(
     // Reads from prefs (the just-persisted source of truth) so a setting change reflects
     // immediately — computing from `state` inside the same copy would see the pre-change value.
     fun tempNextText(): String {
-        val sleep = if (prefs.sleepEnabled) SleepWindow(prefs.sleepStartMin, prefs.sleepEndMin) else null
+        val sleep = prefs.pushPauseWindow()
         val fire = AutoUpdateSchedule.nextTemperatureFire(
             clock.now().toLocalDateTime(TimeZone.currentSystemDefault()),
             prefs.updateIntervalMinutes,

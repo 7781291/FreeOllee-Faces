@@ -20,14 +20,9 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -65,9 +60,7 @@ fun SettingsScreen(
             HorizontalDivider()
             IntervalSection(state, callbacks)
             HorizontalDivider()
-            SleepSection(state, callbacks)
-            HorizontalDivider()
-            AutoSleepSection(state, callbacks)
+            PowerSavingSection(state, callbacks)
             HorizontalDivider()
             AboutSection(state)
         }
@@ -136,52 +129,6 @@ private fun IntervalSection(state: HomeState, callbacks: SettingsCallbacks) {
                 onClick = { callbacks.onIntervalChange(minutes) },
                 shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
             ) { Text("$minutes") }
-        }
-    }
-}
-
-@Composable
-private fun SleepSection(state: HomeState, callbacks: SettingsCallbacks) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Text("Power-saving sleep")
-        Switch(checked = state.sleepEnabled, onCheckedChange = callbacks.onSleepEnabledChange)
-    }
-    if (state.sleepEnabled) {
-        var pickingStart by remember { mutableStateOf(false) }
-        var pickingEnd by remember { mutableStateOf(false) }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            OutlinedButton(
-                onClick = { pickingStart = true },
-                modifier = Modifier.weight(1f),
-            ) { Text("From ${minutesToLabel(state.sleepStartMin)}") }
-            OutlinedButton(
-                onClick = { pickingEnd = true },
-                modifier = Modifier.weight(1f),
-            ) { Text("To ${minutesToLabel(state.sleepEndMin)}") }
-        }
-        if (pickingStart) {
-            TimePickerDialog(
-                initialMinuteOfDay = state.sleepStartMin,
-                onConfirm = {
-                    callbacks.onSleepStartChange(it)
-                    pickingStart = false
-                },
-                onDismiss = { pickingStart = false },
-            )
-        }
-        if (pickingEnd) {
-            TimePickerDialog(
-                initialMinuteOfDay = state.sleepEndMin,
-                onConfirm = {
-                    callbacks.onSleepEndChange(it)
-                    pickingEnd = false
-                },
-                onDismiss = { pickingEnd = false },
-            )
         }
     }
 }

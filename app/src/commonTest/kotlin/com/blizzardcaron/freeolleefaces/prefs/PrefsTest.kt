@@ -1,6 +1,7 @@
 package com.blizzardcaron.freeolleefaces.prefs
 
 import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
+import com.blizzardcaron.freeolleefaces.auto.SleepWindow
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 import com.russhwolf.settings.MapSettings
 import kotlinx.datetime.Clock
@@ -249,31 +250,62 @@ class PrefsTest {
     }
 
     // ---------------------------------------------------------------------------
-    // auto-sleep window schedule
+    // unified power saving
     // ---------------------------------------------------------------------------
 
-    @Test fun autoSleep_defaults_disabledScreenAlwaysOnByDay() {
+    @Test fun powerSaving_defaults() {
         val prefs = freshPrefs()
-        assertEquals(false, prefs.autoSleepScheduleEnabled)
-        assertEquals(22 * 60, prefs.autoSleepWindowStartMin)
-        assertEquals(7 * 60, prefs.autoSleepWindowEndMin)
-        assertEquals(true, prefs.autoSleepInWindowOn)
-        assertEquals(120, prefs.autoSleepInWindowPeriodSec)
-        assertEquals(false, prefs.autoSleepOutWindowOn)
+        assertEquals(true, prefs.powerSavingEnabled)
+        assertEquals(120, prefs.screenSleepTimeoutSec)
+        assertEquals(true, prefs.quietHoursEnabled)
+        assertEquals(22 * 60, prefs.quietHoursStartMin)
+        assertEquals(7 * 60, prefs.quietHoursEndMin)
     }
 
-    @Test fun autoSleep_windowConfig_assemblesFromFlatVars() {
+    @Test fun powerSaving_off_configDisabled_andNoPushPause() {
         val prefs = freshPrefs()
-        prefs.autoSleepScheduleEnabled = true
-        prefs.autoSleepWindowStartMin = 23 * 60
-        prefs.autoSleepWindowEndMin = 6 * 60
-        prefs.autoSleepInWindowPeriodSec = 60
+        prefs.powerSavingEnabled = false
+        assertEquals(false, prefs.autoSleepWindowConfig().enabled)
+        assertNull(prefs.pushPauseWindow())
+    }
+
+    @Test fun powerSaving_on_quietOff_sleeps24x7_andNoPushPause() {
+        val prefs = freshPrefs()
+        prefs.powerSavingEnabled = true
+        prefs.quietHoursEnabled = false
+        prefs.screenSleepTimeoutSec = 30
+        val cfg = prefs.autoSleepWindowConfig()
+        assertEquals(true, cfg.enabled)
+        assertEquals(AutoSleepProfile(autoSleepOn = true, periodSec = 30), cfg.inWindow)
+        assertEquals(cfg.inWindow, cfg.outWindow)
+        assertNull(prefs.pushPauseWindow())
+    }
+
+    @Test fun powerSaving_on_quietOn_sleepInWindow_stayOnOutside_andPushPause() {
+        val prefs = freshPrefs()
+        prefs.powerSavingEnabled = true
+        prefs.quietHoursEnabled = true
+        prefs.quietHoursStartMin = 23 * 60
+        prefs.quietHoursEndMin = 6 * 60
+        prefs.screenSleepTimeoutSec = 60
         val cfg = prefs.autoSleepWindowConfig()
         assertEquals(true, cfg.enabled)
         assertEquals(23 * 60, cfg.startMin)
         assertEquals(6 * 60, cfg.endMin)
         assertEquals(AutoSleepProfile(autoSleepOn = true, periodSec = 60), cfg.inWindow)
         assertEquals(false, cfg.outWindow.autoSleepOn)
+        assertEquals(SleepWindow(23 * 60, 6 * 60), prefs.pushPauseWindow())
+    }
+
+    @Test fun construction_purgesLegacyPowerKeys() {
+        val settings = MapSettings()
+        settings.putBoolean("sleep_enabled", false)
+        settings.putInt("auto_sleep_in_period_sec", 30)
+        settings.putInt("auto_sleep_window_start_min", 1)
+        Prefs(settings)
+        assertEquals(false, settings.hasKey("sleep_enabled"))
+        assertEquals(false, settings.hasKey("auto_sleep_in_period_sec"))
+        assertEquals(false, settings.hasKey("auto_sleep_window_start_min"))
     }
 
     // ---------------------------------------------------------------------------
