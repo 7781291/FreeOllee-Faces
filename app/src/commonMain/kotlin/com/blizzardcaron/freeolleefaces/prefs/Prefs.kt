@@ -2,6 +2,7 @@ package com.blizzardcaron.freeolleefaces.prefs
 
 import com.blizzardcaron.freeolleefaces.activity.ActivityUnit
 import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
+import com.blizzardcaron.freeolleefaces.auto.SleepWindow
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 import com.blizzardcaron.freeolleefaces.notify.FailureKind
 import com.russhwolf.settings.Settings
@@ -244,6 +245,34 @@ class Prefs(
         get() = settings.getInt(KEY_SLEEP_END, DEFAULT_SLEEP_END_HOUR * MINUTES_PER_HOUR)
         set(value) = settings.putInt(KEY_SLEEP_END, value)
 
+    var powerSavingEnabled: Boolean
+        get() = settings.getBoolean(KEY_PS_ENABLED, true)
+        set(value) = settings.putBoolean(KEY_PS_ENABLED, value)
+
+    var screenSleepTimeoutSec: Int
+        get() = settings.getInt(KEY_PS_TIMEOUT, DEFAULT_SCREEN_SLEEP_SEC)
+        set(value) = settings.putInt(KEY_PS_TIMEOUT, value.coerceAtLeast(1))
+
+    var quietHoursEnabled: Boolean
+        get() = settings.getBoolean(KEY_QH_ENABLED, true)
+        set(value) = settings.putBoolean(KEY_QH_ENABLED, value)
+
+    var quietHoursStartMin: Int
+        get() = settings.getInt(KEY_QH_START, DEFAULT_QH_START_HOUR * MINUTES_PER_HOUR)
+        set(value) = settings.putInt(KEY_QH_START, value)
+
+    var quietHoursEndMin: Int
+        get() = settings.getInt(KEY_QH_END, DEFAULT_QH_END_HOUR * MINUTES_PER_HOUR)
+        set(value) = settings.putInt(KEY_QH_END, value)
+
+    /** App-side push-pause window: non-null only when power saving and quiet hours are both on. */
+    fun pushPauseWindow(): SleepWindow? =
+        if (powerSavingEnabled && quietHoursEnabled) {
+            SleepWindow(quietHoursStartMin, quietHoursEndMin)
+        } else {
+            null
+        }
+
     var lastAutoSendMs: Long?
         get() = if (settings.hasKey(KEY_LAST_SEND_MS)) settings.getLong(KEY_LAST_SEND_MS, 0L) else null
         set(value) = if (value == null) settings.remove(KEY_LAST_SEND_MS) else settings.putLong(KEY_LAST_SEND_MS, value)
@@ -307,14 +336,32 @@ class Prefs(
         get() = settings.getInt(KEY_AS_OUT_PERIOD, DEFAULT_AUTO_SLEEP_PERIOD_SEC)
         set(value) = settings.putInt(KEY_AS_OUT_PERIOD, value.coerceAtLeast(1))
 
-    /** Assemble the schedule from the flat-keyed vars above. */
-    fun autoSleepWindowConfig(): AutoSleepWindowConfig = AutoSleepWindowConfig(
-        enabled = autoSleepScheduleEnabled,
-        startMin = autoSleepWindowStartMin,
-        endMin = autoSleepWindowEndMin,
-        inWindow = AutoSleepProfile(autoSleepInWindowOn, autoSleepInWindowPeriodSec),
-        outWindow = AutoSleepProfile(autoSleepOutWindowOn, autoSleepOutWindowPeriodSec),
-    )
+    /** Watch screen-off register desired-state, derived from the unified power-saving prefs. */
+    fun autoSleepWindowConfig(): AutoSleepWindowConfig {
+        if (!powerSavingEnabled) {
+            return AutoSleepWindowConfig(
+                enabled = false,
+                startMin = quietHoursStartMin,
+                endMin = quietHoursEndMin,
+                inWindow = AutoSleepProfile(autoSleepOn = false, periodSec = screenSleepTimeoutSec),
+                outWindow = AutoSleepProfile(autoSleepOn = false, periodSec = screenSleepTimeoutSec),
+            )
+        }
+        val sleep = AutoSleepProfile(autoSleepOn = true, periodSec = screenSleepTimeoutSec)
+        return if (!quietHoursEnabled) {
+            // 24/7: in == out → window boundaries irrelevant, watch always holds the sleep profile.
+            AutoSleepWindowConfig(true, quietHoursStartMin, quietHoursEndMin, sleep, sleep)
+        } else {
+            // Sleep in window, stay on outside (active off-write outside the window).
+            AutoSleepWindowConfig(
+                enabled = true,
+                startMin = quietHoursStartMin,
+                endMin = quietHoursEndMin,
+                inWindow = sleep,
+                outWindow = AutoSleepProfile(autoSleepOn = false, periodSec = screenSleepTimeoutSec),
+            )
+        }
+    }
 
     companion object {
         private const val KEY_LAT = "last_lat"
@@ -351,6 +398,14 @@ class Prefs(
         private const val KEY_SLEEP_ENABLED = "sleep_enabled"
         private const val KEY_SLEEP_START = "sleep_start_min"
         private const val KEY_SLEEP_END = "sleep_end_min"
+        private const val KEY_PS_ENABLED = "power_saving_enabled"
+        private const val KEY_PS_TIMEOUT = "power_saving_timeout_sec"
+        private const val KEY_QH_ENABLED = "quiet_hours_enabled"
+        private const val KEY_QH_START = "quiet_hours_start_min"
+        private const val KEY_QH_END = "quiet_hours_end_min"
+        private const val DEFAULT_SCREEN_SLEEP_SEC = 120
+        private const val DEFAULT_QH_START_HOUR = 22
+        private const val DEFAULT_QH_END_HOUR = 7
         private const val KEY_LAST_SEND_MS = "last_auto_send_ms"
         private const val KEY_LAST_SEND_SUMMARY = "last_auto_send_summary"
         private const val KEY_LAST_NOTIFIED_KIND = "last_notified_kind"
