@@ -57,8 +57,8 @@
       "hex": "0x22",
       "mask": "0x22",
       "segments": [
-        "f",
-        "b"
+        "b",
+        "f"
       ],
       "tier": "approximate",
       "looksLike": "\"",
@@ -95,9 +95,9 @@
       "mask": "0x2D",
       "segments": [
         "a",
-        "f",
         "c",
-        "d"
+        "d",
+        "f"
       ],
       "tier": "unusable",
       "looksLike": "?",
@@ -125,8 +125,8 @@
       "hex": "0x26",
       "mask": "0x44",
       "segments": [
-        "g",
-        "c"
+        "c",
+        "g"
       ],
       "tier": "unusable",
       "looksLike": "7",
@@ -159,9 +159,9 @@
       "mask": "0x39",
       "segments": [
         "a",
-        "f",
+        "d",
         "e",
-        "d"
+        "f"
       ],
       "tier": "clear",
       "looksLike": "[",
@@ -214,9 +214,9 @@
       "hex": "0x2B",
       "mask": "0x70",
       "segments": [
+        "e",
         "f",
-        "g",
-        "e"
+        "g"
       ],
       "tier": "approximate",
       "looksLike": "t",
@@ -298,11 +298,11 @@
       "mask": "0x3F",
       "segments": [
         "a",
-        "f",
         "b",
-        "e",
         "c",
-        "d"
+        "d",
+        "e",
+        "f"
       ],
       "tier": "clear",
       "looksLike": "0",
@@ -340,9 +340,9 @@
       "segments": [
         "a",
         "b",
-        "g",
+        "d",
         "e",
-        "d"
+        "g"
       ],
       "tier": "clear",
       "looksLike": "2",
@@ -361,9 +361,9 @@
       "segments": [
         "a",
         "b",
-        "g",
         "c",
-        "d"
+        "d",
+        "g"
       ],
       "tier": "clear",
       "looksLike": "3",
@@ -378,10 +378,10 @@
       "hex": "0x34",
       "mask": "0x66",
       "segments": [
-        "f",
         "b",
-        "g",
-        "c"
+        "c",
+        "f",
+        "g"
       ],
       "tier": "clear",
       "looksLike": "4",
@@ -397,10 +397,10 @@
       "mask": "0x6D",
       "segments": [
         "a",
-        "f",
-        "g",
         "c",
-        "d"
+        "d",
+        "f",
+        "g"
       ],
       "tier": "clear",
       "looksLike": "5",
@@ -418,11 +418,11 @@
       "mask": "0x7D",
       "segments": [
         "a",
-        "f",
-        "g",
-        "e",
         "c",
-        "d"
+        "d",
+        "e",
+        "f",
+        "g"
       ],
       "tier": "clear",
       "looksLike": "6",
@@ -457,12 +457,12 @@
       "mask": "0x7F",
       "segments": [
         "a",
-        "f",
         "b",
-        "g",
-        "e",
         "c",
-        "d"
+        "d",
+        "e",
+        "f",
+        "g"
       ],
       "tier": "clear",
       "looksLike": "8",
@@ -481,11 +481,11 @@
       "mask": "0x6F",
       "segments": [
         "a",
-        "f",
         "b",
-        "g",
         "c",
-        "d"
+        "d",
+        "f",
+        "g"
       ],
       "tier": "clear",
       "looksLike": "9",
@@ -529,9 +529,9 @@
       "hex": "0x3C",
       "mask": "0x58",
       "segments": [
-        "g",
+        "d",
         "e",
-        "d"
+        "g"
       ],
       "tier": "approximate",
       "looksLike": "C",
@@ -549,8 +549,8 @@
       "hex": "0x3D",
       "mask": "0x48",
       "segments": [
-        "g",
-        "d"
+        "d",
+        "g"
       ],
       "tier": "clear",
       "looksLike": "=",
@@ -565,9 +565,9 @@
       "hex": "0x3E",
       "mask": "0x4C",
       "segments": [
-        "g",
         "c",
-        "d"
+        "d",
+        "g"
       ],
       "tier": "approximate",
       "looksLike": "J",
@@ -583,13 +583,12 @@
       "ascii": 63,
       "char": "?",
       "hex": "0x3F",
-      "mask": "0x5B",
+      "mask": "0x53",
       "segments": [
         "a",
         "b",
-        "g",
         "e",
-        "d"
+        "g"
       ],
       "tier": "approximate",
       "looksLike": "2",
@@ -607,12 +606,12 @@
       "mask": "0x7F",
       "segments": [
         "a",
-        "f",
         "b",
-        "g",
-        "e",
         "c",
-        "d"
+        "d",
+        "e",
+        "f",
+        "g"
       ],
       "tier": "approximate",
       "looksLike": "8",
@@ -628,14 +627,14 @@
       "ascii": 65,
       "char": "A",
       "hex": "0x41",
-      "mask": "0x5F",
+      "mask": "0x77",
       "segments": [
         "a",
         "b",
-        "g",
-        "e",
         "c",
-        "d"
+        "e",
+        "f",
+        "g"
       ],
       "tier": "clear",
       "looksLike": "A",
@@ -651,12 +650,12 @@
       "mask": "0x7F",
       "segments": [
         "a",
-        "f",
         "b",
-        "g",
-        "e",
         "c",
-        "d"
+        "d",
+        "e",
+        "f",
+        "g"
       ],
       "tier": "clear",
       "looksLike": "8",
@@ -675,9 +674,9 @@
       "mask": "0x39",
       "segments": [
         "a",
-        "f",
+        "d",
         "e",
-        "d"
+        "f"
       ],
       "tier": "clear",
       "looksLike": "C",
@@ -696,11 +695,11 @@
       "mask": "0x3F",
       "segments": [
         "a",
-        "f",
         "b",
-        "e",
         "c",
-        "d"
+        "d",
+        "e",
+        "f"
       ],
       "tier": "clear",
       "looksLike": "0",
@@ -719,10 +718,10 @@
       "mask": "0x79",
       "segments": [
         "a",
-        "f",
-        "g",
+        "d",
         "e",
-        "d"
+        "f",
+        "g"
       ],
       "tier": "clear",
       "looksLike": "E",
@@ -738,9 +737,9 @@
       "mask": "0x71",
       "segments": [
         "a",
+        "e",
         "f",
-        "g",
-        "e"
+        "g"
       ],
       "tier": "clear",
       "looksLike": "F",
@@ -758,10 +757,10 @@
       "mask": "0x3D",
       "segments": [
         "a",
-        "f",
-        "e",
         "c",
-        "d"
+        "d",
+        "e",
+        "f"
       ],
       "tier": "approximate",
       "looksLike": "G",
@@ -778,11 +777,11 @@
       "hex": "0x48",
       "mask": "0x76",
       "segments": [
-        "f",
         "b",
-        "g",
+        "c",
         "e",
-        "c"
+        "f",
+        "g"
       ],
       "tier": "clear",
       "looksLike": "H",
@@ -797,8 +796,8 @@
       "hex": "0x49",
       "mask": "0x30",
       "segments": [
-        "f",
-        "e"
+        "e",
+        "f"
       ],
       "tier": "approximate",
       "looksLike": "I",
@@ -816,9 +815,9 @@
       "mask": "0x1E",
       "segments": [
         "b",
-        "e",
         "c",
-        "d"
+        "d",
+        "e"
       ],
       "tier": "approximate",
       "looksLike": "U",
@@ -834,14 +833,13 @@
       "ascii": 75,
       "char": "K",
       "hex": "0x4B",
-      "mask": "0x7D",
+      "mask": "0x75",
       "segments": [
         "a",
-        "f",
-        "g",
-        "e",
         "c",
-        "d"
+        "e",
+        "f",
+        "g"
       ],
       "tier": "approximate",
       "looksLike": "b",
@@ -859,9 +857,9 @@
       "hex": "0x4C",
       "mask": "0x38",
       "segments": [
-        "f",
+        "d",
         "e",
-        "d"
+        "f"
       ],
       "tier": "clear",
       "looksLike": "L",
@@ -874,11 +872,13 @@
       "ascii": 77,
       "char": "M",
       "hex": "0x4D",
-      "mask": "0x54",
+      "mask": "0x37",
       "segments": [
-        "g",
+        "a",
+        "b",
+        "c",
         "e",
-        "c"
+        "f"
       ],
       "tier": "approximate",
       "looksLike": "n",
@@ -897,10 +897,10 @@
       "mask": "0x37",
       "segments": [
         "a",
-        "f",
         "b",
+        "c",
         "e",
-        "c"
+        "f"
       ],
       "tier": "approximate",
       "looksLike": "n",
@@ -919,11 +919,11 @@
       "mask": "0x3F",
       "segments": [
         "a",
-        "f",
         "b",
-        "e",
         "c",
-        "d"
+        "d",
+        "e",
+        "f"
       ],
       "tier": "clear",
       "looksLike": "0",
@@ -942,10 +942,10 @@
       "mask": "0x73",
       "segments": [
         "a",
-        "f",
         "b",
-        "g",
-        "e"
+        "e",
+        "f",
+        "g"
       ],
       "tier": "clear",
       "looksLike": "P",
@@ -960,14 +960,13 @@
       "ascii": 81,
       "char": "Q",
       "hex": "0x51",
-      "mask": "0x6F",
+      "mask": "0x67",
       "segments": [
         "a",
-        "f",
         "b",
-        "g",
         "c",
-        "d"
+        "f",
+        "g"
       ],
       "tier": "approximate",
       "looksLike": "9",
@@ -985,8 +984,8 @@
       "hex": "0x52",
       "mask": "0x50",
       "segments": [
-        "g",
-        "e"
+        "e",
+        "g"
       ],
       "tier": "approximate",
       "looksLike": "r",
@@ -1004,10 +1003,10 @@
       "mask": "0x6D",
       "segments": [
         "a",
-        "f",
-        "g",
         "c",
-        "d"
+        "d",
+        "f",
+        "g"
       ],
       "tier": "clear",
       "looksLike": "5",
@@ -1024,10 +1023,10 @@
       "hex": "0x54",
       "mask": "0x78",
       "segments": [
-        "f",
-        "g",
+        "d",
         "e",
-        "d"
+        "f",
+        "g"
       ],
       "tier": "approximate",
       "looksLike": "t",
@@ -1044,11 +1043,11 @@
       "hex": "0x55",
       "mask": "0x3E",
       "segments": [
-        "f",
         "b",
-        "e",
         "c",
-        "d"
+        "d",
+        "e",
+        "f"
       ],
       "tier": "clear",
       "looksLike": "U",
@@ -1065,11 +1064,11 @@
       "hex": "0x56",
       "mask": "0x3E",
       "segments": [
-        "f",
         "b",
-        "e",
         "c",
-        "d"
+        "d",
+        "e",
+        "f"
       ],
       "tier": "clear",
       "looksLike": "U",
@@ -1084,11 +1083,13 @@
       "ascii": 87,
       "char": "W",
       "hex": "0x57",
-      "mask": "0x62",
+      "mask": "0x3E",
       "segments": [
-        "f",
         "b",
-        "g"
+        "c",
+        "d",
+        "e",
+        "f"
       ],
       "tier": "approximate",
       "looksLike": "U",
@@ -1106,12 +1107,12 @@
       "hex": "0x58",
       "mask": "0x7E",
       "segments": [
-        "f",
         "b",
-        "g",
-        "e",
         "c",
-        "d"
+        "d",
+        "e",
+        "f",
+        "g"
       ],
       "tier": "approximate",
       "looksLike": "0",
@@ -1127,14 +1128,13 @@
       "ascii": 89,
       "char": "Y",
       "hex": "0x59",
-      "mask": "0x6F",
+      "mask": "0x6E",
       "segments": [
-        "a",
-        "f",
         "b",
-        "g",
         "c",
-        "d"
+        "d",
+        "f",
+        "g"
       ],
       "tier": "approximate",
       "looksLike": "9",
@@ -1154,8 +1154,8 @@
       "segments": [
         "a",
         "b",
-        "e",
-        "d"
+        "d",
+        "e"
       ],
       "tier": "approximate",
       "looksLike": "Z",
@@ -1173,9 +1173,9 @@
       "mask": "0x39",
       "segments": [
         "a",
-        "f",
+        "d",
         "e",
-        "d"
+        "f"
       ],
       "tier": "clear",
       "looksLike": "[",
@@ -1193,8 +1193,8 @@
       "hex": "0x5C",
       "mask": "0x24",
       "segments": [
-        "f",
-        "c"
+        "c",
+        "f"
       ],
       "tier": "approximate",
       "looksLike": "\\",
@@ -1230,8 +1230,8 @@
       "mask": "0x23",
       "segments": [
         "a",
-        "f",
-        "b"
+        "b",
+        "f"
       ],
       "tier": "approximate",
       "looksLike": "n",
@@ -1246,9 +1246,8 @@
       "ascii": 95,
       "char": "_",
       "hex": "0x5F",
-      "mask": "0x09",
+      "mask": "0x08",
       "segments": [
-        "a",
         "d"
       ],
       "tier": "clear",
@@ -1283,10 +1282,10 @@
       "segments": [
         "a",
         "b",
-        "g",
-        "e",
         "c",
-        "d"
+        "d",
+        "e",
+        "g"
       ],
       "tier": "approximate",
       "looksLike": "9",
@@ -1304,11 +1303,11 @@
       "hex": "0x62",
       "mask": "0x7C",
       "segments": [
-        "f",
-        "g",
-        "e",
         "c",
-        "d"
+        "d",
+        "e",
+        "f",
+        "g"
       ],
       "tier": "clear",
       "looksLike": "b",
@@ -1323,12 +1322,11 @@
       "ascii": 99,
       "char": "c",
       "hex": "0x63",
-      "mask": "0x39",
+      "mask": "0x58",
       "segments": [
-        "a",
-        "f",
+        "d",
         "e",
-        "d"
+        "g"
       ],
       "tier": "clear",
       "looksLike": "c",
@@ -1346,10 +1344,10 @@
       "mask": "0x5E",
       "segments": [
         "b",
-        "g",
-        "e",
         "c",
-        "d"
+        "d",
+        "e",
+        "g"
       ],
       "tier": "clear",
       "looksLike": "d",
@@ -1365,11 +1363,11 @@
       "mask": "0x7B",
       "segments": [
         "a",
-        "f",
         "b",
-        "g",
+        "d",
         "e",
-        "d"
+        "f",
+        "g"
       ],
       "tier": "approximate",
       "looksLike": "e",
@@ -1385,9 +1383,9 @@
       "mask": "0x71",
       "segments": [
         "a",
+        "e",
         "f",
-        "g",
-        "e"
+        "g"
       ],
       "tier": "clear",
       "looksLike": "F",
@@ -1405,11 +1403,11 @@
       "mask": "0x6F",
       "segments": [
         "a",
-        "f",
         "b",
-        "g",
         "c",
-        "d"
+        "d",
+        "f",
+        "g"
       ],
       "tier": "clear",
       "looksLike": "9",
@@ -1427,10 +1425,10 @@
       "hex": "0x68",
       "mask": "0x74",
       "segments": [
-        "f",
-        "g",
+        "c",
         "e",
-        "c"
+        "f",
+        "g"
       ],
       "tier": "clear",
       "looksLike": "h",
@@ -1461,9 +1459,9 @@
       "mask": "0x1E",
       "segments": [
         "b",
-        "e",
         "c",
-        "d"
+        "d",
+        "e"
       ],
       "tier": "approximate",
       "looksLike": "u",
@@ -1478,14 +1476,13 @@
       "ascii": 107,
       "char": "k",
       "hex": "0x6B",
-      "mask": "0x7D",
+      "mask": "0x75",
       "segments": [
         "a",
-        "f",
-        "g",
-        "e",
         "c",
-        "d"
+        "e",
+        "f",
+        "g"
       ],
       "tier": "approximate",
       "looksLike": "b",
@@ -1503,8 +1500,8 @@
       "hex": "0x6C",
       "mask": "0x30",
       "segments": [
-        "f",
-        "e"
+        "e",
+        "f"
       ],
       "tier": "approximate",
       "looksLike": "I",
@@ -1523,10 +1520,10 @@
       "mask": "0x37",
       "segments": [
         "a",
-        "f",
         "b",
+        "c",
         "e",
-        "c"
+        "f"
       ],
       "tier": "approximate",
       "looksLike": "n",
@@ -1544,9 +1541,9 @@
       "hex": "0x6E",
       "mask": "0x54",
       "segments": [
-        "g",
+        "c",
         "e",
-        "c"
+        "g"
       ],
       "tier": "clear",
       "looksLike": "n",
@@ -1559,14 +1556,12 @@
       "ascii": 111,
       "char": "o",
       "hex": "0x6F",
-      "mask": "0x3F",
+      "mask": "0x5C",
       "segments": [
-        "a",
-        "f",
-        "b",
-        "e",
         "c",
-        "d"
+        "d",
+        "e",
+        "g"
       ],
       "tier": "approximate",
       "looksLike": "0",
@@ -1585,10 +1580,10 @@
       "mask": "0x73",
       "segments": [
         "a",
-        "f",
         "b",
-        "g",
-        "e"
+        "e",
+        "f",
+        "g"
       ],
       "tier": "clear",
       "looksLike": "P",
@@ -1603,14 +1598,13 @@
       "ascii": 113,
       "char": "q",
       "hex": "0x71",
-      "mask": "0x6F",
+      "mask": "0x67",
       "segments": [
         "a",
-        "f",
         "b",
-        "g",
         "c",
-        "d"
+        "f",
+        "g"
       ],
       "tier": "approximate",
       "looksLike": "9",
@@ -1628,8 +1622,8 @@
       "hex": "0x72",
       "mask": "0x50",
       "segments": [
-        "g",
-        "e"
+        "e",
+        "g"
       ],
       "tier": "approximate",
       "looksLike": "r",
@@ -1647,10 +1641,10 @@
       "mask": "0x6D",
       "segments": [
         "a",
-        "f",
-        "g",
         "c",
-        "d"
+        "d",
+        "f",
+        "g"
       ],
       "tier": "clear",
       "looksLike": "5",
@@ -1668,10 +1662,10 @@
       "hex": "0x74",
       "mask": "0x78",
       "segments": [
-        "f",
-        "g",
+        "d",
         "e",
-        "d"
+        "f",
+        "g"
       ],
       "tier": "clear",
       "looksLike": "t",
@@ -1686,11 +1680,11 @@
       "ascii": 117,
       "char": "u",
       "hex": "0x75",
-      "mask": "0x62",
+      "mask": "0x1C",
       "segments": [
-        "f",
-        "b",
-        "g"
+        "c",
+        "d",
+        "e"
       ],
       "tier": "approximate",
       "looksLike": "u",
@@ -1705,9 +1699,9 @@
       "hex": "0x76",
       "mask": "0x1C",
       "segments": [
-        "e",
         "c",
-        "d"
+        "d",
+        "e"
       ],
       "tier": "approximate",
       "looksLike": "u",
@@ -1723,11 +1717,13 @@
       "ascii": 119,
       "char": "w",
       "hex": "0x77",
-      "mask": "0x62",
+      "mask": "0x3E",
       "segments": [
-        "f",
         "b",
-        "g"
+        "c",
+        "d",
+        "e",
+        "f"
       ],
       "tier": "approximate",
       "looksLike": "u",
@@ -1746,12 +1742,12 @@
       "hex": "0x78",
       "mask": "0x7E",
       "segments": [
-        "f",
         "b",
-        "g",
-        "e",
         "c",
-        "d"
+        "d",
+        "e",
+        "f",
+        "g"
       ],
       "tier": "approximate",
       "looksLike": "0",
@@ -1769,11 +1765,11 @@
       "hex": "0x79",
       "mask": "0x6E",
       "segments": [
-        "f",
         "b",
-        "g",
         "c",
-        "d"
+        "d",
+        "f",
+        "g"
       ],
       "tier": "clear",
       "looksLike": "9",
@@ -1793,8 +1789,8 @@
       "segments": [
         "a",
         "b",
-        "e",
-        "d"
+        "d",
+        "e"
       ],
       "tier": "approximate",
       "looksLike": "2",
@@ -1810,8 +1806,12 @@
       "ascii": 123,
       "char": "{",
       "hex": "0x7B",
-      "mask": "0x00",
-      "segments": [],
+      "mask": "0x16",
+      "segments": [
+        "b",
+        "c",
+        "e"
+      ],
       "tier": "unusable",
       "looksLike": "I",
       "confusableWith": [],
@@ -1823,8 +1823,13 @@
       "ascii": 124,
       "char": "|",
       "hex": "0x7C",
-      "mask": "0x00",
-      "segments": [],
+      "mask": "0x36",
+      "segments": [
+        "b",
+        "c",
+        "e",
+        "f"
+      ],
       "tier": "approximate",
       "looksLike": "II",
       "confusableWith": [
@@ -1838,11 +1843,11 @@
       "ascii": 125,
       "char": "}",
       "hex": "0x7D",
-      "mask": "0x16",
+      "mask": "0x34",
       "segments": [
-        "b",
+        "c",
         "e",
-        "c"
+        "f"
       ],
       "tier": "unusable",
       "looksLike": "i",
@@ -1855,12 +1860,10 @@
       "ascii": 126,
       "char": "~",
       "hex": "0x7E",
-      "mask": "0x36",
+      "mask": "0x14",
       "segments": [
-        "f",
-        "b",
-        "e",
-        "c"
+        "c",
+        "e"
       ],
       "tier": "unusable",
       "looksLike": "..",
