@@ -297,6 +297,17 @@ class PrefsTest {
         assertEquals(SleepWindow(23 * 60, 6 * 60), prefs.pushPauseWindow())
     }
 
+    @Test fun construction_purgesLegacyPowerKeys() {
+        val settings = MapSettings()
+        settings.putBoolean("sleep_enabled", false)
+        settings.putInt("auto_sleep_in_period_sec", 30)
+        settings.putInt("auto_sleep_window_start_min", 1)
+        Prefs(settings)
+        assertEquals(false, settings.hasKey("sleep_enabled"))
+        assertEquals(false, settings.hasKey("auto_sleep_in_period_sec"))
+        assertEquals(false, settings.hasKey("auto_sleep_window_start_min"))
+    }
+
     // ---------------------------------------------------------------------------
     // activity-mode prefs
     // ---------------------------------------------------------------------------

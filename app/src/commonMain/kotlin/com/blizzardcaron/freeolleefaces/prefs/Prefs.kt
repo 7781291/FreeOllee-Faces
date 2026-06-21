@@ -13,6 +13,17 @@ class Prefs(
     private val clock: Clock = Clock.System,
 ) {
 
+    init {
+        // Clean reset: the unified power-saving prefs supersede the old sleep / auto-sleep keys.
+        // Purge the dead keys once so they don't linger in storage. Idempotent (remove is a no-op
+        // when absent).
+        listOf(
+            "sleep_enabled", "sleep_start_min", "sleep_end_min",
+            "auto_sleep_schedule_enabled", "auto_sleep_window_start_min", "auto_sleep_window_end_min",
+            "auto_sleep_in_on", "auto_sleep_in_period_sec", "auto_sleep_out_on", "auto_sleep_out_period_sec",
+        ).forEach { settings.remove(it) }
+    }
+
     var lastLat: Double?
         get() = if (settings.hasKey(KEY_LAT)) settings.getFloat(KEY_LAT, 0f).toDouble() else null
         set(value) = if (value == null) settings.remove(KEY_LAT) else settings.putFloat(KEY_LAT, value.toFloat())
@@ -233,18 +244,6 @@ class Prefs(
         stepsFetchedMs = clock.now().toEpochMilliseconds()
     }
 
-    var sleepEnabled: Boolean
-        get() = settings.getBoolean(KEY_SLEEP_ENABLED, true)
-        set(value) = settings.putBoolean(KEY_SLEEP_ENABLED, value)
-
-    var sleepStartMin: Int
-        get() = settings.getInt(KEY_SLEEP_START, DEFAULT_SLEEP_START_HOUR * MINUTES_PER_HOUR)
-        set(value) = settings.putInt(KEY_SLEEP_START, value)
-
-    var sleepEndMin: Int
-        get() = settings.getInt(KEY_SLEEP_END, DEFAULT_SLEEP_END_HOUR * MINUTES_PER_HOUR)
-        set(value) = settings.putInt(KEY_SLEEP_END, value)
-
     var powerSavingEnabled: Boolean
         get() = settings.getBoolean(KEY_PS_ENABLED, true)
         set(value) = settings.putBoolean(KEY_PS_ENABLED, value)
@@ -308,34 +307,6 @@ class Prefs(
         lastAutoSendSummary = summary
     }
 
-    var autoSleepScheduleEnabled: Boolean
-        get() = settings.getBoolean(KEY_AS_ENABLED, false)
-        set(value) = settings.putBoolean(KEY_AS_ENABLED, value)
-
-    var autoSleepWindowStartMin: Int
-        get() = settings.getInt(KEY_AS_START, DEFAULT_SLEEP_START_HOUR * MINUTES_PER_HOUR)
-        set(value) = settings.putInt(KEY_AS_START, value)
-
-    var autoSleepWindowEndMin: Int
-        get() = settings.getInt(KEY_AS_END, DEFAULT_AUTO_SLEEP_END_HOUR * MINUTES_PER_HOUR)
-        set(value) = settings.putInt(KEY_AS_END, value)
-
-    var autoSleepInWindowOn: Boolean
-        get() = settings.getBoolean(KEY_AS_IN_ON, true)
-        set(value) = settings.putBoolean(KEY_AS_IN_ON, value)
-
-    var autoSleepInWindowPeriodSec: Int
-        get() = settings.getInt(KEY_AS_IN_PERIOD, DEFAULT_AUTO_SLEEP_PERIOD_SEC)
-        set(value) = settings.putInt(KEY_AS_IN_PERIOD, value.coerceAtLeast(1))
-
-    var autoSleepOutWindowOn: Boolean
-        get() = settings.getBoolean(KEY_AS_OUT_ON, false)
-        set(value) = settings.putBoolean(KEY_AS_OUT_ON, value)
-
-    var autoSleepOutWindowPeriodSec: Int
-        get() = settings.getInt(KEY_AS_OUT_PERIOD, DEFAULT_AUTO_SLEEP_PERIOD_SEC)
-        set(value) = settings.putInt(KEY_AS_OUT_PERIOD, value.coerceAtLeast(1))
-
     /** Watch screen-off register desired-state, derived from the unified power-saving prefs. */
     fun autoSleepWindowConfig(): AutoSleepWindowConfig {
         if (!powerSavingEnabled) {
@@ -395,9 +366,6 @@ class Prefs(
         private const val KEY_UPDATE_INTERVAL = "update_interval_min"
         private const val KEY_STEPS_COUNT = "steps_last_count"
         private const val KEY_STEPS_FETCHED_MS = "steps_fetched_ms"
-        private const val KEY_SLEEP_ENABLED = "sleep_enabled"
-        private const val KEY_SLEEP_START = "sleep_start_min"
-        private const val KEY_SLEEP_END = "sleep_end_min"
         private const val KEY_PS_ENABLED = "power_saving_enabled"
         private const val KEY_PS_TIMEOUT = "power_saving_timeout_sec"
         private const val KEY_QH_ENABLED = "quiet_hours_enabled"
@@ -409,22 +377,11 @@ class Prefs(
         private const val KEY_LAST_SEND_MS = "last_auto_send_ms"
         private const val KEY_LAST_SEND_SUMMARY = "last_auto_send_summary"
         private const val KEY_LAST_NOTIFIED_KIND = "last_notified_kind"
-        private const val KEY_AS_ENABLED = "auto_sleep_schedule_enabled"
-        private const val KEY_AS_START = "auto_sleep_window_start_min"
-        private const val KEY_AS_END = "auto_sleep_window_end_min"
-        private const val KEY_AS_IN_ON = "auto_sleep_in_on"
-        private const val KEY_AS_IN_PERIOD = "auto_sleep_in_period_sec"
-        private const val KEY_AS_OUT_ON = "auto_sleep_out_on"
-        private const val KEY_AS_OUT_PERIOD = "auto_sleep_out_period_sec"
 
         private const val MINUTES_PER_HOUR = 60
         private const val MAX_HOUR = 23
         private const val MAX_MINUTE = 59
         private const val DEFAULT_ALARM_HOUR = 7
         private const val DEFAULT_QUICK_TIMER_SECONDS = 180
-        private const val DEFAULT_SLEEP_START_HOUR = 22
-        private const val DEFAULT_SLEEP_END_HOUR = 6
-        private const val DEFAULT_AUTO_SLEEP_END_HOUR = 7
-        private const val DEFAULT_AUTO_SLEEP_PERIOD_SEC = 120
     }
 }
