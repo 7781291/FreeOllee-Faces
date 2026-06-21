@@ -3,7 +3,6 @@ package com.blizzardcaron.freeolleefaces.vm
 import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
 import com.blizzardcaron.freeolleefaces.auto.AutoUpdateSchedule
 import com.blizzardcaron.freeolleefaces.auto.Scheduler
-import com.blizzardcaron.freeolleefaces.auto.SleepWindow
 import com.blizzardcaron.freeolleefaces.auto.isTempCacheFresh
 import com.blizzardcaron.freeolleefaces.ble.BleClient
 import com.blizzardcaron.freeolleefaces.ble.OlleeProtocol
@@ -104,7 +103,7 @@ class ComplicationController(
     // Reads from prefs (the just-persisted source of truth) so a setting change reflects
     // immediately — computing from `state` inside the same copy would see the pre-change value.
     fun tempNextText(): String {
-        val sleep = if (prefs.sleepEnabled) SleepWindow(prefs.sleepStartMin, prefs.sleepEndMin) else null
+        val sleep = prefs.pushPauseWindow()
         val fire = AutoUpdateSchedule.nextTemperatureFire(
             clock.now().toLocalDateTime(TimeZone.currentSystemDefault()),
             prefs.updateIntervalMinutes,

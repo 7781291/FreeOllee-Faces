@@ -127,11 +127,7 @@ class AutoUpdateWorker(
         address: String,
         now: LocalDateTime,
     ): Result {
-        val sleep = if (prefs.sleepEnabled) {
-            SleepWindow(prefs.sleepStartMin, prefs.sleepEndMin)
-        } else {
-            null
-        }
+        val sleep = prefs.pushPauseWindow()
         val nowMinOfDay = now.hour * MINUTES_PER_HOUR + now.minute
         val inSleep = sleep != null &&
             AutoUpdateSchedule.isInSleepWindow(nowMinOfDay, sleep.startMin, sleep.endMin)
@@ -196,11 +192,7 @@ class AutoUpdateWorker(
         address: String,
         now: LocalDateTime,
     ): Result {
-        val sleep = if (prefs.sleepEnabled) {
-            SleepWindow(prefs.sleepStartMin, prefs.sleepEndMin)
-        } else {
-            null
-        }
+        val sleep = prefs.pushPauseWindow()
         val nowMinOfDay = now.hour * MINUTES_PER_HOUR + now.minute
 
         // Guard: if we somehow fired inside the sleep window, skip the send.
@@ -354,10 +346,10 @@ class AutoUpdateWorker(
     }
 
     private fun inSleepNow(prefs: Prefs): Boolean {
-        if (!prefs.sleepEnabled) return false
+        val sleep = prefs.pushPauseWindow() ?: return false
         val now = nowLocal()
         val m = now.hour * MINUTES_PER_HOUR + now.minute
-        return AutoUpdateSchedule.isInSleepWindow(m, prefs.sleepStartMin, prefs.sleepEndMin)
+        return AutoUpdateSchedule.isInSleepWindow(m, sleep.startMin, sleep.endMin)
     }
 
     private fun nowLocal(): LocalDateTime =

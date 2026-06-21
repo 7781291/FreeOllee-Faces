@@ -51,11 +51,7 @@ object AutoUpdateScheduler {
     private fun scheduleIntervalFace(ctx: Context, prefs: Prefs, intervalMinutes: Int) {
         val zone = TimeZone.currentSystemDefault()
         val now = Clock.System.now().toLocalDateTime(zone)
-        val sleep = if (prefs.sleepEnabled) {
-            SleepWindow(prefs.sleepStartMin, prefs.sleepEndMin)
-        } else {
-            null
-        }
+        val sleep = prefs.pushPauseWindow()
         val nowMinOfDay = now.hour * MINUTES_PER_HOUR + now.minute
         val inSleep = sleep != null &&
             AutoUpdateSchedule.isInSleepWindow(nowMinOfDay, sleep.startMin, sleep.endMin)
