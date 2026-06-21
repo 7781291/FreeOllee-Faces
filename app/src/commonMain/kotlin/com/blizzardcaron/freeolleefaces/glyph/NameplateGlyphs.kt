@@ -2,6 +2,9 @@ package com.blizzardcaron.freeolleefaces.glyph
 
 enum class Segment { A, B, C, D, E, F, G, DP }
 
+/** Which per-position font a nameplate cell uses (see NameplateLayout). */
+enum class FontClass { UNITS, TENS }
+
 /** Firmware segment-font for the watch nameplate. Source of truth: glyph-map.json. */
 object NameplateGlyphs {
     private val BIT_TO_SEGMENT = listOf(
@@ -36,6 +39,19 @@ object NameplateGlyphs {
         'z' to 0x1B, '{' to 0x16, '|' to 0x36, '}' to 0x34, '~' to 0x14,
     )
 
+    // TENS-cell font overrides (hw pos4/pos6). Empirically recovered from the live official-app
+    // nameplate preview 2026-06-21 (docs/superpowers/specs/assets/2026-06-21-nameplate). The base
+    // firmware table is canonical; the tens digits use a separate ROM (Casio cost-reduction) — e.g.
+    // '7' drops a+b and gains g. Chars absent here render identically in both classes.
+    private val TENS_MASKS: Map<Char, Int> = mapOf(
+        '7' to 0x44, 'A' to 0x5F, 'F' to 0x79, 'J' to 0x42, 'K' to 0x7D, 'L' to 0x60,
+        'M' to 0x54, 'N' to 0x54, 'P' to 0x7B, 'Q' to 0x6F, 'T' to 0x79, 'U' to 0x62,
+        'V' to 0x62, 'W' to 0x62, 'X' to 0x7F, 'Y' to 0x6F, 'b' to 0x7D, 'c' to 0x39,
+        'd' to 0x5F, 'f' to 0x79, 'j' to 0x42, 'k' to 0x7D, 'm' to 0x54, 'o' to 0x3F,
+        'p' to 0x7B, 'q' to 0x6F, 't' to 0x79, 'u' to 0x62, 'v' to 0x62, 'w' to 0x62,
+        'x' to 0x7F, 'y' to 0x6F,
+    )
+
     // Glyphs that don't read as their intended character (blank, single-segment stub, or garbage).
     // tier=unusable in glyph-map.json. Everything else (clear ∪ approximate) is legible.
     private val UNUSABLE: Set<Char> = setOf('$', '%', '&', ',', ':', ';', '`', 'i', '{', '}', '~')
@@ -49,10 +65,11 @@ object NameplateGlyphs {
     /** Cell indices (0..5) that physically render the dp dot. None do on this watch. */
     val DP_CELLS: Set<Int> = emptySet()
 
-    fun maskFor(c: Char): Int = MASKS[c] ?: 0x00
+    fun maskFor(c: Char, fontClass: FontClass = FontClass.UNITS): Int =
+        if (fontClass == FontClass.TENS) TENS_MASKS[c] ?: (MASKS[c] ?: 0x00) else MASKS[c] ?: 0x00
 
-    fun segmentsFor(c: Char): Set<Segment> {
-        val mask = maskFor(c)
+    fun segmentsFor(c: Char, fontClass: FontClass = FontClass.UNITS): Set<Segment> {
+        val mask = maskFor(c, fontClass)
         return BIT_TO_SEGMENT.filterIndexed { i, _ -> (mask shr i) and 1 == 1 }.toSet()
     }
 
