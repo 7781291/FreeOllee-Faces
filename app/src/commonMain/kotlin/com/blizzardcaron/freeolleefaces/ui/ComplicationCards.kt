@@ -27,6 +27,7 @@ import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
 import com.blizzardcaron.freeolleefaces.auto.displayLabel
 import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
 import com.blizzardcaron.freeolleefaces.format.TempUnit
+import com.blizzardcaron.freeolleefaces.glyph.NameplateSanitizer
 
 private data class FacePreview(val preview: PreviewState, val updated: String? = null, val next: String? = null)
 
@@ -119,7 +120,12 @@ internal fun CustomCard(
         active = state.activeComplication == ActiveComplication.CUSTOM,
         onActivate = { callbacks.onActivate(ActiveComplication.CUSTOM) },
         face = FacePreview(
-            preview = PreviewState.Ready(DisplayFormatter.custom(state.custom), "'${state.custom}'"),
+            // Preview through the same sanitizer the send path applies (ComplicationController
+            // sanitizes nameplate-target values), so the on-screen glyphs match the watch.
+            preview = PreviewState.Ready(
+                NameplateSanitizer.sanitize(DisplayFormatter.custom(state.custom)),
+                "'${state.custom}'",
+            ),
         ),
         expanded = expanded,
         onToggle = onToggle,
