@@ -422,11 +422,17 @@ class ComplicationController(
         value: String,
         target: Int = OlleeProtocol.TARGET_NAMEPLATE,
     ): Result<Unit> {
+        // Backstop so faces never push illegible glyphs to the watch nameplate.
+        val out = if (target == OlleeProtocol.TARGET_NAMEPLATE) {
+            com.blizzardcaron.freeolleefaces.glyph.NameplateSanitizer.sanitize(value)
+        } else {
+            value
+        }
         update { it.copy(sending = true) }
-        return ble.send(address, value, target)
+        return ble.send(address, out, target)
             .onSuccess {
                 update { it.copy(sending = false) }
-                showSnackbar("Sent '$value'")
+                showSnackbar("Sent '$out'")
             }
             .onFailure { err ->
                 update { it.copy(sending = false) }

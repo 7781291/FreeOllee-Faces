@@ -1,0 +1,1876 @@
+{
+  "version": 1,
+  "provenance": {
+    "firmwareImage": "OW-FW-APP_HW_01.05.00_FW_00.01.07.bin",
+    "officialAppVersion": "app.ollee.ollee_watch.ollee_watch",
+    "tableDoc": "ollee-segment-font.md"
+  },
+  "bitLayout": {
+    "0": "a",
+    "1": "b",
+    "2": "c",
+    "3": "d",
+    "4": "e",
+    "5": "f",
+    "6": "g",
+    "7": "dp"
+  },
+  "dpCells": [],
+  "tiers": {
+    "clear": "unambiguous; reads as intended",
+    "approximate": "readable but stylized/imperfect; usable with care",
+    "unusable": "garbage, blank-when-it-shouldn't-be, or indistinguishable"
+  },
+  "glyphs": [
+    {
+      "ascii": 32,
+      "char": " ",
+      "hex": "0x20",
+      "mask": "0x00",
+      "segments": [],
+      "tier": "clear",
+      "looksLike": "(blank)",
+      "confusableWith": [],
+      "positionSensitive": false,
+      "capture": "",
+      "notes": "space; not captured, legitimate blank"
+    },
+    {
+      "ascii": 33,
+      "char": "!",
+      "hex": "0x21",
+      "mask": "0x60",
+      "segments": [
+        "f",
+        "g"
+      ],
+      "tier": "approximate",
+      "looksLike": "L",
+      "confusableWith": [],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_21.png",
+      "notes": "upper-left vertical + middle bar; reads like a stylized L, not !"
+    },
+    {
+      "ascii": 34,
+      "char": "\"",
+      "hex": "0x22",
+      "mask": "0x22",
+      "segments": [
+        "b",
+        "f"
+      ],
+      "tier": "approximate",
+      "looksLike": "\"",
+      "confusableWith": [
+        "1",
+        "1"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_21.png",
+      "notes": "two separated upper verticals; readable as a pair of ticks/quote"
+    },
+    {
+      "ascii": 35,
+      "char": "#",
+      "hex": "0x23",
+      "mask": "0x63",
+      "segments": [
+        "a",
+        "b",
+        "f",
+        "g"
+      ],
+      "tier": "clear",
+      "looksLike": "°",
+      "confusableWith": [],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_21.png",
+      "notes": "renders as the flat-top box (degree symbol); confirmed on-device per firmware doc (66#F -> 66°F) [corrected 0x6B->0x63: real app renders clean degree, no underline]"
+    },
+    {
+      "ascii": 36,
+      "char": "$",
+      "hex": "0x24",
+      "mask": "0x2D",
+      "segments": [
+        "a",
+        "c",
+        "d",
+        "f"
+      ],
+      "tier": "unusable",
+      "looksLike": "?",
+      "confusableWith": [],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_21.png",
+      "notes": "top tick + lower-right/bottom ticks; does not read as $, ambiguous fragment"
+    },
+    {
+      "ascii": 37,
+      "char": "%",
+      "hex": "0x25",
+      "mask": "0x00",
+      "segments": [],
+      "tier": "unusable",
+      "looksLike": "",
+      "confusableWith": [],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_21.png",
+      "notes": "renders blank (mask 0x00)"
+    },
+    {
+      "ascii": 38,
+      "char": "&",
+      "hex": "0x26",
+      "mask": "0x44",
+      "segments": [
+        "c",
+        "g"
+      ],
+      "tier": "unusable",
+      "looksLike": "7",
+      "confusableWith": [
+        "7"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_21.png",
+      "notes": "small middle+lower-right tick; reads like a fragment of 7, not &"
+    },
+    {
+      "ascii": 39,
+      "char": "'",
+      "hex": "0x27",
+      "mask": "0x20",
+      "segments": [
+        "f"
+      ],
+      "tier": "clear",
+      "looksLike": "'",
+      "confusableWith": [],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_27.png",
+      "notes": "single upper-left tick, reads cleanly as an apostrophe/tick"
+    },
+    {
+      "ascii": 40,
+      "char": "(",
+      "hex": "0x28",
+      "mask": "0x39",
+      "segments": [
+        "a",
+        "d",
+        "e",
+        "f"
+      ],
+      "tier": "clear",
+      "looksLike": "[",
+      "confusableWith": [
+        "C",
+        "["
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_27.png",
+      "notes": "left-bracket/C shape, clean"
+    },
+    {
+      "ascii": 41,
+      "char": ")",
+      "hex": "0x29",
+      "mask": "0x0F",
+      "segments": [
+        "a",
+        "b",
+        "c",
+        "d"
+      ],
+      "tier": "approximate",
+      "looksLike": "]",
+      "confusableWith": [
+        ")"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_27.png",
+      "notes": "right-bracket shape, slightly open but readable"
+    },
+    {
+      "ascii": 42,
+      "char": "*",
+      "hex": "0x2A",
+      "mask": "0x40",
+      "segments": [
+        "g"
+      ],
+      "tier": "approximate",
+      "looksLike": "-",
+      "confusableWith": [],
+      "positionSensitive": true,
+      "capture": "captures/glyphs/sweep_27.png",
+      "notes": "renders as a plain middle dash; no distinct dp dot visible in pos_2a.png (uniform across all 6 cells)"
+    },
+    {
+      "ascii": 43,
+      "char": "+",
+      "hex": "0x2B",
+      "mask": "0x70",
+      "segments": [
+        "e",
+        "f",
+        "g"
+      ],
+      "tier": "approximate",
+      "looksLike": "t",
+      "confusableWith": [
+        "t",
+        "+"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_27.png",
+      "notes": "left vertical + middle bar; plus-ish per firmware doc, reads more like lowercase t"
+    },
+    {
+      "ascii": 44,
+      "char": ",",
+      "hex": "0x2C",
+      "mask": "0x04",
+      "segments": [
+        "c"
+      ],
+      "tier": "unusable",
+      "looksLike": ",",
+      "confusableWith": [],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_27.png",
+      "notes": "single lower-right tick; too minimal/indistinct, easily missed"
+    },
+    {
+      "ascii": 45,
+      "char": "-",
+      "hex": "0x2D",
+      "mask": "0x40",
+      "segments": [
+        "g"
+      ],
+      "tier": "clear",
+      "looksLike": "-",
+      "confusableWith": [],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_2d.png",
+      "notes": "clean middle bar dash"
+    },
+    {
+      "ascii": 46,
+      "char": ".",
+      "hex": "0x2E",
+      "mask": "0x40",
+      "segments": [
+        "g"
+      ],
+      "tier": "clear",
+      "looksLike": "-",
+      "confusableWith": [
+        "-"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_2d.png",
+      "notes": "identical glyph to dash (mask 0x40); no true decimal point, same render as -"
+    },
+    {
+      "ascii": 47,
+      "char": "/",
+      "hex": "0x2F",
+      "mask": "0x12",
+      "segments": [
+        "b",
+        "e"
+      ],
+      "tier": "approximate",
+      "looksLike": "/",
+      "confusableWith": [],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_2d.png",
+      "notes": "upper-right + lower-left ticks approximate a forward slash"
+    },
+    {
+      "ascii": 48,
+      "char": "0",
+      "hex": "0x30",
+      "mask": "0x3F",
+      "segments": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f"
+      ],
+      "tier": "clear",
+      "looksLike": "0",
+      "confusableWith": [
+        "O",
+        "D"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_2d.png",
+      "notes": "clean full-box zero"
+    },
+    {
+      "ascii": 49,
+      "char": "1",
+      "hex": "0x31",
+      "mask": "0x06",
+      "segments": [
+        "b",
+        "c"
+      ],
+      "tier": "clear",
+      "looksLike": "1",
+      "confusableWith": [
+        "I"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_2d.png",
+      "notes": "clean two right verticals"
+    },
+    {
+      "ascii": 50,
+      "char": "2",
+      "hex": "0x32",
+      "mask": "0x5B",
+      "segments": [
+        "a",
+        "b",
+        "d",
+        "e",
+        "g"
+      ],
+      "tier": "clear",
+      "looksLike": "2",
+      "confusableWith": [
+        "Z"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_2d.png",
+      "notes": "clean standard 2"
+    },
+    {
+      "ascii": 51,
+      "char": "3",
+      "hex": "0x33",
+      "mask": "0x4F",
+      "segments": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "g"
+      ],
+      "tier": "clear",
+      "looksLike": "3",
+      "confusableWith": [],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_33.png",
+      "notes": "clean standard 3"
+    },
+    {
+      "ascii": 52,
+      "char": "4",
+      "hex": "0x34",
+      "mask": "0x66",
+      "segments": [
+        "b",
+        "c",
+        "f",
+        "g"
+      ],
+      "tier": "clear",
+      "looksLike": "4",
+      "confusableWith": [],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_33.png",
+      "notes": "clean standard 4"
+    },
+    {
+      "ascii": 53,
+      "char": "5",
+      "hex": "0x35",
+      "mask": "0x6D",
+      "segments": [
+        "a",
+        "c",
+        "d",
+        "f",
+        "g"
+      ],
+      "tier": "clear",
+      "looksLike": "5",
+      "confusableWith": [
+        "S"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_33.png",
+      "notes": "clean standard 5"
+    },
+    {
+      "ascii": 54,
+      "char": "6",
+      "hex": "0x36",
+      "mask": "0x7D",
+      "segments": [
+        "a",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g"
+      ],
+      "tier": "clear",
+      "looksLike": "6",
+      "confusableWith": [
+        "b"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_33.png",
+      "notes": "clean standard 6"
+    },
+    {
+      "ascii": 55,
+      "char": "7",
+      "hex": "0x37",
+      "mask": "0x07",
+      "segments": [
+        "a",
+        "b",
+        "c"
+      ],
+      "tier": "clear",
+      "looksLike": "7",
+      "confusableWith": [],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_33.png",
+      "notes": "clean standard 7"
+    },
+    {
+      "ascii": 56,
+      "char": "8",
+      "hex": "0x38",
+      "mask": "0x7F",
+      "segments": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g"
+      ],
+      "tier": "clear",
+      "looksLike": "8",
+      "confusableWith": [
+        "B",
+        "@"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_33.png",
+      "notes": "clean full-box 8; identical render to @ and B (see pos_38/40/42)"
+    },
+    {
+      "ascii": 57,
+      "char": "9",
+      "hex": "0x39",
+      "mask": "0x6F",
+      "segments": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "f",
+        "g"
+      ],
+      "tier": "clear",
+      "looksLike": "9",
+      "confusableWith": [
+        "g",
+        "q"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_39.png",
+      "notes": "clean standard 9"
+    },
+    {
+      "ascii": 58,
+      "char": ":",
+      "hex": "0x3A",
+      "mask": "0x00",
+      "segments": [],
+      "tier": "unusable",
+      "looksLike": "",
+      "confusableWith": [],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_39.png",
+      "notes": "renders blank (mask 0x00)"
+    },
+    {
+      "ascii": 59,
+      "char": ";",
+      "hex": "0x3B",
+      "mask": "0x00",
+      "segments": [],
+      "tier": "unusable",
+      "looksLike": "",
+      "confusableWith": [],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_39.png",
+      "notes": "renders blank (mask 0x00)"
+    },
+    {
+      "ascii": 60,
+      "char": "<",
+      "hex": "0x3C",
+      "mask": "0x58",
+      "segments": [
+        "d",
+        "e",
+        "g"
+      ],
+      "tier": "approximate",
+      "looksLike": "C",
+      "confusableWith": [
+        "c",
+        "C"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_39.png",
+      "notes": "top tick + left vertical + bottom approximates a small c/<"
+    },
+    {
+      "ascii": 61,
+      "char": "=",
+      "hex": "0x3D",
+      "mask": "0x48",
+      "segments": [
+        "d",
+        "g"
+      ],
+      "tier": "clear",
+      "looksLike": "=",
+      "confusableWith": [],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_39.png",
+      "notes": "two horizontal bars, clean equals sign"
+    },
+    {
+      "ascii": 62,
+      "char": ">",
+      "hex": "0x3E",
+      "mask": "0x4C",
+      "segments": [
+        "c",
+        "d",
+        "g"
+      ],
+      "tier": "approximate",
+      "looksLike": "J",
+      "confusableWith": [
+        "J",
+        "2"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_39.png",
+      "notes": "top tick + right vertical + bottom reads like a backward C/J fragment, not a crisp >"
+    },
+    {
+      "ascii": 63,
+      "char": "?",
+      "hex": "0x3F",
+      "mask": "0x53",
+      "segments": [
+        "a",
+        "b",
+        "e",
+        "g"
+      ],
+      "tier": "approximate",
+      "looksLike": "2",
+      "confusableWith": [
+        "2"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_3f.png",
+      "notes": "top-right diagonal + vertical + middle + bottom-left reads closer to a 2 than a ?"
+    },
+    {
+      "ascii": 64,
+      "char": "@",
+      "hex": "0x40",
+      "mask": "0x7F",
+      "segments": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g"
+      ],
+      "tier": "approximate",
+      "looksLike": "8",
+      "confusableWith": [
+        "8",
+        "B"
+      ],
+      "positionSensitive": true,
+      "capture": "captures/glyphs/sweep_3f.png",
+      "notes": "renders identical to 8/B full box; dp bit (0xFF includes +dp) not visibly distinct in pos_40.png vs pos_38/42"
+    },
+    {
+      "ascii": 65,
+      "char": "A",
+      "hex": "0x41",
+      "mask": "0x77",
+      "segments": [
+        "a",
+        "b",
+        "c",
+        "e",
+        "f",
+        "g"
+      ],
+      "tier": "clear",
+      "looksLike": "A",
+      "confusableWith": [],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_3f.png",
+      "notes": "standard 7-seg A shape (open bottom), clean"
+    },
+    {
+      "ascii": 66,
+      "char": "B",
+      "hex": "0x42",
+      "mask": "0x7F",
+      "segments": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g"
+      ],
+      "tier": "clear",
+      "looksLike": "8",
+      "confusableWith": [
+        "8",
+        "@"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_3f.png",
+      "notes": "full box, identical render to 8 and @"
+    },
+    {
+      "ascii": 67,
+      "char": "C",
+      "hex": "0x43",
+      "mask": "0x39",
+      "segments": [
+        "a",
+        "d",
+        "e",
+        "f"
+      ],
+      "tier": "clear",
+      "looksLike": "C",
+      "confusableWith": [
+        "(",
+        "["
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_3f.png",
+      "notes": "clean C/left-bracket shape"
+    },
+    {
+      "ascii": 68,
+      "char": "D",
+      "hex": "0x44",
+      "mask": "0x3F",
+      "segments": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f"
+      ],
+      "tier": "clear",
+      "looksLike": "0",
+      "confusableWith": [
+        "0",
+        "O"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_3f.png",
+      "notes": "full box, identical render to 0/O"
+    },
+    {
+      "ascii": 69,
+      "char": "E",
+      "hex": "0x45",
+      "mask": "0x79",
+      "segments": [
+        "a",
+        "d",
+        "e",
+        "f",
+        "g"
+      ],
+      "tier": "clear",
+      "looksLike": "E",
+      "confusableWith": [],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_45.png",
+      "notes": "clean E"
+    },
+    {
+      "ascii": 70,
+      "char": "F",
+      "hex": "0x46",
+      "mask": "0x71",
+      "segments": [
+        "a",
+        "e",
+        "f",
+        "g"
+      ],
+      "tier": "clear",
+      "looksLike": "F",
+      "confusableWith": [
+        "f"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_45.png",
+      "notes": "clean F; identical render to lowercase f"
+    },
+    {
+      "ascii": 71,
+      "char": "G",
+      "hex": "0x47",
+      "mask": "0x3D",
+      "segments": [
+        "a",
+        "c",
+        "d",
+        "e",
+        "f"
+      ],
+      "tier": "approximate",
+      "looksLike": "G",
+      "confusableWith": [
+        "C"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_45.png",
+      "notes": "C shape with bottom-right closing tick; reads as G/C hybrid"
+    },
+    {
+      "ascii": 72,
+      "char": "H",
+      "hex": "0x48",
+      "mask": "0x76",
+      "segments": [
+        "b",
+        "c",
+        "e",
+        "f",
+        "g"
+      ],
+      "tier": "clear",
+      "looksLike": "H",
+      "confusableWith": [],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_45.png",
+      "notes": "clean H"
+    },
+    {
+      "ascii": 73,
+      "char": "I",
+      "hex": "0x49",
+      "mask": "0x30",
+      "segments": [
+        "e",
+        "f"
+      ],
+      "tier": "approximate",
+      "looksLike": "I",
+      "confusableWith": [
+        ":"
+      ],
+      "positionSensitive": true,
+      "capture": "captures/glyphs/sweep_45.png",
+      "notes": "two short ticks stacked (top+bottom) rather than full bars; readable as I but could be misread as a colon; positionSensitive per dp flag, uniform across cells per pos_49.png"
+    },
+    {
+      "ascii": 74,
+      "char": "J",
+      "hex": "0x4A",
+      "mask": "0x1E",
+      "segments": [
+        "b",
+        "c",
+        "d",
+        "e"
+      ],
+      "tier": "approximate",
+      "looksLike": "U",
+      "confusableWith": [
+        "U",
+        "J"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_45.png",
+      "notes": "open-top U/J shape; reads more like U than a hook J"
+    },
+    {
+      "ascii": 75,
+      "char": "K",
+      "hex": "0x4B",
+      "mask": "0x75",
+      "segments": [
+        "a",
+        "c",
+        "e",
+        "f",
+        "g"
+      ],
+      "tier": "approximate",
+      "looksLike": "b",
+      "confusableWith": [
+        "b",
+        "6"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_4b.png",
+      "notes": "backward 6/b shape; doesn't read cleanly as K"
+    },
+    {
+      "ascii": 76,
+      "char": "L",
+      "hex": "0x4C",
+      "mask": "0x38",
+      "segments": [
+        "d",
+        "e",
+        "f"
+      ],
+      "tier": "clear",
+      "looksLike": "L",
+      "confusableWith": [],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_4b.png",
+      "notes": "clean L"
+    },
+    {
+      "ascii": 77,
+      "char": "M",
+      "hex": "0x4D",
+      "mask": "0x37",
+      "segments": [
+        "a",
+        "b",
+        "c",
+        "e",
+        "f"
+      ],
+      "tier": "approximate",
+      "looksLike": "n",
+      "confusableWith": [
+        "N",
+        "n"
+      ],
+      "positionSensitive": true,
+      "capture": "captures/glyphs/sweep_4b.png",
+      "notes": "open-bottom n/Pi shape; render varies by cell position (see pos_4d.png: alternates taller/shorter per cell)"
+    },
+    {
+      "ascii": 78,
+      "char": "N",
+      "hex": "0x4E",
+      "mask": "0x37",
+      "segments": [
+        "a",
+        "b",
+        "c",
+        "e",
+        "f"
+      ],
+      "tier": "approximate",
+      "looksLike": "n",
+      "confusableWith": [
+        "n",
+        "M"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_4b.png",
+      "notes": "open-bottom n/Pi shape, visually close to M's render (legs disconnected from a bottom bar)"
+    },
+    {
+      "ascii": 79,
+      "char": "O",
+      "hex": "0x4F",
+      "mask": "0x3F",
+      "segments": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f"
+      ],
+      "tier": "clear",
+      "looksLike": "0",
+      "confusableWith": [
+        "0",
+        "D"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_4b.png",
+      "notes": "clean full box"
+    },
+    {
+      "ascii": 80,
+      "char": "P",
+      "hex": "0x50",
+      "mask": "0x73",
+      "segments": [
+        "a",
+        "b",
+        "e",
+        "f",
+        "g"
+      ],
+      "tier": "clear",
+      "looksLike": "P",
+      "confusableWith": [
+        "p"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_4b.png",
+      "notes": "clean P; identical render to lowercase p"
+    },
+    {
+      "ascii": 81,
+      "char": "Q",
+      "hex": "0x51",
+      "mask": "0x67",
+      "segments": [
+        "a",
+        "b",
+        "c",
+        "f",
+        "g"
+      ],
+      "tier": "approximate",
+      "looksLike": "9",
+      "confusableWith": [
+        "9",
+        "g"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_51.png",
+      "notes": "reads as 9, not distinctly Q"
+    },
+    {
+      "ascii": 82,
+      "char": "R",
+      "hex": "0x52",
+      "mask": "0x50",
+      "segments": [
+        "e",
+        "g"
+      ],
+      "tier": "approximate",
+      "looksLike": "r",
+      "confusableWith": [
+        "r"
+      ],
+      "positionSensitive": true,
+      "capture": "captures/glyphs/sweep_51.png",
+      "notes": "renders as a small lowercase-r hook (top tick + left vertical) instead of the full abcefg box the mask specifies; disagrees with firmware mask abcefg+dp; confirmed uniform across all 6 cells in pos_52.png; visually indistinguishable from lowercase r [reclassified clear->approximate by controller: renders as readable lowercase r]"
+    },
+    {
+      "ascii": 83,
+      "char": "S",
+      "hex": "0x53",
+      "mask": "0x6D",
+      "segments": [
+        "a",
+        "c",
+        "d",
+        "f",
+        "g"
+      ],
+      "tier": "clear",
+      "looksLike": "5",
+      "confusableWith": [
+        "5"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_51.png",
+      "notes": "clean 5/S shape"
+    },
+    {
+      "ascii": 84,
+      "char": "T",
+      "hex": "0x54",
+      "mask": "0x78",
+      "segments": [
+        "d",
+        "e",
+        "f",
+        "g"
+      ],
+      "tier": "approximate",
+      "looksLike": "t",
+      "confusableWith": [
+        "t"
+      ],
+      "positionSensitive": true,
+      "capture": "captures/glyphs/sweep_51.png",
+      "notes": "renders as a lowercase-t shape (vertical + middle bar), not the top-bar-only shape the mask (a+dp) specifies; render varies by cell position per pos_54.png (alternates E-like/t-like across cells) -- positionSensitive confirmed [reclassified clear->approximate by controller: renders as readable lowercase t]"
+    },
+    {
+      "ascii": 85,
+      "char": "U",
+      "hex": "0x55",
+      "mask": "0x3E",
+      "segments": [
+        "b",
+        "c",
+        "d",
+        "e",
+        "f"
+      ],
+      "tier": "clear",
+      "looksLike": "U",
+      "confusableWith": [
+        "V"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_51.png",
+      "notes": "clean U"
+    },
+    {
+      "ascii": 86,
+      "char": "V",
+      "hex": "0x56",
+      "mask": "0x3E",
+      "segments": [
+        "b",
+        "c",
+        "d",
+        "e",
+        "f"
+      ],
+      "tier": "clear",
+      "looksLike": "U",
+      "confusableWith": [
+        "U"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_51.png",
+      "notes": "identical render to U (same mask bcdef)"
+    },
+    {
+      "ascii": 87,
+      "char": "W",
+      "hex": "0x57",
+      "mask": "0x3E",
+      "segments": [
+        "b",
+        "c",
+        "d",
+        "e",
+        "f"
+      ],
+      "tier": "approximate",
+      "looksLike": "U",
+      "confusableWith": [
+        "U",
+        "u"
+      ],
+      "positionSensitive": true,
+      "capture": "captures/glyphs/sweep_57.png",
+      "notes": "renders as U shape; positionSensitive per dp flag, render shape alternates u/U across cells per pos_57.png"
+    },
+    {
+      "ascii": 88,
+      "char": "X",
+      "hex": "0x58",
+      "mask": "0x7E",
+      "segments": [
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g"
+      ],
+      "tier": "approximate",
+      "looksLike": "0",
+      "confusableWith": [
+        "0",
+        "U"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_57.png",
+      "notes": "full box minus top bar; reads like 0/U, not X"
+    },
+    {
+      "ascii": 89,
+      "char": "Y",
+      "hex": "0x59",
+      "mask": "0x6E",
+      "segments": [
+        "b",
+        "c",
+        "d",
+        "f",
+        "g"
+      ],
+      "tier": "approximate",
+      "looksLike": "9",
+      "confusableWith": [
+        "9",
+        "g"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_57.png",
+      "notes": "reads as 9 with tail, not distinctly Y"
+    },
+    {
+      "ascii": 90,
+      "char": "Z",
+      "hex": "0x5A",
+      "mask": "0x1B",
+      "segments": [
+        "a",
+        "b",
+        "d",
+        "e"
+      ],
+      "tier": "approximate",
+      "looksLike": "Z",
+      "confusableWith": [
+        "2"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_57.png",
+      "notes": "zigzag renders split across two visual rows (top-right corner separate from bottom-left L); readable as Z with care"
+    },
+    {
+      "ascii": 91,
+      "char": "[",
+      "hex": "0x5B",
+      "mask": "0x39",
+      "segments": [
+        "a",
+        "d",
+        "e",
+        "f"
+      ],
+      "tier": "clear",
+      "looksLike": "[",
+      "confusableWith": [
+        "(",
+        "C"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_57.png",
+      "notes": "identical render to ("
+    },
+    {
+      "ascii": 92,
+      "char": "\\",
+      "hex": "0x5C",
+      "mask": "0x24",
+      "segments": [
+        "c",
+        "f"
+      ],
+      "tier": "approximate",
+      "looksLike": "\\",
+      "confusableWith": [],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_57.png",
+      "notes": "two disconnected diagonal-ish ticks approximate a backslash"
+    },
+    {
+      "ascii": 93,
+      "char": "]",
+      "hex": "0x5D",
+      "mask": "0x0F",
+      "segments": [
+        "a",
+        "b",
+        "c",
+        "d"
+      ],
+      "tier": "clear",
+      "looksLike": "]",
+      "confusableWith": [
+        ")"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_5d.png",
+      "notes": "identical render to )"
+    },
+    {
+      "ascii": 94,
+      "char": "^",
+      "hex": "0x5E",
+      "mask": "0x23",
+      "segments": [
+        "a",
+        "b",
+        "f"
+      ],
+      "tier": "approximate",
+      "looksLike": "n",
+      "confusableWith": [
+        "^"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_5d.png",
+      "notes": "top bar + both upper verticals, small hat/n shape"
+    },
+    {
+      "ascii": 95,
+      "char": "_",
+      "hex": "0x5F",
+      "mask": "0x08",
+      "segments": [
+        "d"
+      ],
+      "tier": "clear",
+      "looksLike": "_",
+      "confusableWith": [],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_5d.png",
+      "notes": "clean bottom bar underscore"
+    },
+    {
+      "ascii": 96,
+      "char": "`",
+      "hex": "0x60",
+      "mask": "0x02",
+      "segments": [
+        "b"
+      ],
+      "tier": "unusable",
+      "looksLike": "'",
+      "confusableWith": [
+        "'"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_5d.png",
+      "notes": "single upper-right tick; too minimal/indistinct, easily confused with apostrophe"
+    },
+    {
+      "ascii": 97,
+      "char": "a",
+      "hex": "0x61",
+      "mask": "0x5F",
+      "segments": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "g"
+      ],
+      "tier": "approximate",
+      "looksLike": "9",
+      "confusableWith": [
+        "9",
+        "a"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_5d.png",
+      "notes": "9/a hybrid shape, open at lower-right"
+    },
+    {
+      "ascii": 98,
+      "char": "b",
+      "hex": "0x62",
+      "mask": "0x7C",
+      "segments": [
+        "c",
+        "d",
+        "e",
+        "f",
+        "g"
+      ],
+      "tier": "clear",
+      "looksLike": "b",
+      "confusableWith": [
+        "6"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_5d.png",
+      "notes": "clean lowercase b"
+    },
+    {
+      "ascii": 99,
+      "char": "c",
+      "hex": "0x63",
+      "mask": "0x58",
+      "segments": [
+        "d",
+        "e",
+        "g"
+      ],
+      "tier": "clear",
+      "looksLike": "c",
+      "confusableWith": [
+        "<"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_63.png",
+      "notes": "clean lowercase c"
+    },
+    {
+      "ascii": 100,
+      "char": "d",
+      "hex": "0x64",
+      "mask": "0x5E",
+      "segments": [
+        "b",
+        "c",
+        "d",
+        "e",
+        "g"
+      ],
+      "tier": "clear",
+      "looksLike": "d",
+      "confusableWith": [],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_63.png",
+      "notes": "clean lowercase d"
+    },
+    {
+      "ascii": 101,
+      "char": "e",
+      "hex": "0x65",
+      "mask": "0x7B",
+      "segments": [
+        "a",
+        "b",
+        "d",
+        "e",
+        "f",
+        "g"
+      ],
+      "tier": "approximate",
+      "looksLike": "e",
+      "confusableWith": [],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_63.png",
+      "notes": "9-like shape with extra bottom-left tick; reads as e with care"
+    },
+    {
+      "ascii": 102,
+      "char": "f",
+      "hex": "0x66",
+      "mask": "0x71",
+      "segments": [
+        "a",
+        "e",
+        "f",
+        "g"
+      ],
+      "tier": "clear",
+      "looksLike": "F",
+      "confusableWith": [
+        "F"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_63.png",
+      "notes": "identical render to uppercase F"
+    },
+    {
+      "ascii": 103,
+      "char": "g",
+      "hex": "0x67",
+      "mask": "0x6F",
+      "segments": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "f",
+        "g"
+      ],
+      "tier": "clear",
+      "looksLike": "9",
+      "confusableWith": [
+        "9",
+        "q"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_63.png",
+      "notes": "identical render to 9"
+    },
+    {
+      "ascii": 104,
+      "char": "h",
+      "hex": "0x68",
+      "mask": "0x74",
+      "segments": [
+        "c",
+        "e",
+        "f",
+        "g"
+      ],
+      "tier": "clear",
+      "looksLike": "h",
+      "confusableWith": [],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_63.png",
+      "notes": "clean lowercase h"
+    },
+    {
+      "ascii": 105,
+      "char": "i",
+      "hex": "0x69",
+      "mask": "0x10",
+      "segments": [
+        "e"
+      ],
+      "tier": "unusable",
+      "looksLike": ".",
+      "confusableWith": [],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_69.png",
+      "notes": "single lower-left tick; too minimal, reads like a stray dot, not i"
+    },
+    {
+      "ascii": 106,
+      "char": "j",
+      "hex": "0x6A",
+      "mask": "0x1E",
+      "segments": [
+        "b",
+        "c",
+        "d",
+        "e"
+      ],
+      "tier": "approximate",
+      "looksLike": "u",
+      "confusableWith": [
+        "u"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_69.png",
+      "notes": "top-right tick + middle bar; fragment, reads vaguely like part of u"
+    },
+    {
+      "ascii": 107,
+      "char": "k",
+      "hex": "0x6B",
+      "mask": "0x75",
+      "segments": [
+        "a",
+        "c",
+        "e",
+        "f",
+        "g"
+      ],
+      "tier": "approximate",
+      "looksLike": "b",
+      "confusableWith": [
+        "b",
+        "6"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_69.png",
+      "notes": "backward 6/b shape, identical to K's render"
+    },
+    {
+      "ascii": 108,
+      "char": "l",
+      "hex": "0x6C",
+      "mask": "0x30",
+      "segments": [
+        "e",
+        "f"
+      ],
+      "tier": "approximate",
+      "looksLike": "I",
+      "confusableWith": [
+        "I",
+        ":"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_69.png",
+      "notes": "two vertical ticks stacked (upper-left+lower-left); doesn't read as l cleanly"
+    },
+    {
+      "ascii": 109,
+      "char": "m",
+      "hex": "0x6D",
+      "mask": "0x37",
+      "segments": [
+        "a",
+        "b",
+        "c",
+        "e",
+        "f"
+      ],
+      "tier": "approximate",
+      "looksLike": "n",
+      "confusableWith": [
+        "M",
+        "n"
+      ],
+      "positionSensitive": true,
+      "capture": "captures/glyphs/sweep_69.png",
+      "notes": "open-bottom n/Pi shape, identical render family to M (same mask abcef+dp); positionSensitive"
+    },
+    {
+      "ascii": 110,
+      "char": "n",
+      "hex": "0x6E",
+      "mask": "0x54",
+      "segments": [
+        "c",
+        "e",
+        "g"
+      ],
+      "tier": "clear",
+      "looksLike": "n",
+      "confusableWith": [],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_69.png",
+      "notes": "clean lowercase n"
+    },
+    {
+      "ascii": 111,
+      "char": "o",
+      "hex": "0x6F",
+      "mask": "0x5C",
+      "segments": [
+        "c",
+        "d",
+        "e",
+        "g"
+      ],
+      "tier": "approximate",
+      "looksLike": "0",
+      "confusableWith": [
+        "0",
+        "O"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_6f.png",
+      "notes": "full box; reads as 0/o, not distinctly o"
+    },
+    {
+      "ascii": 112,
+      "char": "p",
+      "hex": "0x70",
+      "mask": "0x73",
+      "segments": [
+        "a",
+        "b",
+        "e",
+        "f",
+        "g"
+      ],
+      "tier": "clear",
+      "looksLike": "P",
+      "confusableWith": [
+        "P"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_6f.png",
+      "notes": "identical render to uppercase P"
+    },
+    {
+      "ascii": 113,
+      "char": "q",
+      "hex": "0x71",
+      "mask": "0x67",
+      "segments": [
+        "a",
+        "b",
+        "c",
+        "f",
+        "g"
+      ],
+      "tier": "approximate",
+      "looksLike": "9",
+      "confusableWith": [
+        "9",
+        "Q"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_6f.png",
+      "notes": "reads as 9, not distinctly q"
+    },
+    {
+      "ascii": 114,
+      "char": "r",
+      "hex": "0x72",
+      "mask": "0x50",
+      "segments": [
+        "e",
+        "g"
+      ],
+      "tier": "approximate",
+      "looksLike": "r",
+      "confusableWith": [
+        "R"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_6f.png",
+      "notes": "small top-tick+left-vertical hook; identical render to uppercase R (eg segments only visibly lit)"
+    },
+    {
+      "ascii": 115,
+      "char": "s",
+      "hex": "0x73",
+      "mask": "0x6D",
+      "segments": [
+        "a",
+        "c",
+        "d",
+        "f",
+        "g"
+      ],
+      "tier": "clear",
+      "looksLike": "5",
+      "confusableWith": [
+        "5",
+        "S"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_6f.png",
+      "notes": "identical render to 5/S"
+    },
+    {
+      "ascii": 116,
+      "char": "t",
+      "hex": "0x74",
+      "mask": "0x78",
+      "segments": [
+        "d",
+        "e",
+        "f",
+        "g"
+      ],
+      "tier": "clear",
+      "looksLike": "t",
+      "confusableWith": [
+        "t"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_6f.png",
+      "notes": "clean lowercase t"
+    },
+    {
+      "ascii": 117,
+      "char": "u",
+      "hex": "0x75",
+      "mask": "0x1C",
+      "segments": [
+        "c",
+        "d",
+        "e"
+      ],
+      "tier": "approximate",
+      "looksLike": "u",
+      "confusableWith": [],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_75.png",
+      "notes": "lower U shape, reads as u with care"
+    },
+    {
+      "ascii": 118,
+      "char": "v",
+      "hex": "0x76",
+      "mask": "0x1C",
+      "segments": [
+        "c",
+        "d",
+        "e"
+      ],
+      "tier": "approximate",
+      "looksLike": "u",
+      "confusableWith": [
+        "u",
+        "v"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_75.png",
+      "notes": "bottom+both lower verticals; reads like u, not a pointed v"
+    },
+    {
+      "ascii": 119,
+      "char": "w",
+      "hex": "0x77",
+      "mask": "0x3E",
+      "segments": [
+        "b",
+        "c",
+        "d",
+        "e",
+        "f"
+      ],
+      "tier": "approximate",
+      "looksLike": "u",
+      "confusableWith": [
+        "w",
+        "u",
+        "W"
+      ],
+      "positionSensitive": true,
+      "capture": "captures/glyphs/sweep_75.png",
+      "notes": "U-ish shape; identical render family to W (same mask bcdef+dp); positionSensitive"
+    },
+    {
+      "ascii": 120,
+      "char": "x",
+      "hex": "0x78",
+      "mask": "0x7E",
+      "segments": [
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g"
+      ],
+      "tier": "approximate",
+      "looksLike": "0",
+      "confusableWith": [
+        "0",
+        "x"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_75.png",
+      "notes": "full box minus top bar; reads like 0, not x"
+    },
+    {
+      "ascii": 121,
+      "char": "y",
+      "hex": "0x79",
+      "mask": "0x6E",
+      "segments": [
+        "b",
+        "c",
+        "d",
+        "f",
+        "g"
+      ],
+      "tier": "clear",
+      "looksLike": "9",
+      "confusableWith": [
+        "9",
+        "y"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_75.png",
+      "notes": "9 with tail, reads reasonably as y"
+    },
+    {
+      "ascii": 122,
+      "char": "z",
+      "hex": "0x7A",
+      "mask": "0x1B",
+      "segments": [
+        "a",
+        "b",
+        "d",
+        "e"
+      ],
+      "tier": "approximate",
+      "looksLike": "2",
+      "confusableWith": [
+        "Z",
+        "2"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_75.png",
+      "notes": "identical render to Z (same mask abde); split zigzag, readable as z/2 with care"
+    },
+    {
+      "ascii": 123,
+      "char": "{",
+      "hex": "0x7B",
+      "mask": "0x16",
+      "segments": [
+        "b",
+        "c",
+        "e"
+      ],
+      "tier": "unusable",
+      "looksLike": "I",
+      "confusableWith": [],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_7b.png",
+      "notes": "renders as a tall right stroke + short lower-left tick; does not read as a brace, closer to a stray I/foot mark"
+    },
+    {
+      "ascii": 124,
+      "char": "|",
+      "hex": "0x7C",
+      "mask": "0x36",
+      "segments": [
+        "b",
+        "c",
+        "e",
+        "f"
+      ],
+      "tier": "approximate",
+      "looksLike": "II",
+      "confusableWith": [
+        "u"
+      ],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_7b.png",
+      "notes": "two tall vertical strokes (no top/bottom bars); reads like II or an open u, not a single pipe"
+    },
+    {
+      "ascii": 125,
+      "char": "}",
+      "hex": "0x7D",
+      "mask": "0x34",
+      "segments": [
+        "c",
+        "e",
+        "f"
+      ],
+      "tier": "unusable",
+      "looksLike": "i",
+      "confusableWith": [],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_7b.png",
+      "notes": "renders as a small disconnected hook/tick pair; does not read as a closing brace"
+    },
+    {
+      "ascii": 126,
+      "char": "~",
+      "hex": "0x7E",
+      "mask": "0x14",
+      "segments": [
+        "c",
+        "e"
+      ],
+      "tier": "unusable",
+      "looksLike": "..",
+      "confusableWith": [],
+      "positionSensitive": false,
+      "capture": "captures/glyphs/sweep_7b.png",
+      "notes": "renders as two short low ticks, not a top bar; disagrees with mask 'a' (top-only); reads as stray marks, not a tilde"
+    }
+  ]
+}

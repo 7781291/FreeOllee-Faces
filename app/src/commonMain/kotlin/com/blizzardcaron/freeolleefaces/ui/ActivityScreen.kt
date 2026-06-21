@@ -73,9 +73,10 @@ private fun RunningContent(
     watchSelected: Boolean,
     callbacks: ActivityCallbacks,
 ) {
-    Readout("Pace", paceText(state.recentPaceSecPerKm, unit), state.selectedMetric == ActivityMetric.PACE)
-    Readout("Distance", distanceText(state.distanceMeters, unit), state.selectedMetric == ActivityMetric.DISTANCE)
-    Readout("Time", hms(state.elapsedMs), state.selectedMetric == ActivityMetric.TIME)
+    // Show each metric exactly as the watch renders it (faithful segment preview).
+    Readout("Pace", ActivityMetric.PACE.render(state, unit), state.selectedMetric == ActivityMetric.PACE)
+    Readout("Distance", ActivityMetric.DISTANCE.render(state, unit), state.selectedMetric == ActivityMetric.DISTANCE)
+    Readout("Time", ActivityMetric.TIME.render(state, unit), state.selectedMetric == ActivityMetric.TIME)
     val watchStatusText = if (!watchSelected) {
         "No watch — recording only"
     } else if (state.watchReachable) {
@@ -91,13 +92,13 @@ private fun RunningContent(
 }
 
 @Composable
-private fun Readout(label: String, value: String, selected: Boolean) {
+private fun Readout(label: String, watchValue: String, selected: Boolean) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(if (selected) "▶ $label" else label, modifier = Modifier.weight(1f))
-        Text(
-            value,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+        SegmentReadout(
+            value = watchValue,
+            cellHeight = if (selected) 36.dp else 26.dp,
+            tone = LcdTone.Green,
         )
     }
 }
