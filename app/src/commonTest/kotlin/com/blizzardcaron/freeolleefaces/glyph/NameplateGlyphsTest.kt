@@ -58,4 +58,13 @@ class NameplateGlyphsTest {
             assertTrue(NameplateGlyphs.isLegible(it), "substitution target '$it' must be legible")
         }
     }
+
+    @Test
+    fun substitutions_only_remap_illegible_sources() {
+        // A substitution only makes sense for a char that doesn't read on its own; remapping a
+        // legible char would silently alter correct output.
+        NameplateGlyphs.SUBSTITUTIONS.keys.forEach {
+            assertTrue(!NameplateGlyphs.isLegible(it), "substitution source '$it' should be illegible")
+        }
+    }
 }

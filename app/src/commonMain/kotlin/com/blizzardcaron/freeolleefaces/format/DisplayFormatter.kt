@@ -26,7 +26,7 @@ object DisplayFormatter {
 
     fun temperature(value: Double, unit: TempUnit = TempUnit.FAHRENHEIT, stale: Boolean = false): String {
         // The watch's segment font (firmware OW-FW-APP, font table indexed by ASCII) maps '#'
-        // (0x23) to segments a+b+f+g — the top square that reads as a degree '°'. There is no
+        // (mask 0x63) to segments a+b+f+g — the top square that reads as a degree '°'. There is no
         // glyph at Latin-1 0xB0, so we send '#' to get the degree ring, e.g. "  66#F" -> 66°F.
         val rounded = value.roundToInt()
         // Stale marking replaces the leading pad with 'E'. A 3-digit *negative* temp ("-100#F") fills
