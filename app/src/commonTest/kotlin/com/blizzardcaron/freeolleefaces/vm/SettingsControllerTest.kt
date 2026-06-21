@@ -88,22 +88,54 @@ class SettingsControllerTest {
     }
 
     // ---------------------------------------------------------------------------
-    // setAutoSleepWindowStart — persists + updates state (no reschedule, no tempNextText)
+    // power-saving setters
     // ---------------------------------------------------------------------------
 
     @Test
-    fun setAutoSleepWindowStart_persistsAndUpdatesState() {
+    fun setQuietHoursStart_persists_updatesState_andReschedules() {
+        val callLog = mutableListOf<String>()
+        val prefs = Prefs(MapSettings())
+        val scheduler = FakeScheduler(callLog)
+        val holder = StateHolder()
+        val c = controller(prefs, scheduler, TestScope(), holder = holder, tempNextText = { "Next 3:00 AM" })
+
+        c.setQuietHoursStart(120)
+
+        assertEquals(120, prefs.quietHoursStartMin, "prefs.quietHoursStartMin persisted")
+        assertEquals(120, holder.st.quietHoursStartMin, "state.quietHoursStartMin updated")
+        assertEquals("Next 3:00 AM", holder.st.tempNext, "tempNext reflects injected text")
+        assertEquals(listOf("scheduler.reschedule"), callLog, "window change reschedules")
+    }
+
+    @Test
+    fun setScreenSleepTimeout_persists_updatesState_noReschedule() {
         val callLog = mutableListOf<String>()
         val prefs = Prefs(MapSettings())
         val scheduler = FakeScheduler(callLog)
         val holder = StateHolder()
         val c = controller(prefs, scheduler, TestScope(), holder = holder)
 
-        c.setAutoSleepWindowStart(120)
+        c.setScreenSleepTimeout(30)
 
-        assertEquals(120, prefs.autoSleepWindowStartMin, "prefs.autoSleepWindowStartMin should be persisted")
-        assertEquals(120, holder.st.autoSleepWindowStartMin, "state.autoSleepWindowStartMin should be updated")
-        assertEquals(emptyList(), callLog, "auto-sleep window setters do not reschedule")
+        assertEquals(30, prefs.screenSleepTimeoutSec, "prefs.screenSleepTimeoutSec persisted")
+        assertEquals(30, holder.st.screenSleepTimeoutSec, "state.screenSleepTimeoutSec updated")
+        assertEquals(emptyList(), callLog, "timeout change does not reschedule")
+    }
+
+    @Test
+    fun setPowerSavingEnabled_persists_updatesState_andReschedules() {
+        val callLog = mutableListOf<String>()
+        val prefs = Prefs(MapSettings())
+        val scheduler = FakeScheduler(callLog)
+        val holder = StateHolder()
+        val c = controller(prefs, scheduler, TestScope(), holder = holder, tempNextText = { "Next 9:00 PM" })
+
+        c.setPowerSavingEnabled(false)
+
+        assertEquals(false, prefs.powerSavingEnabled, "prefs.powerSavingEnabled persisted")
+        assertEquals(false, holder.st.powerSavingEnabled, "state.powerSavingEnabled updated")
+        assertEquals("Next 9:00 PM", holder.st.tempNext, "tempNext reflects injected text")
+        assertEquals(listOf("scheduler.reschedule"), callLog, "power-saving toggle reschedules")
     }
 
     // ---------------------------------------------------------------------------

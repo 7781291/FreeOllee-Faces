@@ -66,56 +66,32 @@ class SettingsController(
         scheduler.reschedule()
     }
 
-    fun setSleepEnabled(enabled: Boolean) {
-        prefs.sleepEnabled = enabled
-        update { it.copy(sleepEnabled = enabled, tempNext = tempNextText()) }
+    fun setPowerSavingEnabled(enabled: Boolean) {
+        prefs.powerSavingEnabled = enabled
+        update { it.copy(powerSavingEnabled = enabled, tempNext = tempNextText()) }
         scheduler.reschedule()
     }
 
-    fun setSleepStart(min: Int) {
-        prefs.sleepStartMin = min
-        update { it.copy(sleepStartMin = min, tempNext = tempNextText()) }
+    fun setScreenSleepTimeout(sec: Int) {
+        prefs.screenSleepTimeoutSec = sec
+        update { it.copy(screenSleepTimeoutSec = prefs.screenSleepTimeoutSec) }
+    }
+
+    fun setQuietHoursEnabled(enabled: Boolean) {
+        prefs.quietHoursEnabled = enabled
+        update { it.copy(quietHoursEnabled = enabled, tempNext = tempNextText()) }
         scheduler.reschedule()
     }
 
-    fun setSleepEnd(min: Int) {
-        prefs.sleepEndMin = min
-        update { it.copy(sleepEndMin = min, tempNext = tempNextText()) }
+    fun setQuietHoursStart(min: Int) {
+        prefs.quietHoursStartMin = min
+        update { it.copy(quietHoursStartMin = min, tempNext = tempNextText()) }
         scheduler.reschedule()
     }
 
-    fun setAutoSleepScheduleEnabled(enabled: Boolean) {
-        prefs.autoSleepScheduleEnabled = enabled
-        update { it.copy(autoSleepScheduleEnabled = enabled) }
-    }
-
-    fun setAutoSleepWindowStart(min: Int) {
-        prefs.autoSleepWindowStartMin = min
-        update { it.copy(autoSleepWindowStartMin = min) }
-    }
-
-    fun setAutoSleepWindowEnd(min: Int) {
-        prefs.autoSleepWindowEndMin = min
-        update { it.copy(autoSleepWindowEndMin = min) }
-    }
-
-    fun setAutoSleepInWindowOn(on: Boolean) {
-        prefs.autoSleepInWindowOn = on
-        update { it.copy(autoSleepInWindowOn = on) }
-    }
-
-    fun setAutoSleepInWindowPeriod(sec: Int) {
-        prefs.autoSleepInWindowPeriodSec = sec
-        update { it.copy(autoSleepInWindowPeriodSec = prefs.autoSleepInWindowPeriodSec) }
-    }
-
-    fun setAutoSleepOutWindowOn(on: Boolean) {
-        prefs.autoSleepOutWindowOn = on
-        update { it.copy(autoSleepOutWindowOn = on) }
-    }
-
-    fun setAutoSleepOutWindowPeriod(sec: Int) {
-        prefs.autoSleepOutWindowPeriodSec = sec
-        update { it.copy(autoSleepOutWindowPeriodSec = prefs.autoSleepOutWindowPeriodSec) }
+    fun setQuietHoursEnd(min: Int) {
+        prefs.quietHoursEndMin = min
+        update { it.copy(quietHoursEndMin = min, tempNext = tempNextText()) }
+        scheduler.reschedule()
     }
 }
