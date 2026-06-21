@@ -37,8 +37,9 @@ import kotlinx.datetime.toLocalDateTime
  * `Clock.System` -> the injected [clock] (matching the [vm.AlarmController]/[vm.TimerController]
  * precedent). The
  * `scheduler` dependency (used only by [activate]) is injected here since [activate] is the only
- * complication-cluster method that calls `scheduler.reschedule()` — the VM's other 5 call sites
- * (setInterval/setSleepEnabled/setSleepStart/setSleepEnd/onStart) are outside this cluster and keep
+ * complication-cluster method that calls `scheduler.reschedule()` — the VM's other 6 call sites
+ * (setInterval/setPowerSavingEnabled/setQuietHoursEnabled/setQuietHoursStart/setQuietHoursEnd/onStart)
+ * are outside this cluster and keep
  * their own reference. The shared `HomeState.sending` flag is NOT duplicated here — [state]/[update]
  * read and write the VM's single shared flag (also used by the VM's own `sendAndReport` and
  * [vm.TimerController]'s `pushTimerFrame`), via the injected accessors.
