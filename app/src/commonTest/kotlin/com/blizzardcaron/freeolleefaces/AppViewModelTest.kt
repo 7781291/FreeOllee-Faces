@@ -1,6 +1,11 @@
 package com.blizzardcaron.freeolleefaces
 
+import com.blizzardcaron.freeolleefaces.activity.ActivityTrack
+import com.blizzardcaron.freeolleefaces.activity.ActivityTrackStore
+import com.blizzardcaron.freeolleefaces.activity.ActivityUnit
+import com.blizzardcaron.freeolleefaces.activity.NoopActivityTrackStore
 import com.blizzardcaron.freeolleefaces.ble.ConnectionStatus
+import com.blizzardcaron.freeolleefaces.fakes.FakeActivityTrackStore
 import com.blizzardcaron.freeolleefaces.fakes.FakeBleClient
 import com.blizzardcaron.freeolleefaces.fakes.FakeLocationProvider
 import com.blizzardcaron.freeolleefaces.fakes.FakeNotificationAccessChecker
@@ -11,6 +16,8 @@ import com.blizzardcaron.freeolleefaces.prefs.Prefs
 import com.blizzardcaron.freeolleefaces.timer.TimerSetsRepository
 import com.russhwolf.settings.MapSettings
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -55,6 +62,8 @@ class AppViewModelTest {
         fake: FakeWatchConnection,
         prefs: Prefs,
         callLog: MutableList<String> = mutableListOf(),
+        activityStore: ActivityTrackStore = NoopActivityTrackStore,
+        clock: Clock = Clock.System,
     ): AppViewModel = AppViewModel(
         prefs = prefs,
         ble = FakeBleClient(callLog),
@@ -66,7 +75,28 @@ class AppViewModelTest {
         alarmRepo = AlarmsRepository(MapSettings()),
         alarmScheduler = FakeAlarmScheduler(callLog),
         watchConnection = fake,
+        activityStore = activityStore,
+        clock = clock,
     )
+
+    @Test
+    fun onStart_prunesTracksOlderThanRetentionWindow() = runTest(testScheduler) {
+        val dayMs = 24L * 60 * 60 * 1000
+        val now = 30 * dayMs
+        val store = FakeActivityTrackStore().apply {
+            save(ActivityTrack("old", startedAtMs = 0, endedAtMs = now - 8 * dayMs, unit = ActivityUnit.METRIC))
+            save(ActivityTrack("fresh", startedAtMs = 0, endedAtMs = now - dayMs, unit = ActivityUnit.METRIC))
+            save(ActivityTrack("running", startedAtMs = 0, endedAtMs = null, unit = ActivityUnit.METRIC))
+        }
+        val fixedClock = object : Clock {
+            override fun now(): Instant = Instant.fromEpochMilliseconds(now)
+        }
+        val vm = vmWith(FakeWatchConnection(), Prefs(MapSettings()), activityStore = store, clock = fixedClock)
+
+        vm.onStart()
+
+        assertEquals(setOf("fresh", "running"), store.list().map { it.id }.toSet())
+    }
 
     @Test
     fun onForeground_withWatch_connectsAndReflectsConnected() = runTest(testScheduler) {

@@ -195,6 +195,7 @@ private fun rememberAppViewModel(context: Context): AppViewModel = remember {
         versionLabel = versionLabel(versionName, context.packageName),
         activityLauncher = AndroidActivitySessionLauncher(context),
         instrumentsLauncher = AndroidInstrumentsSessionLauncher(context),
+        activityStore = AndroidActivityTrackStore(context),
         hasLocationPermission = {
             ContextCompat.checkSelfPermission(
                 context, Manifest.permission.ACCESS_FINE_LOCATION,

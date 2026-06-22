@@ -5,8 +5,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.blizzardcaron.freeolleefaces.activity.ActivityRetention
 import com.blizzardcaron.freeolleefaces.activity.ActivitySessionLauncher
+import com.blizzardcaron.freeolleefaces.activity.ActivityTrackStore
 import com.blizzardcaron.freeolleefaces.activity.NoopActivitySessionLauncher
+import com.blizzardcaron.freeolleefaces.activity.NoopActivityTrackStore
 import com.blizzardcaron.freeolleefaces.alarm.AlarmsRepository
 import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
 import com.blizzardcaron.freeolleefaces.auto.AlarmScheduler
@@ -69,6 +72,7 @@ class AppViewModel(
     private val clock: Clock = Clock.System,
     private val activityLauncher: ActivitySessionLauncher = NoopActivitySessionLauncher,
     private val instrumentsLauncher: InstrumentsSessionLauncher = NoopInstrumentsSessionLauncher,
+    private val activityStore: ActivityTrackStore = NoopActivityTrackStore,
     private val hasLocationPermission: () -> Boolean = { true },
 ) : ViewModel() {
 
@@ -200,6 +204,12 @@ class AppViewModel(
     fun onStart() {
         scheduler.reschedule()
         alarmScheduler.rearm()
+        pruneOldActivities()
+    }
+
+    /** Hard-delete recorded tracks older than the [ActivityRetention] window. */
+    private fun pruneOldActivities() {
+        activityStore.prune(ActivityRetention.cutoffMs(clock.now().toEpochMilliseconds()))
     }
 
     /**
