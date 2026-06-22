@@ -59,6 +59,8 @@ import com.blizzardcaron.freeolleefaces.ui.BottomNavTab
 import com.blizzardcaron.freeolleefaces.ui.HomeCallbacks
 import com.blizzardcaron.freeolleefaces.ui.HomeScreen
 import com.blizzardcaron.freeolleefaces.ui.HomeState
+import com.blizzardcaron.freeolleefaces.ui.InstrumentsCallbacks
+import com.blizzardcaron.freeolleefaces.ui.InstrumentsScreen
 import com.blizzardcaron.freeolleefaces.ui.QuickTimerState
 import com.blizzardcaron.freeolleefaces.ui.Screen
 import com.blizzardcaron.freeolleefaces.ui.SettingsCallbacks
@@ -409,9 +411,42 @@ private fun AppContent(
         )
     }
 
+    @Composable
+    fun InstrumentsTab() {
+        val context = LocalContext.current
+        val instrumentsState by viewModel.instruments.state.collectAsState()
+        val permissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+            androidx.activity.result.contract.ActivityResultContracts.RequestPermission(),
+        ) { _ -> viewModel.instruments.onStart() }
+        val startWithPermission: () -> Unit = {
+            val granted = ContextCompat.checkSelfPermission(
+                context, Manifest.permission.ACCESS_FINE_LOCATION,
+            ) == PackageManager.PERMISSION_GRANTED
+            if (granted) {
+                viewModel.instruments.onStart()
+            } else {
+                permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            }
+        }
+        InstrumentsScreen(
+            state = instrumentsState,
+            unit = viewModel.instruments.activityUnit,
+            tempUnit = state.tempUnit,
+            watchSelected = viewModel.instruments.watchSelected,
+            callbacks = InstrumentsCallbacks(
+                onStart = startWithPermission,
+                onStop = { viewModel.instruments.onStop() },
+                onMode = { viewModel.instruments.onMode() },
+                onToggleUnit = { viewModel.instruments.toggleUnit() },
+            ),
+            modifier = modifier,
+        )
+    }
+
     when (screen) {
         Screen.Home -> HomeScreen(state = state, callbacks = homeCallbacks, modifier = modifier)
         Screen.Activity -> ActivityTab()
+        Screen.Instruments -> InstrumentsTab()
         Screen.Settings -> SettingsScreen(
             state = state,
             callbacks = settingsCallbacks,

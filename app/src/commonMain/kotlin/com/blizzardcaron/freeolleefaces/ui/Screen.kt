@@ -7,4 +7,5 @@ sealed interface Screen {
     data object TimerSetEdit : Screen
     data object Alarms : Screen
     data object Activity : Screen
+    data object Instruments : Screen
 }

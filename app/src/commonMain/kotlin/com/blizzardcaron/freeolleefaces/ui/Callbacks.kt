@@ -101,3 +101,11 @@ data class ActivityCallbacks(
     val onMode: () -> Unit,
     val onToggleUnit: () -> Unit,
 )
+
+/** Instruments-screen callbacks, bundled to keep the composable signature small. */
+data class InstrumentsCallbacks(
+    val onStart: () -> Unit,
+    val onStop: () -> Unit,
+    val onMode: () -> Unit,
+    val onToggleUnit: () -> Unit,
+)
