@@ -1,10 +1,6 @@
 package com.blizzardcaron.freeolleefaces.activity
 
 import com.blizzardcaron.freeolleefaces.location.Coords
-import kotlin.math.atan2
-import kotlin.math.cos
-import kotlin.math.sin
-import kotlin.math.sqrt
 
 /**
  * Pure activity math: ingests GPS fixes, accumulates accuracy-gated, jitter-filtered haversine
@@ -37,7 +33,7 @@ class ActivitySession(
             window.addLast(Mark(nowMs, distanceMeters))
             return
         }
-        val step = haversineMeters(prev.lat, prev.lng, coords.lat, coords.lng)
+        val step = GeoMath.haversineMeters(prev.lat, prev.lng, coords.lat, coords.lng)
         if (step < minMoveMeters) return
         distanceMeters += step
         lastAccepted = coords
@@ -79,20 +75,5 @@ class ActivitySession(
         const val DEFAULT_MIN_PACE_SPAN_MS = 5_000L
         const val METERS_PER_KM = 1000.0
         const val MILLIS_PER_SECOND = 1000.0
-        const val EARTH_RADIUS_M = 6_371_000.0
-        const val DEG_TO_RAD = 0.017453292519943295 // PI / 180
     }
 }
-
-private fun haversineMeters(lat1: Double, lng1: Double, lat2: Double, lng2: Double): Double {
-    val rLat1 = lat1 * DEG_TO_RAD_TOP
-    val rLat2 = lat2 * DEG_TO_RAD_TOP
-    val dLat = (lat2 - lat1) * DEG_TO_RAD_TOP
-    val dLng = (lng2 - lng1) * DEG_TO_RAD_TOP
-    val a = sin(dLat / 2) * sin(dLat / 2) +
-        cos(rLat1) * cos(rLat2) * sin(dLng / 2) * sin(dLng / 2)
-    return EARTH_RADIUS_M_TOP * 2 * atan2(sqrt(a), sqrt(1 - a))
-}
-
-private const val DEG_TO_RAD_TOP = 0.017453292519943295
-private const val EARTH_RADIUS_M_TOP = 6_371_000.0
