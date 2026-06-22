@@ -1,8 +1,6 @@
 package com.blizzardcaron.freeolleefaces.activity
 
 import com.blizzardcaron.freeolleefaces.ble.BleClient
-import com.blizzardcaron.freeolleefaces.ble.OlleeProtocol
-import com.blizzardcaron.freeolleefaces.glyph.NameplateSanitizer
 import com.blizzardcaron.freeolleefaces.location.Coords
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -49,9 +47,6 @@ class ActivitySessionEngine(
         trackId = newId()
         points.clear()
         selectedMetric = ActivityMetric.PACE
-        // NameplatePusher is initialized once and manages its own internal state.
-        // No explicit reset needed here.
-    
         session = ActivitySession(startedAtMs)
         _state.value = ActivityState(running = true, selectedMetric = selectedMetric)
         watchAddress()?.let { autoSleep.disableForActivity(it) }
@@ -68,27 +63,20 @@ class ActivitySessionEngine(
     suspend fun tick(nowMs: Long) {
         val s = session ?: return
         val st = s.state(selectedMetric, nowMs)
-        // Backstop: producers are legible by construction (NameplateLegibilityTest), but never
-        // let a stray glyph reach the watch as garbage.
-        val text = NameplateSanitizer.sanitize(selectedMetric.render(st, unit))
-        var reachable = _state.value.watchReachable
-        val addr = watchAddress()
-        val addr = watchAddress()
-        // Pusher handles checks, sending, updating internal state (last push text/time), 
-        // and returning the resulting reachable flag.
-        val newReachable = pusher.maybePush(addr, text, nowMs, _state.value.watchReachable)
-        _state.value = st.copy(watchReachable = newReachable, lastPushText = pusher.lastPushText)
+        val raw = selectedMetric.render(st, unit)
+        val reachable = pusher.maybePush(watchAddress(), raw, nowMs, _state.value.watchReachable)
+        _state.value = st.copy(watchReachable = reachable, lastPushText = pusher.lastPushText)
     }
 
     fun cycleMetric() {
         selectedMetric = selectedMetric.next()
-        forceNextPush = true
+        pusher.forceNext()
         _state.value = _state.value.copy(selectedMetric = selectedMetric)
     }
 
     fun setUnit(newUnit: ActivityUnit) {
         unit = newUnit
-        forceNextPush = true
+        pusher.forceNext()
     }
 
     suspend fun flush() {

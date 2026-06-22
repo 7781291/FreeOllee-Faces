@@ -26,18 +26,18 @@ class NameplatePusher(private val ble: BleClient) {
         currentlyReachable: Boolean,
     ): Boolean {
         val text = NameplateSanitizer.sanitize(rawText)
-        if (address == null) {
-            force = false
-            return currentlyReachable
-        }
-        if (!ActivityPushDecider.shouldPush(lastPushedText, text, nowMs - lastPushMs, force)) {
-            force = false
-            return currentlyReachable
-        }
         var reachable = currentlyReachable
-        ble.send(address, text, OlleeProtocol.TARGET_NAMEPLATE)
-            .onSuccess { lastPushedText = text; lastPushMs = nowMs; reachable = true }
-            .onFailure { reachable = false }
+        if (address != null &&
+            ActivityPushDecider.shouldPush(lastPushedText, text, nowMs - lastPushMs, force)
+        ) {
+            ble.send(address, text, OlleeProtocol.TARGET_NAMEPLATE)
+                .onSuccess {
+                    lastPushedText = text
+                    lastPushMs = nowMs
+                    reachable = true
+                }
+                .onFailure { reachable = false }
+        }
         force = false
         return reachable
     }
