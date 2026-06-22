@@ -10,7 +10,7 @@ import kotlin.test.assertTrue
 private data class GlyphFile(val glyphs: List<Entry>, val dpCells: List<Int> = emptyList())
 
 @Serializable
-private data class Entry(val ascii: Int, val char: String, val mask: String, val tier: String)
+private data class Entry(val ascii: Int, val char: String, val mask: String, val tier: String, val tensMask: String? = null)
 
 /** Guards that NameplateGlyphs stays in sync with the ground-truth contract (glyph-map.json). */
 class NameplateGlyphsTest {
@@ -26,6 +26,15 @@ class NameplateGlyphsTest {
         load().glyphs.forEach { e ->
             val c = e.char.single()
             assertEquals(e.mask.removePrefix("0x").toInt(16), NameplateGlyphs.maskFor(c), "mask for '$c'")
+        }
+    }
+
+    @Test
+    fun tens_masks_match_the_contract() {
+        load().glyphs.forEach { e ->
+            val c = e.char.single()
+            val expected = (e.tensMask ?: e.mask).removePrefix("0x").toInt(16)
+            assertEquals(expected, NameplateGlyphs.maskFor(c, FontClass.TENS), "tens mask for '$c'")
         }
     }
 

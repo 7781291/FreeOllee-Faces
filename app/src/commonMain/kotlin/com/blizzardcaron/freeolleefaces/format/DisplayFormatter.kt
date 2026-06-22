@@ -61,8 +61,10 @@ object DisplayFormatter {
         return if (stale) "E" + fresh.dropLast(1) else fresh
     }
 
+    // Right-justified (leading spaces) so custom text aligns flush-right like the watch nameplate
+    // and the other complications (temperature/steps/activity). Overflow keeps the leading 6 chars.
     fun custom(text: String): String =
-        text.padEnd(LENGTH, ' ').take(LENGTH)
+        text.padStart(LENGTH, ' ').take(LENGTH)
 
     /**
      * Today's step count, right-justified in [LENGTH] chars (e.g. `" 12345"`). Negatives

@@ -112,8 +112,9 @@ class DisplayFormatterTest {
     }
 
     @Test
-    fun `custom pads shorter strings with spaces`() {
-        assertEquals("hi    ", DisplayFormatter.custom("hi"))
+    fun `custom right-justifies shorter strings`() {
+        // Right-aligned to match the watch nameplate (and temperature/steps/activity).
+        assertEquals("    hi", DisplayFormatter.custom("hi"))
         assertEquals("      ", DisplayFormatter.custom(""))
     }
 

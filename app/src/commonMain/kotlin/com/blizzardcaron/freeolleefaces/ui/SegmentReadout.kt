@@ -16,17 +16,43 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.blizzardcaron.freeolleefaces.glyph.CellSize
 import com.blizzardcaron.freeolleefaces.glyph.NameplateGlyphs
+import com.blizzardcaron.freeolleefaces.glyph.NameplateLayout
 import com.blizzardcaron.freeolleefaces.glyph.Segment
 import com.blizzardcaron.freeolleefaces.ui.theme.BrandColors
 
-/** Cell-by-cell lit segments for [value], left-aligned and blank-padded to [cellCount]. Pure. */
-fun litSegments(value: String, cellCount: Int): List<Set<Segment>> =
-    (0 until cellCount).map { i ->
-        value.getOrNull(i)?.let { NameplateGlyphs.segmentsFor(it) } ?: emptySet()
+/** Right-aligned, per-cell-font lit segments for [value] across the fixed nameplate layout. Pure. */
+fun litSegments(value: String): List<Set<Segment>> {
+    val cells = NameplateLayout.CELLS
+    val start = cells.size - value.length // negative when value > 6 -> takes the last 6 chars
+    return cells.indices.map { i ->
+        value.getOrNull(i - start)?.let { NameplateGlyphs.segmentsFor(it, cells[i].font) } ?: emptySet()
     }
+}
 
-private const val CELLS = 6
+internal data class CellRect(val x: Float, val y: Float, val w: Float, val h: Float)
+
+/** Per-cell rects for the nameplate, given the large-cell height (unit-agnostic: px or dp.value). */
+internal fun nameplateCellRects(largeHeight: Float): List<CellRect> {
+    val largeW = largeHeight * CELL_ASPECT
+    val gap = largeW * CELL_GAP_FRACTION
+    val colonExtra = largeW * NameplateLayout.COLON_EXTRA_GAP_FRACTION
+    var x = 0f
+    return NameplateLayout.CELLS.mapIndexed { i, cell ->
+        val scale = if (cell.size == CellSize.MEDIUM) NameplateLayout.MEDIUM_SCALE else 1f
+        val w = largeW * scale
+        val h = largeHeight * scale
+        val rect = CellRect(x, largeHeight - h, w, h) // baseline-aligned
+        x += w + gap
+        if (i == NameplateLayout.COLON_GAP_AFTER_INDEX) x += colonExtra
+        rect
+    }
+}
+
+internal fun nameplateReadoutWidth(largeHeight: Float): Float =
+    nameplateCellRects(largeHeight).last().let { it.x + it.w }
+
 private const val CELL_ASPECT = 0.6f // width / height of one cell
 private const val CELL_GAP_FRACTION = 0.25f // gap between cells, relative to cell width
 
@@ -53,23 +79,20 @@ fun SegmentReadout(
 ) {
     val lit = if (tone == LcdTone.Aqua) BrandColors.LcdOnAqua else BrandColors.LcdOn
     val off = BrandColors.LcdOff
-    val cells = litSegments(value, CELLS)
+    val cells = litSegments(value)
     // Size the readout to exactly the 6 cells so none get clipped (Canvas has no intrinsic size).
-    val cellW = cellHeight * CELL_ASPECT
-    val readoutWidth = cellW * (1f + CELL_GAP_FRACTION) * (CELLS - 1) + cellW
     Canvas(
         modifier = modifier
             .clip(RoundedCornerShape(SCREEN_CORNER_RADIUS_DP.dp))
             .background(BrandColors.LcdScreen)
             .padding(horizontal = SCREEN_PADDING_HORIZONTAL_DP.dp, vertical = SCREEN_PADDING_VERTICAL_DP.dp)
-            .width(readoutWidth)
+            .width(nameplateReadoutWidth(cellHeight.value).dp)
             .height(cellHeight),
     ) {
-        val h = size.height
-        val cw = h * CELL_ASPECT
-        val stride = cw * (1f + CELL_GAP_FRACTION)
+        val rects = nameplateCellRects(size.height)
         cells.forEachIndexed { i, segs ->
-            drawCell(Offset(i * stride, 0f), Size(cw, h), segs, lit, off)
+            val r = rects[i]
+            drawCell(Offset(r.x, r.y), Size(r.w, r.h), segs, lit, off)
         }
     }
 }
