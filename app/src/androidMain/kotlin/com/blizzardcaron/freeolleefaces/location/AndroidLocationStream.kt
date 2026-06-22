@@ -45,6 +45,8 @@ class AndroidLocationStream(
         accuracyM = if (hasAccuracy()) accuracy else null,
         provider = provider,
         altM = if (hasAltitude()) altitude else null,
+        bearingDeg = if (hasBearing()) bearing else null,
+        speedMps = if (hasSpeed()) speed else null,
     )
 
     private companion object {
