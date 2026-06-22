@@ -40,9 +40,7 @@ class ActivitySessionEngine(
     private var unit: ActivityUnit = ActivityUnit.IMPERIAL
     private val points = mutableListOf<TrackPoint>()
     private var selectedMetric: ActivityMetric = ActivityMetric.PACE
-    private var lastPushedText: String? = null
-    private var lastPushMs: Long = 0L
-    private var forceNextPush: Boolean = false
+    private val pusher = NameplatePusher(ble)
 
     suspend fun start() {
         if (session != null) return
@@ -51,9 +49,9 @@ class ActivitySessionEngine(
         trackId = newId()
         points.clear()
         selectedMetric = ActivityMetric.PACE
-        lastPushedText = null
-        lastPushMs = 0L
-        forceNextPush = false
+        // NameplatePusher is initialized once and manages its own internal state.
+        // No explicit reset needed here.
+    
         session = ActivitySession(startedAtMs)
         _state.value = ActivityState(running = true, selectedMetric = selectedMetric)
         watchAddress()?.let { autoSleep.disableForActivity(it) }
@@ -64,7 +62,7 @@ class ActivitySessionEngine(
         s.onSample(coords, nowMs)
         points += TrackPoint(nowMs, coords.lat, coords.lng, coords.accuracyM, coords.altM)
         _state.value = s.state(selectedMetric, nowMs)
-            .copy(watchReachable = _state.value.watchReachable, lastPushText = lastPushedText)
+            .copy(watchReachable = _state.value.watchReachable, lastPushText = pusher.lastPushText)
     }
 
     suspend fun tick(nowMs: Long) {
@@ -75,19 +73,11 @@ class ActivitySessionEngine(
         val text = NameplateSanitizer.sanitize(selectedMetric.render(st, unit))
         var reachable = _state.value.watchReachable
         val addr = watchAddress()
-        if (addr != null &&
-            ActivityPushDecider.shouldPush(lastPushedText, text, nowMs - lastPushMs, forceNextPush)
-        ) {
-            ble.send(addr, text, OlleeProtocol.TARGET_NAMEPLATE)
-                .onSuccess {
-                    lastPushedText = text
-                    lastPushMs = nowMs
-                    reachable = true
-                }
-                .onFailure { reachable = false }
-        }
-        forceNextPush = false
-        _state.value = st.copy(watchReachable = reachable, lastPushText = lastPushedText)
+        val addr = watchAddress()
+        // Pusher handles checks, sending, updating internal state (last push text/time), 
+        // and returning the resulting reachable flag.
+        val newReachable = pusher.maybePush(addr, text, nowMs, _state.value.watchReachable)
+        _state.value = st.copy(watchReachable = newReachable, lastPushText = pusher.lastPushText)
     }
 
     fun cycleMetric() {
