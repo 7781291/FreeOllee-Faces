@@ -18,4 +18,19 @@ class AndroidActivityTrackStore(context: Context) : ActivityTrackStore {
         (dir.listFiles { f -> f.extension == "json" } ?: emptyArray())
             .mapNotNull { ActivityTrackJson.decode(it.readText()) }
             .sortedByDescending { it.startedAtMs }
+
+    override fun delete(id: String) {
+        File(dir, "$id.json").delete()
+    }
+
+    override fun prune(endedBeforeMs: Long): Int =
+        list().count { track ->
+            val ended = track.endedAtMs
+            if (ended != null && ended < endedBeforeMs) {
+                delete(track.id)
+                true
+            } else {
+                false
+            }
+        }
 }

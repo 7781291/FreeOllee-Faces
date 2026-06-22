@@ -54,6 +54,9 @@ private fun IdleContent(
     OutlinedButton(onClick = callbacks.onToggleUnit, modifier = Modifier.fillMaxWidth()) {
         Text("Units: ${if (unit == ActivityUnit.IMPERIAL) "Miles" else "Kilometres"}")
     }
+    OutlinedButton(onClick = callbacks.onOpenHistory, modifier = Modifier.fillMaxWidth()) {
+        Text("History")
+    }
     if (lastSummary != null) {
         Card(elevation = CardDefaults.cardElevation()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -101,31 +104,4 @@ private fun Readout(label: String, watchValue: String, selected: Boolean) {
             tone = LcdTone.Green,
         )
     }
-}
-
-private const val SECONDS_PER_MINUTE = 60
-private const val SECONDS_PER_HOUR = 3600
-private const val MILLIS_PER_SECOND = 1000L
-
-private fun hms(ms: Long): String {
-    val total = ms / MILLIS_PER_SECOND
-    val h = total / SECONDS_PER_HOUR
-    val m = (total % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE
-    val s = total % SECONDS_PER_MINUTE
-    val mm = m.toString().padStart(2, '0')
-    val ss = s.toString().padStart(2, '0')
-    return if (h > 0) "$h:$mm:$ss" else "$mm:$ss"
-}
-
-private fun distanceText(meters: Double, unit: ActivityUnit): String {
-    val v = unit.distance(meters)
-    return "${com.blizzardcaron.freeolleefaces.format.formatDecimal(v, 2)} ${unit.distanceSuffix}"
-}
-
-private fun paceText(secPerKm: Double?, unit: ActivityUnit): String {
-    if (secPerKm == null || secPerKm <= 0.0) return "--:-- /${unit.distanceSuffix}"
-    val secs = unit.paceSecondsPerUnit(secPerKm).toInt()
-    val mm = secs / SECONDS_PER_MINUTE
-    val ss = (secs % SECONDS_PER_MINUTE).toString().padStart(2, '0')
-    return "$mm:$ss /${unit.distanceSuffix}"
 }

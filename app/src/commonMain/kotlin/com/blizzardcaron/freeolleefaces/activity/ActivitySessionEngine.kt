@@ -1,8 +1,6 @@
 package com.blizzardcaron.freeolleefaces.activity
 
 import com.blizzardcaron.freeolleefaces.ble.BleClient
-import com.blizzardcaron.freeolleefaces.ble.OlleeProtocol
-import com.blizzardcaron.freeolleefaces.glyph.NameplateSanitizer
 import com.blizzardcaron.freeolleefaces.location.Coords
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,9 +38,7 @@ class ActivitySessionEngine(
     private var unit: ActivityUnit = ActivityUnit.IMPERIAL
     private val points = mutableListOf<TrackPoint>()
     private var selectedMetric: ActivityMetric = ActivityMetric.PACE
-    private var lastPushedText: String? = null
-    private var lastPushMs: Long = 0L
-    private var forceNextPush: Boolean = false
+    private val pusher = NameplatePusher(ble)
 
     suspend fun start() {
         if (session != null) return
@@ -51,9 +47,6 @@ class ActivitySessionEngine(
         trackId = newId()
         points.clear()
         selectedMetric = ActivityMetric.PACE
-        lastPushedText = null
-        lastPushMs = 0L
-        forceNextPush = false
         session = ActivitySession(startedAtMs)
         _state.value = ActivityState(running = true, selectedMetric = selectedMetric)
         watchAddress()?.let { autoSleep.disableForActivity(it) }
@@ -64,41 +57,26 @@ class ActivitySessionEngine(
         s.onSample(coords, nowMs)
         points += TrackPoint(nowMs, coords.lat, coords.lng, coords.accuracyM, coords.altM)
         _state.value = s.state(selectedMetric, nowMs)
-            .copy(watchReachable = _state.value.watchReachable, lastPushText = lastPushedText)
+            .copy(watchReachable = _state.value.watchReachable, lastPushText = pusher.lastPushText)
     }
 
     suspend fun tick(nowMs: Long) {
         val s = session ?: return
         val st = s.state(selectedMetric, nowMs)
-        // Backstop: producers are legible by construction (NameplateLegibilityTest), but never
-        // let a stray glyph reach the watch as garbage.
-        val text = NameplateSanitizer.sanitize(selectedMetric.render(st, unit))
-        var reachable = _state.value.watchReachable
-        val addr = watchAddress()
-        if (addr != null &&
-            ActivityPushDecider.shouldPush(lastPushedText, text, nowMs - lastPushMs, forceNextPush)
-        ) {
-            ble.send(addr, text, OlleeProtocol.TARGET_NAMEPLATE)
-                .onSuccess {
-                    lastPushedText = text
-                    lastPushMs = nowMs
-                    reachable = true
-                }
-                .onFailure { reachable = false }
-        }
-        forceNextPush = false
-        _state.value = st.copy(watchReachable = reachable, lastPushText = lastPushedText)
+        val raw = selectedMetric.render(st, unit)
+        val reachable = pusher.maybePush(watchAddress(), raw, nowMs, _state.value.watchReachable)
+        _state.value = st.copy(watchReachable = reachable, lastPushText = pusher.lastPushText)
     }
 
     fun cycleMetric() {
         selectedMetric = selectedMetric.next()
-        forceNextPush = true
+        pusher.forceNext()
         _state.value = _state.value.copy(selectedMetric = selectedMetric)
     }
 
     fun setUnit(newUnit: ActivityUnit) {
         unit = newUnit
-        forceNextPush = true
+        pusher.forceNext()
     }
 
     suspend fun flush() {

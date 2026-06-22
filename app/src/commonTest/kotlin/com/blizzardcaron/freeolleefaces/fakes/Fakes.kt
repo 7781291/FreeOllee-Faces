@@ -202,6 +202,14 @@ class FakeActivityTrackStore : com.blizzardcaron.freeolleefaces.activity.Activit
         saved.maxByOrNull { it.startedAtMs }
     override fun list(): List<com.blizzardcaron.freeolleefaces.activity.ActivityTrack> =
         saved.sortedByDescending { it.startedAtMs }
+    override fun delete(id: String) {
+        saved.removeAll { it.id == id }
+    }
+    override fun prune(endedBeforeMs: Long): Int {
+        val before = saved.size
+        saved.removeAll { it.endedAtMs?.let { ended -> ended < endedBeforeMs } == true }
+        return before - saved.size
+    }
 }
 
 // ---------------------------------------------------------------------------

@@ -100,4 +100,20 @@ data class ActivityCallbacks(
     val onStop: () -> Unit,
     val onMode: () -> Unit,
     val onToggleUnit: () -> Unit,
+    val onOpenHistory: () -> Unit,
+)
+
+/** Activity-history list callbacks. */
+data class ActivityHistoryCallbacks(
+    val onOpen: (String) -> Unit,
+    val onDelete: (String) -> Unit,
+    val onBack: () -> Unit,
+)
+
+/** Instruments-screen callbacks, bundled to keep the composable signature small. */
+data class InstrumentsCallbacks(
+    val onStart: () -> Unit,
+    val onStop: () -> Unit,
+    val onMode: () -> Unit,
+    val onToggleUnit: () -> Unit,
 )

@@ -5,8 +5,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.blizzardcaron.freeolleefaces.activity.ActivityRetention
 import com.blizzardcaron.freeolleefaces.activity.ActivitySessionLauncher
+import com.blizzardcaron.freeolleefaces.activity.ActivityTrack
+import com.blizzardcaron.freeolleefaces.activity.ActivityTrackStore
 import com.blizzardcaron.freeolleefaces.activity.NoopActivitySessionLauncher
+import com.blizzardcaron.freeolleefaces.activity.NoopActivityTrackStore
 import com.blizzardcaron.freeolleefaces.alarm.AlarmsRepository
 import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
 import com.blizzardcaron.freeolleefaces.auto.AlarmScheduler
@@ -19,6 +23,8 @@ import com.blizzardcaron.freeolleefaces.ble.NoopWatchConnection
 import com.blizzardcaron.freeolleefaces.ble.WatchConnection
 import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
 import com.blizzardcaron.freeolleefaces.health.StepsProvider
+import com.blizzardcaron.freeolleefaces.instruments.InstrumentsSessionLauncher
+import com.blizzardcaron.freeolleefaces.instruments.NoopInstrumentsSessionLauncher
 import com.blizzardcaron.freeolleefaces.location.LocationProvider
 import com.blizzardcaron.freeolleefaces.location.freshnessLabel
 import com.blizzardcaron.freeolleefaces.notifications.NotificationAccessChecker
@@ -30,6 +36,7 @@ import com.blizzardcaron.freeolleefaces.ui.Screen
 import com.blizzardcaron.freeolleefaces.vm.ActivityController
 import com.blizzardcaron.freeolleefaces.vm.AlarmController
 import com.blizzardcaron.freeolleefaces.vm.ComplicationController
+import com.blizzardcaron.freeolleefaces.vm.InstrumentsController
 import com.blizzardcaron.freeolleefaces.vm.SettingsController
 import com.blizzardcaron.freeolleefaces.vm.TimerController
 import com.blizzardcaron.freeolleefaces.vm.clockTime
@@ -65,12 +72,20 @@ class AppViewModel(
     private val watchConnection: WatchConnection = NoopWatchConnection,
     private val clock: Clock = Clock.System,
     private val activityLauncher: ActivitySessionLauncher = NoopActivitySessionLauncher,
+    private val instrumentsLauncher: InstrumentsSessionLauncher = NoopInstrumentsSessionLauncher,
+    private val activityStore: ActivityTrackStore = NoopActivityTrackStore,
     private val hasLocationPermission: () -> Boolean = { true },
 ) : ViewModel() {
 
     var state by mutableStateOf(initialState())
         private set
     var screen by mutableStateOf<Screen>(Screen.Home)
+        private set
+    var selectedActivityId by mutableStateOf<String?>(null)
+        private set
+
+    /** Bumped on delete so the history list recomposes off the file-backed store. */
+    var historyRevision by mutableStateOf(0)
         private set
 
     val alarms = AlarmController(
@@ -121,6 +136,13 @@ class AppViewModel(
         showSnackbar = ::emitEvent,
     )
 
+    val instruments = InstrumentsController(
+        launcher = instrumentsLauncher,
+        prefs = prefs,
+        hasLocationPermission = hasLocationPermission,
+        showSnackbar = ::emitEvent,
+    )
+
     private val _events = Channel<String>(Channel.BUFFERED) // snackbar messages
     val events = _events.receiveAsFlow()
 
@@ -166,6 +188,21 @@ class AppViewModel(
 
     fun navigateTo(s: Screen) { screen = s }
 
+    /** All recorded activity tracks, newest first (for the history list). */
+    fun activityHistory(): List<ActivityTrack> = activityStore.list()
+
+    /** Open a recorded activity's detail screen by [id]. */
+    fun openActivity(id: String) {
+        selectedActivityId = id
+        navigateTo(Screen.ActivityDetail)
+    }
+
+    /** Hard-delete a recorded activity by [id]. */
+    fun deleteActivity(id: String) {
+        activityStore.delete(id)
+        historyRevision++
+    }
+
     fun onWatchPicked(address: String, label: String) {
         prefs.watchAddress = address
         // Show Connecting immediately: WatchLink may already sit at Connecting, so the connect below
@@ -189,6 +226,12 @@ class AppViewModel(
     fun onStart() {
         scheduler.reschedule()
         alarmScheduler.rearm()
+        pruneOldActivities()
+    }
+
+    /** Hard-delete recorded tracks older than the [ActivityRetention] window. */
+    private fun pruneOldActivities() {
+        activityStore.prune(ActivityRetention.cutoffMs(clock.now().toEpochMilliseconds()))
     }
 
     /**
