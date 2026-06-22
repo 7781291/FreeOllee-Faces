@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.blizzardcaron.freeolleefaces.activity.ActivityRetention
 import com.blizzardcaron.freeolleefaces.activity.ActivitySessionLauncher
+import com.blizzardcaron.freeolleefaces.activity.ActivityTrack
 import com.blizzardcaron.freeolleefaces.activity.ActivityTrackStore
 import com.blizzardcaron.freeolleefaces.activity.NoopActivitySessionLauncher
 import com.blizzardcaron.freeolleefaces.activity.NoopActivityTrackStore
@@ -79,6 +80,12 @@ class AppViewModel(
     var state by mutableStateOf(initialState())
         private set
     var screen by mutableStateOf<Screen>(Screen.Home)
+        private set
+    var selectedActivityId by mutableStateOf<String?>(null)
+        private set
+
+    /** Bumped on delete so the history list recomposes off the file-backed store. */
+    var historyRevision by mutableStateOf(0)
         private set
 
     val alarms = AlarmController(
@@ -180,6 +187,21 @@ class AppViewModel(
     )
 
     fun navigateTo(s: Screen) { screen = s }
+
+    /** All recorded activity tracks, newest first (for the history list). */
+    fun activityHistory(): List<ActivityTrack> = activityStore.list()
+
+    /** Open a recorded activity's detail screen by [id]. */
+    fun openActivity(id: String) {
+        selectedActivityId = id
+        navigateTo(Screen.ActivityDetail)
+    }
+
+    /** Hard-delete a recorded activity by [id]. */
+    fun deleteActivity(id: String) {
+        activityStore.delete(id)
+        historyRevision++
+    }
 
     fun onWatchPicked(address: String, label: String) {
         prefs.watchAddress = address

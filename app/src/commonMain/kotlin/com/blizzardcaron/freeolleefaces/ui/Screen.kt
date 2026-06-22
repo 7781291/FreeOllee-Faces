@@ -8,4 +8,6 @@ sealed interface Screen {
     data object Alarms : Screen
     data object Activity : Screen
     data object Instruments : Screen
+    data object ActivityHistory : Screen
+    data object ActivityDetail : Screen
 }
