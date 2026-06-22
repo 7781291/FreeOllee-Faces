@@ -19,6 +19,8 @@ import com.blizzardcaron.freeolleefaces.ble.NoopWatchConnection
 import com.blizzardcaron.freeolleefaces.ble.WatchConnection
 import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
 import com.blizzardcaron.freeolleefaces.health.StepsProvider
+import com.blizzardcaron.freeolleefaces.instruments.InstrumentsSessionLauncher
+import com.blizzardcaron.freeolleefaces.instruments.NoopInstrumentsSessionLauncher
 import com.blizzardcaron.freeolleefaces.location.LocationProvider
 import com.blizzardcaron.freeolleefaces.location.freshnessLabel
 import com.blizzardcaron.freeolleefaces.notifications.NotificationAccessChecker
@@ -30,6 +32,7 @@ import com.blizzardcaron.freeolleefaces.ui.Screen
 import com.blizzardcaron.freeolleefaces.vm.ActivityController
 import com.blizzardcaron.freeolleefaces.vm.AlarmController
 import com.blizzardcaron.freeolleefaces.vm.ComplicationController
+import com.blizzardcaron.freeolleefaces.vm.InstrumentsController
 import com.blizzardcaron.freeolleefaces.vm.SettingsController
 import com.blizzardcaron.freeolleefaces.vm.TimerController
 import com.blizzardcaron.freeolleefaces.vm.clockTime
@@ -65,6 +68,7 @@ class AppViewModel(
     private val watchConnection: WatchConnection = NoopWatchConnection,
     private val clock: Clock = Clock.System,
     private val activityLauncher: ActivitySessionLauncher = NoopActivitySessionLauncher,
+    private val instrumentsLauncher: InstrumentsSessionLauncher = NoopInstrumentsSessionLauncher,
     private val hasLocationPermission: () -> Boolean = { true },
 ) : ViewModel() {
 
@@ -116,6 +120,13 @@ class AppViewModel(
 
     val activity = ActivityController(
         launcher = activityLauncher,
+        prefs = prefs,
+        hasLocationPermission = hasLocationPermission,
+        showSnackbar = ::emitEvent,
+    )
+
+    val instruments = InstrumentsController(
+        launcher = instrumentsLauncher,
         prefs = prefs,
         hasLocationPermission = hasLocationPermission,
         showSnackbar = ::emitEvent,

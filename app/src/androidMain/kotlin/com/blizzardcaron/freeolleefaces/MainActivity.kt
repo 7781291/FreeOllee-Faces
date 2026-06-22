@@ -41,6 +41,7 @@ import com.blizzardcaron.freeolleefaces.auto.AndroidScheduler
 import com.blizzardcaron.freeolleefaces.ble.AndroidBleClient
 import com.blizzardcaron.freeolleefaces.ble.AndroidWatchConnection
 import com.blizzardcaron.freeolleefaces.health.AndroidStepsProvider
+import com.blizzardcaron.freeolleefaces.instruments.AndroidInstrumentsSessionLauncher
 import com.blizzardcaron.freeolleefaces.location.AndroidLocationProvider
 import com.blizzardcaron.freeolleefaces.notifications.AndroidNotificationAccess
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
@@ -191,6 +192,7 @@ private fun rememberAppViewModel(context: Context): AppViewModel = remember {
         alarmScheduler = AndroidAlarmScheduler(context),
         versionLabel = versionLabel(versionName, context.packageName),
         activityLauncher = AndroidActivitySessionLauncher(context),
+        instrumentsLauncher = AndroidInstrumentsSessionLauncher(context),
         hasLocationPermission = {
             ContextCompat.checkSelfPermission(
                 context, Manifest.permission.ACCESS_FINE_LOCATION,

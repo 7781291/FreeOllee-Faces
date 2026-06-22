@@ -107,5 +107,10 @@
             android:name=".activity.ActivitySessionService"
             android:exported="false"
             android:foregroundServiceType="location|connectedDevice" />
+
+        <service
+            android:name=".instruments.InstrumentsSessionService"
+            android:exported="false"
+            android:foregroundServiceType="location|connectedDevice" />
     </application>
 </manifest>
