@@ -99,7 +99,14 @@ class ActivitySessionEngine(
     }
 
     fun cycleMetric() {
-        selectedMetric = selectedMetric.next()
+        val allowed =
+            if (recording) {
+                ActivityMetric.entries
+            } else {
+                listOf(ActivityMetric.ORIENTATION, ActivityMetric.ALTITUDE)
+            }
+        val idx = allowed.indexOf(selectedMetric).coerceAtLeast(0)
+        selectedMetric = allowed[(idx + 1) % allowed.size]
         pusher.forceNext()
         _state.value = _state.value.copy(selectedMetric = selectedMetric)
     }
