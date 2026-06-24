@@ -217,6 +217,27 @@ class Prefs(
         tempFetchedMs = clock.now().toEpochMilliseconds()
     }
 
+    /** Cached surface pressure in hPa (raw; formatted on send). null when never fetched. */
+    var pressureValueHpa: Double?
+        get() =
+            if (settings.hasKey(KEY_PRESSURE_VALUE_HPA)) {
+                settings.getFloat(KEY_PRESSURE_VALUE_HPA, 0f).toDouble()
+            } else {
+                null
+            }
+        set(value) {
+            if (value == null) {
+                settings.remove(KEY_PRESSURE_VALUE_HPA)
+            } else {
+                settings.putFloat(KEY_PRESSURE_VALUE_HPA, value.toFloat())
+            }
+        }
+
+    /** Stamp the cached surface pressure (raw hPa). */
+    fun recordPressureFetch(hpa: Double) {
+        pressureValueHpa = hpa
+    }
+
     /** Shared push cadence (minutes) for the interval-driven faces; one of [IntervalOptions.ALLOWED]. */
     var updateIntervalMinutes: Int
         get() = IntervalOptions.coerce(settings.getInt(KEY_UPDATE_INTERVAL, IntervalOptions.DEFAULT))
@@ -342,6 +363,7 @@ class Prefs(
         private const val KEY_AUTO_SOURCE = "auto_source"
         private const val KEY_ACTIVE_COMPLICATION = "active_face"
         private const val KEY_TEMP_VALUE = "temp_value"
+        private const val KEY_PRESSURE_VALUE_HPA = "pressure_value_hpa"
         private const val KEY_TEMP_CACHE_UNIT = "temp_cache_unit"
         private const val KEY_TEMP_FETCHED_MS = "temp_fetched_ms"
         private const val KEY_LOCATION_FETCHED_MS = "location_fetched_ms"
