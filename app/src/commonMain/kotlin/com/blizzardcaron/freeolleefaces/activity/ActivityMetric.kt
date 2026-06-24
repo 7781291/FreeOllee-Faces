@@ -9,7 +9,7 @@ import kotlin.math.roundToInt
  * new entries plus render branches; the track schema (`TrackPoint.altM`) already reserves altitude.
  */
 enum class ActivityMetric {
-    PACE, DISTANCE, TIME;
+    PACE, DISTANCE, TIME, ORIENTATION, ALTITUDE;
 
     fun next(): ActivityMetric = entries[(ordinal + 1) % entries.size]
 
@@ -17,6 +17,8 @@ enum class ActivityMetric {
         PACE -> renderPace(state, unit)
         DISTANCE -> renderDistance(state, unit)
         TIME -> renderTime(state)
+        ORIENTATION -> renderOrientation(state.headingDeg)
+        ALTITUDE -> renderAltitude(state.altitudeM, unit)
     }
 
     private companion object {
@@ -28,6 +30,23 @@ enum class ActivityMetric {
         const val NAMEPLATE_WIDTH = 6
         const val MILLIS_PER_SECOND = 1000L
         const val DISTANCE_TAG = "d" // lowercase d is legible & distinct; uppercase 'D' looks like '0'
+        const val FEET_PER_METER = 3.28084
+        const val FULL_CIRCLE = 360
+        const val COMPASS_DIGIT_WIDTH = 3
+
+        fun renderOrientation(headingDeg: Float?): String {
+            if (headingDeg == null) return "---#"
+            val deg = (headingDeg.roundToInt() % FULL_CIRCLE + FULL_CIRCLE) % FULL_CIRCLE
+            return "${deg.toString().padStart(COMPASS_DIGIT_WIDTH, '0')}#${cardinal8(headingDeg)}"
+        }
+
+        fun renderAltitude(altM: Double?, unit: ActivityUnit): String {
+            if (altM == null) return "---"
+            val (value, suffix) =
+                if (unit == ActivityUnit.IMPERIAL) (altM * FEET_PER_METER) to 'f' else altM to 'm'
+            val num = value.roundToInt().toString()
+            return if (num.length >= NAMEPLATE_WIDTH) num.take(NAMEPLATE_WIDTH) else "$num$suffix"
+        }
 
         // The watch nameplate cells render ':' blank and '.' as a dash, and have no legible mi/km
         // glyphs. So min/sec separators use a space (renders identically to the blank colon),

@@ -9,4 +9,6 @@ data class ActivityState(
     val elapsedMs: Long = 0L,
     val watchReachable: Boolean = true,
     val lastPushText: String? = null,
+    val headingDeg: Float? = null,
+    val altitudeM: Double? = null,
 )
