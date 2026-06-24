@@ -75,6 +75,18 @@ internal fun SunCard(state: HomeState, callbacks: HomeCallbacks) {
 }
 
 @Composable
+internal fun PressureCard(state: HomeState, callbacks: HomeCallbacks) {
+    ComplicationCard(
+        title = ActiveComplication.PRESSURE.displayLabel(),
+        active = state.activeComplication == ActiveComplication.PRESSURE,
+        onActivate = { callbacks.onActivate(ActiveComplication.PRESSURE) },
+        face = FacePreview(state.pressurePreview, state.pressureUpdated, state.pressureNext),
+        expanded = false,
+        onToggle = null,
+    )
+}
+
+@Composable
 internal fun StepsCard(
     state: HomeState,
     callbacks: HomeCallbacks,

@@ -40,6 +40,8 @@ object AutoUpdateScheduler {
 
             ActiveComplication.STEPS -> scheduleIntervalFace(ctx, prefs, prefs.updateIntervalMinutes)
 
+            ActiveComplication.PRESSURE -> scheduleIntervalFace(ctx, prefs, prefs.updateIntervalMinutes)
+
             ActiveComplication.SUN -> enqueueNext(ctx, 0L, sendAttempt = 0)
         }
     }

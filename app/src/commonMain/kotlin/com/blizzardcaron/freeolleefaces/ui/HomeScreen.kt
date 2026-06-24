@@ -98,6 +98,8 @@ private fun ColumnScope.ComplicationCardsList(
 
         SunCard(state = state, callbacks = callbacks)
 
+        PressureCard(state = state, callbacks = callbacks)
+
         StepsCard(
             state = state,
             callbacks = callbacks,

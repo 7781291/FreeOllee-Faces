@@ -1,5 +1,6 @@
 package com.blizzardcaron.freeolleefaces.vm
 
+import com.blizzardcaron.freeolleefaces.activity.ActivityUnit
 import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
 import com.blizzardcaron.freeolleefaces.auto.AutoUpdateSchedule
 import com.blizzardcaron.freeolleefaces.auto.Scheduler
@@ -247,11 +248,55 @@ class ComplicationController(
         }
     }
 
+    fun refreshPressure(push: Boolean) {
+        val c = validCoords()
+        if (c == null) {
+            update { it.copy(pressurePreview = PreviewState.Error("Location not set — open Settings (⚙)")) }
+            return
+        }
+        val (lat, lng) = c
+        val imperial = prefs.activityUnit == ActivityUnit.IMPERIAL
+        refreshJob?.cancel()
+        refreshJob = scope.launch {
+            update { it.copy(pressurePreview = PreviewState.Loading) }
+            OpenMeteoClient.currentPressureHpa(lat, lng, RetryPolicy.Preview)
+                .onSuccess { hpa ->
+                    prefs.recordPressureFetch(hpa)
+                    val payload = DisplayFormatter.pressure(hpa, imperial)
+                    update {
+                        it.copy(
+                            pressurePreview = PreviewState.Ready(payload, "Currently: ${formatDecimal(hpa, 1)} hPa"),
+                            pressureUpdated = "Updated ${clockTime(nowMs())}",
+                            pressureNext = tempNextText(),
+                        )
+                    }
+                    if (push) pushIfWatch(payload)
+                }
+                .onFailure { err ->
+                    val cached = prefs.pressureValueHpa
+                    if (cached != null) {
+                        val payload = DisplayFormatter.pressure(cached, imperial, stale = true)
+                        update {
+                            it.copy(
+                                pressurePreview = PreviewState.Ready(
+                                    payload, "Currently: ${formatDecimal(cached, 1)} hPa (stale)",
+                                ),
+                            )
+                        }
+                        if (push) pushIfWatch(payload)
+                    } else {
+                        update { it.copy(pressurePreview = PreviewState.Error(WeatherErrorCopy.describe(err))) }
+                    }
+                }
+        }
+    }
+
     fun refreshActive(force: Boolean, push: Boolean) {
         when (state().activeComplication) {
             ActiveComplication.TEMPERATURE -> refreshTemp(force, push)
             ActiveComplication.SUN -> refreshSun(push)
             ActiveComplication.STEPS -> refreshSteps(push)
+            ActiveComplication.PRESSURE -> refreshPressure(push)
             ActiveComplication.CUSTOM -> {}
         }
     }
@@ -265,6 +310,7 @@ class ComplicationController(
         refreshTemp(force = false, push = false)
         refreshSun(push = false)
         refreshSteps(push = false)
+        refreshPressure(push = false)
         update {
             it.copy(
                 notificationCount = prefs.notificationCount,
@@ -285,6 +331,7 @@ class ComplicationController(
             ActiveComplication.TEMPERATURE -> refreshTemp(force = false, push = true)
             ActiveComplication.SUN -> refreshSun(push = true)
             ActiveComplication.STEPS -> refreshSteps(push = true)
+            ActiveComplication.PRESSURE -> refreshPressure(push = true)
             ActiveComplication.CUSTOM -> {
                 val text = prefs.customText
                 if (text.isNotEmpty()) sendCustom(text)

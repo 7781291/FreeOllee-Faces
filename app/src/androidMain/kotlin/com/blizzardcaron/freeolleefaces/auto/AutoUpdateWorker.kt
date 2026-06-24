@@ -3,6 +3,7 @@ package com.blizzardcaron.freeolleefaces.auto
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.blizzardcaron.freeolleefaces.activity.ActivityUnit
 import com.blizzardcaron.freeolleefaces.ble.AndroidBleClient
 import com.blizzardcaron.freeolleefaces.ble.AutoSleepApply
 import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
@@ -85,6 +86,7 @@ class AutoUpdateWorker(
 
             face == ActiveComplication.TEMPERATURE -> runTemperature(ctx, prefs, lat, lng, address, now)
             face == ActiveComplication.SUN -> runSun(ctx, prefs, lat, lng, address, now)
+            face == ActiveComplication.PRESSURE -> runPressure(ctx, prefs, lat, lng, address, now)
 
             else -> Result.success() // STEPS/CUSTOM already handled above
         }
@@ -251,6 +253,62 @@ class AutoUpdateWorker(
             val fire = AutoUpdateSchedule.nextTemperatureFire(now, prefs.updateIntervalMinutes, sleep)
             val delayMs = millisBetween(now, fire)
             AutoUpdateScheduler.enqueueNext(ctx, delayMs, sendAttempt = 0)
+        }
+        return Result.success()
+    }
+
+    private suspend fun runPressure(
+        ctx: Context,
+        prefs: Prefs,
+        lat: Double,
+        lng: Double,
+        address: String,
+        now: LocalDateTime,
+    ): Result {
+        val sleep = prefs.pushPauseWindow()
+        val nowMinOfDay = now.hour * MINUTES_PER_HOUR + now.minute
+        val inSleep = sleep != null &&
+            AutoUpdateSchedule.isInSleepWindow(nowMinOfDay, sleep.startMin, sleep.endMin)
+        val imperial = prefs.activityUnit == ActivityUnit.IMPERIAL
+        var backstopped = false
+        if (!inSleep) {
+            OpenMeteoClient.currentPressureHpa(lat, lng, RetryPolicy.Background)
+                .onSuccess { hpa ->
+                    prefs.recordPressureFetch(hpa)
+                    val payload = DisplayFormatter.pressure(hpa, imperial)
+                    AndroidBleClient(ctx).send(address, payload)
+                        .onSuccess {
+                            prefs.recordAutoSend("Sent '$payload'")
+                            applyHealth(ctx, prefs, null, inSleep)
+                        }
+                        .onFailure {
+                            backstopped = handleSendFailure(ctx, prefs, FailureKind.WATCH_UNREACHABLE, inSleep)
+                        }
+                }
+                .onFailure { err ->
+                    val suffix = (err as? WeatherFetchError)?.statusCode?.let { " (HTTP $it)" } ?: ""
+                    val cached = prefs.pressureValueHpa
+                    if (cached != null) {
+                        val payload = DisplayFormatter.pressure(cached, imperial, stale = true)
+                        AndroidBleClient(ctx).send(address, payload)
+                            .onSuccess {
+                                prefs.recordAutoSend("Sent stale '$payload'$suffix")
+                                applyHealth(ctx, prefs, FailureKind.WEATHER_FETCH_FAILED, inSleep)
+                            }
+                            .onFailure {
+                                backstopped = handleSendFailure(ctx, prefs, FailureKind.WATCH_UNREACHABLE, inSleep)
+                            }
+                    } else {
+                        prefs.recordAutoSend("Skipped: pressure fetch failed$suffix")
+                        applyHealth(ctx, prefs, FailureKind.WEATHER_FETCH_FAILED, inSleep)
+                    }
+                }
+        } else {
+            prefs.recordAutoSend("Asleep (power saving)")
+        }
+        if (!backstopped) {
+            val fire = AutoUpdateSchedule.nextTemperatureFire(now, prefs.updateIntervalMinutes, sleep)
+            AutoUpdateScheduler.enqueueNext(ctx, millisBetween(now, fire), sendAttempt = 0)
         }
         return Result.success()
     }
