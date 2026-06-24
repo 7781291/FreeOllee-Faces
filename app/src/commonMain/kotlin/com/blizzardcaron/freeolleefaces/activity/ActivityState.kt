@@ -3,6 +3,7 @@ package com.blizzardcaron.freeolleefaces.activity
 /** Immutable live state of the running activity (not persisted). */
 data class ActivityState(
     val running: Boolean = false,
+    val recording: Boolean = false,
     val selectedMetric: ActivityMetric = ActivityMetric.PACE,
     val distanceMeters: Double = 0.0,
     val recentPaceSecPerKm: Double? = null,

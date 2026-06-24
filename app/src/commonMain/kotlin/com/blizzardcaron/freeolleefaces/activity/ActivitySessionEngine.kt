@@ -38,6 +38,7 @@ class ActivitySessionEngine(
     private var unit: ActivityUnit = ActivityUnit.IMPERIAL
     private val points = mutableListOf<TrackPoint>()
     private var selectedMetric: ActivityMetric = ActivityMetric.PACE
+    private var recording = false
     private val pusher = NameplatePusher(ble)
 
     suspend fun start() {
@@ -47,24 +48,53 @@ class ActivitySessionEngine(
         trackId = newId()
         points.clear()
         selectedMetric = ActivityMetric.PACE
+        recording = true
         session = ActivitySession(startedAtMs)
-        _state.value = ActivityState(running = true, selectedMetric = selectedMetric)
+        _state.value = ActivityState(running = true, recording = true, selectedMetric = selectedMetric)
         watchAddress()?.let { autoSleep.disableForActivity(it) }
+    }
+
+    /** Start a non-recording live session for the instrument glance (compass/altitude); saves no track. */
+    suspend fun startLive() {
+        if (session != null) return
+        startedAtMs = now()
+        unit = prefs.activityUnit
+        points.clear()
+        selectedMetric = ActivityMetric.ORIENTATION
+        recording = false
+        session = ActivitySession(startedAtMs)
+        _state.value = ActivityState(running = true, recording = false, selectedMetric = selectedMetric)
     }
 
     suspend fun ingest(coords: Coords, nowMs: Long) {
         val s = session ?: return
         s.onSample(coords, nowMs)
-        points += TrackPoint(nowMs, coords.lat, coords.lng, coords.accuracyM, coords.altM)
-        _state.value = s.state(selectedMetric, nowMs)
-            .copy(watchReachable = _state.value.watchReachable, lastPushText = pusher.lastPushText)
+        if (recording) points += TrackPoint(nowMs, coords.lat, coords.lng, coords.accuracyM, coords.altM)
+        val heading =
+            if (coords.bearingDeg != null && (coords.speedMps ?: 0f) >= SPEED_GATE_MPS) {
+                coords.bearingDeg
+            } else {
+                _state.value.headingDeg
+            }
+        _state.value = s.state(selectedMetric, nowMs).copy(
+            watchReachable = _state.value.watchReachable,
+            lastPushText = pusher.lastPushText,
+            recording = recording,
+            headingDeg = heading,
+            altitudeM = coords.altM ?: _state.value.altitudeM,
+        )
     }
 
     suspend fun tick(nowMs: Long) {
         val s = session ?: return
-        val st = s.state(selectedMetric, nowMs)
+        val prev = _state.value
+        val st = s.state(selectedMetric, nowMs).copy(
+            recording = recording,
+            headingDeg = prev.headingDeg,
+            altitudeM = prev.altitudeM,
+        )
         val raw = selectedMetric.render(st, unit)
-        val reachable = pusher.maybePush(watchAddress(), raw, nowMs, _state.value.watchReachable)
+        val reachable = pusher.maybePush(watchAddress(), raw, nowMs, prev.watchReachable)
         _state.value = st.copy(watchReachable = reachable, lastPushText = pusher.lastPushText)
     }
 
@@ -80,15 +110,17 @@ class ActivitySessionEngine(
     }
 
     suspend fun flush() {
-        if (session != null) store.save(snapshot(endedAtMs = null, abnormal = false))
+        if (session != null && recording) store.save(snapshot(endedAtMs = null, abnormal = false))
     }
 
     suspend fun stop(abnormal: Boolean = false) {
         if (session == null) return
-        val endMs = now()
-        store.save(snapshot(endedAtMs = endMs, abnormal = abnormal))
-        watchAddress()?.let { autoSleep.restoreAfterActivity(it) }
+        if (recording) {
+            store.save(snapshot(endedAtMs = now(), abnormal = abnormal))
+            watchAddress()?.let { autoSleep.restoreAfterActivity(it) }
+        }
         session = null
+        recording = false
         _state.value = ActivityState()
     }
 
@@ -116,5 +148,6 @@ class ActivitySessionEngine(
     private companion object {
         const val MILLIS_PER_SECOND = 1000.0
         const val METERS_PER_KM = 1000.0
+        const val SPEED_GATE_MPS = 0.5f
     }
 }
