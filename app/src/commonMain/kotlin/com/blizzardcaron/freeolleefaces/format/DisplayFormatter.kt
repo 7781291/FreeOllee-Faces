@@ -24,6 +24,9 @@ object DisplayFormatter {
     /** Divisor to abbreviate a step count to thousands (e.g. 100_234 -> "100k"). */
     private const val THOUSAND = 1000
 
+    private const val INHG_PER_HPA = 0.0295299830714
+    private const val INHG_DECIMALS = 2
+
     fun temperature(value: Double, unit: TempUnit = TempUnit.FAHRENHEIT, stale: Boolean = false): String {
         // The watch's segment font (firmware OW-FW-APP, font table indexed by ASCII) maps '#'
         // (mask 0x63) to segments a+b+f+g — the top square that reads as a degree '°'. There is no
@@ -34,6 +37,13 @@ object DisplayFormatter {
         // the sign. So such a value renders unmarked (value integrity beats the stale flag); markStale
         // is a no-op when there's no leading space.
         return markStale("${rounded.toString().padStart(TEMP_DIGITS_WIDTH)}#${unit.symbol}", stale)
+    }
+
+    /** Surface pressure in [LENGTH] cells: hPa integer (metric) or inHg 2-dp (imperial). */
+    fun pressure(hpa: Double, imperial: Boolean, stale: Boolean = false): String {
+        val value =
+            if (imperial) formatDecimal(hpa * INHG_PER_HPA, INHG_DECIMALS) else hpa.roundToInt().toString()
+        return markStale(value.padStart(LENGTH), stale)
     }
 
     fun sunTime(kind: SunEventKind, time: LocalTime, stale: Boolean = false): String {
