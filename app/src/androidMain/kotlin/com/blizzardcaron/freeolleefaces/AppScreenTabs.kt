@@ -16,9 +16,6 @@ import com.blizzardcaron.freeolleefaces.ui.ActivityDetailScreen
 import com.blizzardcaron.freeolleefaces.ui.ActivityHistoryCallbacks
 import com.blizzardcaron.freeolleefaces.ui.ActivityHistoryScreen
 import com.blizzardcaron.freeolleefaces.ui.ActivityScreen
-import com.blizzardcaron.freeolleefaces.ui.HomeState
-import com.blizzardcaron.freeolleefaces.ui.InstrumentsCallbacks
-import com.blizzardcaron.freeolleefaces.ui.InstrumentsScreen
 import com.blizzardcaron.freeolleefaces.ui.Screen
 
 @Composable
@@ -49,38 +46,6 @@ fun ActivityTab(viewModel: AppViewModel, modifier: Modifier) {
             onMode = { viewModel.activity.onMode() },
             onToggleUnit = { viewModel.activity.toggleUnit() },
             onOpenHistory = { viewModel.navigateTo(Screen.ActivityHistory) },
-        ),
-        modifier = modifier,
-    )
-}
-
-@Composable
-fun InstrumentsTab(viewModel: AppViewModel, state: HomeState, modifier: Modifier) {
-    val context = LocalContext.current
-    val instrumentsState by viewModel.instruments.state.collectAsState()
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { _ -> viewModel.instruments.onStart() }
-    val startWithPermission: () -> Unit = {
-        val granted = ContextCompat.checkSelfPermission(
-            context, Manifest.permission.ACCESS_FINE_LOCATION,
-        ) == PackageManager.PERMISSION_GRANTED
-        if (granted) {
-            viewModel.instruments.onStart()
-        } else {
-            permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-        }
-    }
-    InstrumentsScreen(
-        state = instrumentsState,
-        unit = viewModel.instruments.activityUnit,
-        tempUnit = state.tempUnit,
-        watchSelected = viewModel.instruments.watchSelected,
-        callbacks = InstrumentsCallbacks(
-            onStart = startWithPermission,
-            onStop = { viewModel.instruments.onStop() },
-            onMode = { viewModel.instruments.onMode() },
-            onToggleUnit = { viewModel.instruments.toggleUnit() },
         ),
         modifier = modifier,
     )
