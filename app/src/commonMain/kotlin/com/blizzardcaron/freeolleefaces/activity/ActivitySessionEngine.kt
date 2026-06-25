@@ -66,6 +66,22 @@ class ActivitySessionEngine(
         _state.value = ActivityState(running = true, recording = false, selectedMetric = selectedMetric)
     }
 
+    /** Upgrade a running live session to a recording one (fresh track from now); cold-starts if idle. */
+    suspend fun beginRecording() {
+        if (session == null) {
+            start()
+            return
+        }
+        if (recording) return
+        trackId = newId()
+        startedAtMs = now()
+        points.clear()
+        selectedMetric = ActivityMetric.PACE
+        recording = true
+        _state.value = _state.value.copy(recording = true, selectedMetric = selectedMetric)
+        watchAddress()?.let { autoSleep.disableForActivity(it) }
+    }
+
     suspend fun ingest(coords: Coords, nowMs: Long) {
         val s = session ?: return
         s.onSample(coords, nowMs)

@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.StateFlow
 interface ActivitySessionLauncher {
     val state: StateFlow<ActivityState>
     fun start()
+    fun startLive()
     fun stop()
     fun cycleMetric()
     fun setUnit(unit: ActivityUnit)
@@ -16,6 +17,7 @@ interface ActivitySessionLauncher {
 object NoopActivitySessionLauncher : ActivitySessionLauncher {
     override val state: StateFlow<ActivityState> = MutableStateFlow(ActivityState())
     override fun start() = Unit
+    override fun startLive() = Unit
     override fun stop() = Unit
     override fun cycleMetric() = Unit
     override fun setUnit(unit: ActivityUnit) = Unit

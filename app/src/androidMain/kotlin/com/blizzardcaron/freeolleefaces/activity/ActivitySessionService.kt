@@ -62,6 +62,7 @@ class ActivitySessionService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_START -> startSession()
+            ACTION_START_LIVE -> startLiveSession()
             ACTION_STOP -> stopSession(abnormal = false)
             ACTION_CYCLE -> engine.cycleMetric()
             ACTION_SET_UNIT -> engine.setUnit(prefs.activityUnit)
@@ -71,29 +72,44 @@ class ActivitySessionService : Service() {
 
     // The location permission is gated upstream by ActivityController.onStart() — the engine
     // never reaches the service's ACTION_START without ACCESS_FINE_LOCATION already granted.
-    @SuppressLint("MissingPermission")
+    // When a live glance is already running, ACTION_START upgrades it in place to a recording.
     private fun startSession() {
+        if (ActivitySessionHost.isRunning) {
+            scope.launch { engine.beginRecording() }
+            return
+        }
+        ActivitySessionHost.isRunning = true
+        startForegroundCompat()
+        loops = launchLoops { engine.start() }
+    }
+
+    // Non-recording live glance (compass/altitude); same loops, no track saved. Permission is
+    // gated upstream by ActivityController.onShowLive() exactly as for ACTION_START.
+    private fun startLiveSession() {
         if (ActivitySessionHost.isRunning) return
         ActivitySessionHost.isRunning = true
         startForegroundCompat()
-        loops = scope.launch {
-            engine.start()
-            val location = launch {
-                AndroidLocationStream(this@ActivitySessionService).stream()
-                    .onEach { engine.ingest(it, System.currentTimeMillis()) }
-                    .launchIn(this)
-            }
-            val ticker = launch {
-                var ticks = 0
-                while (isActive) {
-                    engine.tick(System.currentTimeMillis())
-                    if (++ticks % FLUSH_EVERY_TICKS == 0) engine.flush()
-                    delay(TICK_MS)
-                }
-            }
-            location.join()
-            ticker.join()
+        loops = launchLoops { engine.startLive() }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun launchLoops(startEngine: suspend () -> Unit): Job = scope.launch {
+        startEngine()
+        val location = launch {
+            AndroidLocationStream(this@ActivitySessionService).stream()
+                .onEach { engine.ingest(it, System.currentTimeMillis()) }
+                .launchIn(this)
         }
+        val ticker = launch {
+            var ticks = 0
+            while (isActive) {
+                engine.tick(System.currentTimeMillis())
+                if (++ticks % FLUSH_EVERY_TICKS == 0) engine.flush()
+                delay(TICK_MS)
+            }
+        }
+        location.join()
+        ticker.join()
     }
 
     private fun stopSession(abnormal: Boolean) {
@@ -167,6 +183,7 @@ class ActivitySessionService : Service() {
         private const val TICK_MS = 1000L
         private const val FLUSH_EVERY_TICKS = 10 // flush the track ~every 10s
         const val ACTION_START = "com.blizzardcaron.freeolleefaces.activity.START"
+        const val ACTION_START_LIVE = "com.blizzardcaron.freeolleefaces.activity.START_LIVE"
         const val ACTION_STOP = "com.blizzardcaron.freeolleefaces.activity.STOP"
         const val ACTION_CYCLE = "com.blizzardcaron.freeolleefaces.activity.CYCLE"
         const val ACTION_SET_UNIT = "com.blizzardcaron.freeolleefaces.activity.SET_UNIT"
@@ -181,6 +198,7 @@ class ActivitySessionService : Service() {
         }
 
         fun start(context: Context) = send(context, ACTION_START, foreground = true)
+        fun startLive(context: Context) = send(context, ACTION_START_LIVE, foreground = true)
         fun stop(context: Context) = send(context, ACTION_STOP, foreground = false)
         fun cycle(context: Context) = send(context, ACTION_CYCLE, foreground = false)
         fun setUnit(context: Context) = send(context, ACTION_SET_UNIT, foreground = false)

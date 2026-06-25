@@ -25,14 +25,24 @@ fun ActivityTab(viewModel: AppViewModel, modifier: Modifier) {
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
     ) { granted -> if (granted) viewModel.activity.onStart() }
+    val livePermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted -> if (granted) viewModel.activity.onShowLive() }
+    fun hasLocation() = ContextCompat.checkSelfPermission(
+        context, Manifest.permission.ACCESS_FINE_LOCATION,
+    ) == PackageManager.PERMISSION_GRANTED
     val startWithPermission: () -> Unit = {
-        val granted = ContextCompat.checkSelfPermission(
-            context, Manifest.permission.ACCESS_FINE_LOCATION,
-        ) == PackageManager.PERMISSION_GRANTED
-        if (granted) {
+        if (hasLocation()) {
             viewModel.activity.onStart()
         } else {
             permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+    }
+    val showLiveWithPermission: () -> Unit = {
+        if (hasLocation()) {
+            viewModel.activity.onShowLive()
+        } else {
+            livePermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
         }
     }
     ActivityScreen(
@@ -42,6 +52,7 @@ fun ActivityTab(viewModel: AppViewModel, modifier: Modifier) {
         lastSummary = AndroidActivityTrackStore(context).latest()?.summary,
         callbacks = ActivityCallbacks(
             onStart = startWithPermission,
+            onShowLive = showLiveWithPermission,
             onStop = { viewModel.activity.onStop() },
             onMode = { viewModel.activity.onMode() },
             onToggleUnit = { viewModel.activity.toggleUnit() },
