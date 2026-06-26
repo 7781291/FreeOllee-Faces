@@ -21,6 +21,8 @@ data class HomeCallbacks(
 data class SettingsCallbacks(
     val onBack: () -> Unit,
     val onSelectWatch: () -> Unit,
+    val onDisconnect: () -> Unit,
+    val onUnsetWatch: () -> Unit,
     val onIntervalChange: (Int) -> Unit,
     val onPowerSavingEnabledChange: (Boolean) -> Unit,
     val onScreenSleepTimeoutChange: (Int) -> Unit,

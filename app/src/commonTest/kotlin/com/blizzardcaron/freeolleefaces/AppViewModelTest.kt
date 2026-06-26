@@ -181,6 +181,34 @@ class AppViewModelTest {
     }
 
     @Test
+    fun onDisconnect_dropsLink_butKeepsSelectedWatch() = runTest(testScheduler) {
+        val fake = FakeWatchConnection(connectResult = ConnectionStatus.Connected)
+        val prefs = Prefs(MapSettings()).apply { watchAddress = this@AppViewModelTest.watchAddress }
+        val vm = vmWith(fake, prefs)
+
+        vm.onDisconnect()
+        advanceUntilIdle()
+
+        assertEquals(1, fake.disconnectCount, "onDisconnect should release the held link")
+        assertEquals(watchAddress, prefs.watchAddress, "disconnect must NOT forget the selected watch")
+    }
+
+    @Test
+    fun onUnsetWatch_forgetsWatch_andShowsNoWatch() = runTest(testScheduler) {
+        val fake = FakeWatchConnection(connectResult = ConnectionStatus.Connected)
+        val prefs = Prefs(MapSettings()).apply { watchAddress = this@AppViewModelTest.watchAddress }
+        val vm = vmWith(fake, prefs)
+
+        vm.onUnsetWatch()
+        advanceUntilIdle()
+
+        assertEquals(1, fake.disconnectCount, "unset should release the held link")
+        assertEquals(null, prefs.watchAddress, "unset should clear the saved watch address")
+        assertEquals(false, vm.state.watchSelected, "unset should mark no watch selected")
+        assertEquals(ConnectionStatus.NoWatch, vm.state.connectionStatus, "unset should show NoWatch")
+    }
+
+    @Test
     fun onWatchPicked_connects() = runTest(testScheduler) {
         val fake = FakeWatchConnection()
         val vm = vmWith(fake, Prefs(MapSettings()))   // no watch yet

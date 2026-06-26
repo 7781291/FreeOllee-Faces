@@ -262,4 +262,22 @@ class AppViewModel(
         val addr = prefs.watchAddress ?: return
         viewModelScope.launch { watchConnection.connect(addr) }
     }
+
+    /** Disconnect button: drop the held link but keep the selected watch; a send or Reconnect re-links. */
+    fun onDisconnect() {
+        watchConnection.disconnect()
+    }
+
+    /** Unset button: forget the selected watch entirely — drop the link, clear the address, show NoWatch. */
+    fun onUnsetWatch() {
+        watchConnection.disconnect()
+        prefs.watchAddress = null
+        update {
+            it.copy(
+                watchLabel = "Watch: none selected",
+                watchSelected = false,
+                connectionStatus = ConnectionStatus.NoWatch,
+            )
+        }
+    }
 }
