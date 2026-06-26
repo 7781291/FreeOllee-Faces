@@ -28,6 +28,7 @@ class ActivitySessionEngine(
     private val newId: () -> String = {
         "${Clock.System.now().toEpochMilliseconds()}-${Random.nextInt(ID_RANDOM_BOUND)}"
     },
+    private val metricsConfig: () -> ActivityMetricsConfig = { ActivityMetricsConfig.DEFAULT },
 ) {
     private val _state = MutableStateFlow(ActivityState())
     val state: StateFlow<ActivityState> = _state.asStateFlow()
@@ -38,6 +39,7 @@ class ActivitySessionEngine(
     private var unit: ActivityUnit = ActivityUnit.IMPERIAL
     private val points = mutableListOf<TrackPoint>()
     private var selectedMetric: ActivityMetric = ActivityMetric.PACE
+    private var config: ActivityMetricsConfig = ActivityMetricsConfig.DEFAULT
     private var recording = false
     private val pusher = NameplatePusher(ble)
 
@@ -47,8 +49,9 @@ class ActivitySessionEngine(
         unit = prefs.activityUnit
         trackId = newId()
         points.clear()
-        selectedMetric = ActivityMetric.PACE
+        config = metricsConfig()
         recording = true
+        selectedMetric = activeOrder().first()
         session = ActivitySession(startedAtMs)
         _state.value = ActivityState(running = true, recording = true, selectedMetric = selectedMetric)
         watchAddress()?.let { autoSleep.disableForActivity(it) }
@@ -60,8 +63,9 @@ class ActivitySessionEngine(
         startedAtMs = now()
         unit = prefs.activityUnit
         points.clear()
-        selectedMetric = ActivityMetric.ORIENTATION
+        config = metricsConfig()
         recording = false
+        selectedMetric = activeOrder().first()
         session = ActivitySession(startedAtMs)
         _state.value = ActivityState(running = true, recording = false, selectedMetric = selectedMetric)
     }
@@ -76,8 +80,8 @@ class ActivitySessionEngine(
         trackId = newId()
         startedAtMs = now()
         points.clear()
-        selectedMetric = ActivityMetric.PACE
         recording = true
+        selectedMetric = activeOrder().first()
         _state.value = _state.value.copy(recording = true, selectedMetric = selectedMetric)
         watchAddress()?.let { autoSleep.disableForActivity(it) }
     }
@@ -99,6 +103,7 @@ class ActivitySessionEngine(
             headingDeg = heading,
             altitudeM = coords.altM ?: _state.value.altitudeM,
             pressureHpa = _state.value.pressureHpa,
+            hasFix = true,
         )
     }
 
@@ -116,23 +121,31 @@ class ActivitySessionEngine(
             headingDeg = prev.headingDeg,
             altitudeM = prev.altitudeM,
             pressureHpa = prev.pressureHpa,
+            hasFix = prev.hasFix,
         )
-        val raw = selectedMetric.render(st, unit)
+        val raw = when {
+            prev.hasFix -> selectedMetric.render(st, unit)
+            selectedMetric == ActivityMetric.PRESSURE && st.pressureHpa != null ->
+                selectedMetric.render(st, unit)
+            else -> ACQUIRING_NAMEPLATE
+        }
         val reachable = pusher.maybePush(watchAddress(), raw, nowMs, prev.watchReachable)
         _state.value = st.copy(watchReachable = reachable, lastPushText = pusher.lastPushText)
     }
 
     fun cycleMetric() {
-        val allowed =
-            if (recording) {
-                ActivityMetric.entries
-            } else {
-                listOf(ActivityMetric.ORIENTATION, ActivityMetric.ALTITUDE, ActivityMetric.PRESSURE)
-            }
-        val idx = allowed.indexOf(selectedMetric).coerceAtLeast(0)
-        selectedMetric = allowed[(idx + 1) % allowed.size]
+        val order = activeOrder()
+        val idx = order.indexOf(selectedMetric).coerceAtLeast(0)
+        selectedMetric = order[(idx + 1) % order.size]
         pusher.forceNext()
         _state.value = _state.value.copy(selectedMetric = selectedMetric)
+    }
+
+    private fun activeOrder(): List<ActivityMetric> {
+        val mode = if (recording) ActivityMode.RECORDING else ActivityMode.GLANCE
+        return config.enabledOrder(mode).ifEmpty {
+            listOf(if (recording) ActivityMetric.PACE else ActivityMetric.ORIENTATION)
+        }
     }
 
     fun setUnit(newUnit: ActivityUnit) {
@@ -180,5 +193,6 @@ class ActivitySessionEngine(
         const val MILLIS_PER_SECOND = 1000.0
         const val METERS_PER_KM = 1000.0
         const val SPEED_GATE_MPS = 0.5f
+        const val ACQUIRING_NAMEPLATE = " GPS  " // 6 cells: steady GPS-lock indicator until first fix
     }
 }

@@ -1,0 +1,79 @@
+package com.blizzardcaron.freeolleefaces.activity
+
+import com.blizzardcaron.freeolleefaces.fakes.FakeActivityTrackStore
+import com.blizzardcaron.freeolleefaces.fakes.FakeBleClient
+import com.blizzardcaron.freeolleefaces.fakes.FakeSessionAutoSleep
+import com.blizzardcaron.freeolleefaces.location.Coords
+import com.blizzardcaron.freeolleefaces.prefs.Prefs
+import com.russhwolf.settings.MapSettings
+import kotlinx.coroutines.test.runTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
+
+class ActivitySessionEngineGpsLockTest {
+    private fun ble() = FakeBleClient()
+    private fun engine(
+        ble: FakeBleClient,
+        config: ActivityMetricsConfig = ActivityMetricsConfig.DEFAULT,
+    ) = ActivitySessionEngine(
+        ble = ble, store = FakeActivityTrackStore(), prefs = Prefs(MapSettings()),
+        autoSleep = FakeSessionAutoSleep(), watchAddress = { "AA:BB" },
+        now = { 0L }, newId = { "trk" }, metricsConfig = { config },
+    )
+
+    private fun coords() = Coords(lat = 1.0, lng = 2.0, accuracyM = 5f, provider = "gps")
+
+    @Test fun hasFix_false_until_first_ingest_then_sticky() = runTest {
+        val e = engine(ble())
+        e.startLive()
+        assertFalse(e.state.value.hasFix)
+        e.ingest(coords(), nowMs = 0L)
+        assertTrue(e.state.value.hasFix)
+    }
+
+    @Test fun tick_pushes_gps_token_before_first_fix() = runTest {
+        val ble = ble()
+        val e = engine(ble)
+        e.startLive() // selected = ORIENTATION (GPS-derived)
+        e.tick(nowMs = 0L)
+        assertEquals("GPS", ble.sentNameplate().last().trim())
+    }
+
+    @Test fun pressure_pushes_real_value_before_first_fix() = runTest {
+        val ble = ble()
+        val e = engine(ble)
+        e.startLive()
+        e.cycleMetric() // -> ALTITUDE
+        e.cycleMetric() // -> PRESSURE
+        e.ingestPressure(1013.0)
+        e.tick(nowMs = 0L)
+        // Pressure is not GPS-derived: its real wire value, not the GPS token.
+        assertFalse(ble.sentNameplate().last().trim() == "GPS")
+    }
+
+    @Test fun tick_pushes_metric_after_fix() = runTest {
+        val ble = ble()
+        val e = engine(ble)
+        e.start() // recording; selected = PACE
+        e.ingest(coords(), nowMs = 0L)
+        e.tick(nowMs = 2_000L)
+        assertFalse(ble.sentNameplate().last().trim() == "GPS")
+    }
+
+    @Test fun start_selects_first_enabled_recording_metric() = runTest {
+        val config = ActivityMetricsConfig.DEFAULT.setEnabled(ActivityMode.RECORDING, ActivityMetric.PACE, false)
+        val e = engine(ble(), config)
+        e.start()
+        assertEquals(ActivityMetric.DISTANCE, e.state.value.selectedMetric)
+    }
+
+    @Test fun cycle_skips_disabled_glance_metric() = runTest {
+        val config = ActivityMetricsConfig.DEFAULT.setEnabled(ActivityMode.GLANCE, ActivityMetric.ALTITUDE, false)
+        val e = engine(ble(), config)
+        e.startLive() // ORIENTATION
+        e.cycleMetric() // skips ALTITUDE -> PRESSURE
+        assertEquals(ActivityMetric.PRESSURE, e.state.value.selectedMetric)
+    }
+}
