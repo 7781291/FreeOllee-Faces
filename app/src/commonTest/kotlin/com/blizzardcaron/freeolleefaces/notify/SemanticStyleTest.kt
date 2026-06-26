@@ -2,6 +2,7 @@ package com.blizzardcaron.freeolleefaces.notify
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class SemanticStyleTest {
 
@@ -20,7 +21,7 @@ class SemanticStyleTest {
     @Test fun everyFailureKindMapsToDangerOrCaution() {
         FailureKind.entries.forEach {
             val style = it.semanticStyle()
-            assertEquals(true, style == SemanticStyle.DANGER || style == SemanticStyle.CAUTION)
+            assertTrue(style == SemanticStyle.DANGER || style == SemanticStyle.CAUTION)
         }
     }
 }

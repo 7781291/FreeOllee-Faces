@@ -182,13 +182,12 @@ class ActivitySessionService : Service() {
     }
 
     private fun updateNotification(state: ActivityState) {
-        // Cap the post rate well under the framework limit; emissions arriving during the cooldown
-        // are dropped and the next one after it carries the latest text (the engine emits often).
-        // Skip identical text so a paused session doesn't repost the same value.
+        if (!ActivitySessionHost.isRunning) return
         val now = System.currentTimeMillis()
         val text = "${state.selectedMetric.name.lowercase()} · ${state.lastPushText ?: "…"}"
-        val throttled = now - lastNotifyAtMs < MIN_NOTIFY_INTERVAL_MS
-        if (!ActivitySessionHost.isRunning || throttled || text == lastNotifiedText) return
+        // Throttle policy (rate cap + dedupe) lives in the pure ActivityNotificationThrottle so it
+        // is unit-tested; posting on every sub-second emission would trip Android 17's rate limiter.
+        if (!ActivityNotificationThrottle.shouldPost(now, lastNotifyAtMs, text, lastNotifiedText)) return
         lastNotifyAtMs = now
         lastNotifiedText = text
         ContextCompat.getSystemService(this, NotificationManager::class.java)
@@ -260,7 +259,6 @@ class ActivitySessionService : Service() {
         private const val API_37 = 37
         private const val CHANNEL_ID = "activity_session"
         private const val TICK_MS = 1000L
-        private const val MIN_NOTIFY_INTERVAL_MS = 2000L // cap notif posts (Android 17 rate limiter)
         private const val FLUSH_EVERY_TICKS = 10 // flush the track ~every 10s
         private const val PRESSURE_PROBE_MS = 3000L // wait this long for a barometer sample
         private const val PRESSURE_NETWORK_REFRESH_MS = 600_000L // network fallback refresh ~10 min
