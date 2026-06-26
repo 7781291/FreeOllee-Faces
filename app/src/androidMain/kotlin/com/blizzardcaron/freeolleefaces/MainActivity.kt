@@ -382,9 +382,7 @@ private fun AppContent(
         Screen.Activity -> ActivityTab(viewModel, modifier)
         Screen.ActivityHistory -> ActivityHistoryTab(viewModel, modifier)
         Screen.ActivityDetail -> ActivityDetailTab(viewModel, modifier)
-        // The config screen's Compose UI lands in a follow-up task; until then, route straight
-        // back rather than leave a sealed `when` branch unhandled.
-        Screen.ActivityMetricsConfig -> viewModel.navigateTo(Screen.Activity)
+        Screen.ActivityMetricsConfig -> ActivityMetricsConfigTab(viewModel, modifier)
         Screen.Settings -> SettingsScreen(
             state = state,
             callbacks = settingsCallbacks,

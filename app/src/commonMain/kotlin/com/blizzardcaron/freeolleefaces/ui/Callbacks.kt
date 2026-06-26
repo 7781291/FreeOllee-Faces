@@ -1,5 +1,7 @@
 package com.blizzardcaron.freeolleefaces.ui
 
+import com.blizzardcaron.freeolleefaces.activity.ActivityMetric
+import com.blizzardcaron.freeolleefaces.activity.ActivityMode
 import com.blizzardcaron.freeolleefaces.alarm.Alarm
 import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
 import com.blizzardcaron.freeolleefaces.format.TempUnit
@@ -111,5 +113,13 @@ data class ActivityCallbacks(
 data class ActivityHistoryCallbacks(
     val onOpen: (String) -> Unit,
     val onDelete: (String) -> Unit,
+    val onBack: () -> Unit,
+)
+
+/** Activity-metrics-config screen callbacks (reorder + enable/disable, per mode). */
+data class ActivityMetricsConfigCallbacks(
+    val onMoveUp: (ActivityMode, Int) -> Unit,
+    val onMoveDown: (ActivityMode, Int) -> Unit,
+    val onToggle: (ActivityMode, ActivityMetric, Boolean) -> Unit,
     val onBack: () -> Unit,
 )
