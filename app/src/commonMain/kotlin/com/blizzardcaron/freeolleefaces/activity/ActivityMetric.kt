@@ -2,7 +2,9 @@ package com.blizzardcaron.freeolleefaces.activity
 
 import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
 import com.blizzardcaron.freeolleefaces.format.formatDecimal
+import com.blizzardcaron.freeolleefaces.format.groupThousands
 import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
 /**
  * The metric currently shown on the watch name-tag. `render` is the only path that produces the
@@ -23,6 +25,17 @@ enum class ActivityMetric {
         PRESSURE -> renderPressure(state.pressureHpa, unit)
     }
 
+    /** In-app, fully-unit'd interpretation of this metric. null when the underlying value is absent. */
+    fun human(state: ActivityState, unit: ActivityUnit): String? = when (this) {
+        PACE -> humanPace(state, unit)
+        DISTANCE -> humanDistance(state, unit)
+        TIME -> humanTime(state)
+        ORIENTATION -> humanOrientation(state.headingDeg)
+        ALTITUDE -> humanAltitude(state.altitudeM, unit)
+        PRESSURE -> humanPressure(state.pressureHpa, unit)
+    }
+
+    @Suppress("TooManyFunctions")
     private companion object {
         const val SECONDS_PER_MINUTE = 60
         const val SECONDS_PER_HOUR = 3600
@@ -90,6 +103,57 @@ enum class ActivityMetric {
             val h = (totalSec / SECONDS_PER_HOUR).coerceAtMost(MAX_HOURS.toLong())
             val m = ((totalSec % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE).toString().padStart(2, '0')
             return "${h}h$m"
+        }
+
+        const val INHG_PER_HPA = 0.0295299830714
+        const val INHG_DECIMALS = 2
+        const val DISTANCE_DECIMALS = 2
+        const val COMPASS_DEGREE_WIDTH = 3
+
+        fun humanPace(state: ActivityState, unit: ActivityUnit): String? {
+            val secPerKm = state.recentPaceSecPerKm
+            if (secPerKm == null || secPerKm <= 0.0) return null
+            val secs = unit.paceSecondsPerUnit(secPerKm).roundToInt().coerceAtLeast(0)
+            val mm = secs / SECONDS_PER_MINUTE
+            val ss = (secs % SECONDS_PER_MINUTE).toString().padStart(2, '0')
+            return "$mm:$ss /${unit.distanceSuffix}"
+        }
+
+        fun humanDistance(state: ActivityState, unit: ActivityUnit): String {
+            val distance = unit.distance(state.distanceMeters).coerceAtLeast(0.0)
+            return "${formatDecimal(distance, DISTANCE_DECIMALS)} ${unit.distanceSuffix}"
+        }
+
+        fun humanTime(state: ActivityState): String {
+            val totalSec = state.elapsedMs / MILLIS_PER_SECOND
+            val h = totalSec / SECONDS_PER_HOUR
+            val m = (totalSec % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE
+            val s = totalSec % SECONDS_PER_MINUTE
+            return listOf(h, m, s).joinToString(":") { it.toString().padStart(2, '0') }
+        }
+
+        fun humanOrientation(headingDeg: Float?): String? {
+            if (headingDeg == null) return null
+            val deg = (headingDeg.roundToInt() % FULL_CIRCLE + FULL_CIRCLE) % FULL_CIRCLE
+            return "${deg.toString().padStart(COMPASS_DEGREE_WIDTH, '0')}° ${cardinal8(headingDeg).trimEnd()}"
+        }
+
+        fun humanAltitude(altM: Double?, unit: ActivityUnit): String? {
+            if (altM == null) return null
+            return if (unit == ActivityUnit.IMPERIAL) {
+                "${groupThousands((altM * FEET_PER_METER).roundToLong())} ft"
+            } else {
+                "${groupThousands(altM.roundToLong())} m"
+            }
+        }
+
+        fun humanPressure(hpa: Double?, unit: ActivityUnit): String? {
+            if (hpa == null) return null
+            return if (unit == ActivityUnit.IMPERIAL) {
+                "${formatDecimal(hpa * INHG_PER_HPA, INHG_DECIMALS)} inHg"
+            } else {
+                "${hpa.roundToInt()} hPa"
+            }
         }
     }
 }
