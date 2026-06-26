@@ -14,7 +14,8 @@ object ActivityPushDecider {
         msSinceLastPush: Long,
         forced: Boolean,
     ): Boolean {
-        if (msSinceLastPush < MIN_PUSH_INTERVAL_MS) return false
+        // The 1 Hz floor applies only between pushes, never to the first push
+        if (lastPushedText != null && msSinceLastPush < MIN_PUSH_INTERVAL_MS) return false
         return forced ||
             lastPushedText == null ||
             newText != lastPushedText ||

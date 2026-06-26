@@ -7,7 +7,7 @@ import kotlin.test.assertTrue
 class ActivityPushDeciderTest {
 
     @Test fun first_push_always_sends() {
-        assertTrue(ActivityPushDecider.shouldPush(null, "P 8:30", 1_000L, forced = false))
+        assertTrue(ActivityPushDecider.shouldPush(null, "P 8:30", 0L, forced = false))
     }
 
     @Test fun changed_text_sends() {

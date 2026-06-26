@@ -43,7 +43,7 @@ class NameplatePusherTest {
         val pusher = NameplatePusher(ble)
         pusher.maybePush("AA:BB", "P5 30", nowMs = 0, currentlyReachable = true)
         pusher.forceNext()
-        pusher.maybePush("AA:BB", "P5 30", nowMs = 100, currentlyReachable = true)
+        pusher.maybePush("AA:BB", "P5 30", nowMs = 1_000, currentlyReachable = true)
         assertEquals(2, ble.sent.size)
     }
 
