@@ -79,6 +79,16 @@ private fun WatchSection(state: HomeState, callbacks: SettingsCallbacks) {
             Text(if (state.watchSelected) "change" else "select")
         }
     }
+    // Drop the live BLE link (Disconnect) or forget the watch entirely (Unset); only meaningful
+    // when a watch is selected. Unset returns the app to the no-watch / setup-incomplete state.
+    if (state.watchSelected) {
+        Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+            TextButton(onClick = callbacks.onDisconnect) { Text("Disconnect") }
+            TextButton(onClick = callbacks.onUnsetWatch) {
+                Text("Unset", color = MaterialTheme.colorScheme.error)
+            }
+        }
+    }
 }
 
 @Composable

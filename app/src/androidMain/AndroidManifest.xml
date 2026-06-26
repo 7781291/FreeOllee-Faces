@@ -8,6 +8,9 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Android 17: lets the activity foreground notification be promoted to a Live Update chip
+         (Notification.setRequestPromotedOngoing). Without it the request is ignored. -->
+    <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />

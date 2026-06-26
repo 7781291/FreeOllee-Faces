@@ -237,6 +237,8 @@ private fun rememberAppCallbacks(
     val settingsCallbacks = SettingsCallbacks(
         onBack = { viewModel.navigateTo(Screen.Home) },
         onSelectWatch = perms::selectWatch,
+        onDisconnect = { viewModel.onDisconnect() },
+        onUnsetWatch = { viewModel.onUnsetWatch() },
         onIntervalChange = { mins -> viewModel.settings.setInterval(mins) },
         onPowerSavingEnabledChange = { enabled -> viewModel.settings.setPowerSavingEnabled(enabled) },
         onScreenSleepTimeoutChange = { sec -> viewModel.settings.setScreenSleepTimeout(sec) },

@@ -48,6 +48,7 @@ class AutoUpdateWorker(
 
     override suspend fun doWork(): Result {
         val ctx = applicationContext
+        JobDiagnostics.logPendingJobReasons(ctx)
         val prefs = Prefs(appSettings(ctx))
 
         val face = prefs.activeComplication

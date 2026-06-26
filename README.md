@@ -98,6 +98,10 @@ and publishes it as a GitHub Release — see the
 opt out by putting `[skip release]` in its title; a companion workflow rejects merges
 that forget to bump `VERSION`. APKs are not committed to the repository.
 
+The easiest way to stay current without hand-downloading each APK is
+[Obtainium](https://obtainium.page) — point it at this repo's Releases and it will track,
+notify, and install new versions for you straight from GitHub.
+
 ## License
 
 Super FreeOllee is free software, licensed under the **GNU General Public License v3.0**

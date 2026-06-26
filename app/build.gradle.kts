@@ -70,12 +70,12 @@ kotlin {
 
 android {
     namespace = "com.blizzardcaron.freeolleefaces"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.blizzardcaron.freeolleefaces"
         minSdk = 31
-        targetSdk = 36
+        targetSdk = 37
         versionCode = appVersionCode
         versionName = appVersionName
     }
