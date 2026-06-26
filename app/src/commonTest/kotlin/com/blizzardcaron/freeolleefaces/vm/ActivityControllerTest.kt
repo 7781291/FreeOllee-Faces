@@ -1,5 +1,6 @@
 package com.blizzardcaron.freeolleefaces.vm
 
+import com.blizzardcaron.freeolleefaces.activity.ActivityMetricsRepository
 import com.blizzardcaron.freeolleefaces.activity.ActivitySessionLauncher
 import com.blizzardcaron.freeolleefaces.activity.ActivityState
 import com.blizzardcaron.freeolleefaces.activity.ActivityUnit
@@ -33,6 +34,7 @@ class ActivityControllerTest {
         prefs = prefs,
         hasLocationPermission = { permission },
         showSnackbar = { snackbars += it },
+        metricsRepo = ActivityMetricsRepository(MapSettings()),
     )
 
     @Test fun onStart_without_permission_does_not_launch_and_warns() {

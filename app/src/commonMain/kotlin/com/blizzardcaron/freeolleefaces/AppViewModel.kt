@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.blizzardcaron.freeolleefaces.activity.ActivityMetricsRepository
 import com.blizzardcaron.freeolleefaces.activity.ActivityRetention
 import com.blizzardcaron.freeolleefaces.activity.ActivitySessionLauncher
 import com.blizzardcaron.freeolleefaces.activity.ActivityTrack
@@ -62,6 +63,7 @@ class AppViewModel(
     private val location: LocationProvider,
     private val notificationAccess: NotificationAccessChecker,
     private val timerRepo: TimerSetsRepository,
+    private val metricsRepo: ActivityMetricsRepository,
     private val scheduler: Scheduler,
     private val alarmRepo: AlarmsRepository,
     private val alarmScheduler: AlarmScheduler,
@@ -130,6 +132,7 @@ class AppViewModel(
         prefs = prefs,
         hasLocationPermission = hasLocationPermission,
         showSnackbar = ::emitEvent,
+        metricsRepo = metricsRepo,
     )
 
     private val _events = Channel<String>(Channel.BUFFERED) // snackbar messages

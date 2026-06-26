@@ -64,6 +64,7 @@ fun ActivityTab(viewModel: AppViewModel, modifier: Modifier) {
             onMode = { viewModel.activity.onMode() },
             onToggleUnit = { viewModel.activity.toggleUnit() },
             onOpenHistory = { viewModel.navigateTo(Screen.ActivityHistory) },
+            onConfigureMetrics = { viewModel.navigateTo(Screen.ActivityMetricsConfig) },
         ),
         modifier = modifier,
     )
