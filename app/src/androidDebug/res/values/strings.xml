@@ -1,5 +1,6 @@
 <resources>
-    <!-- Debug builds install as a separate app (….debug); a distinct label makes it obvious
-         in the drawer which one is the dev/test build vs the real GitHub release. -->
-    <string name="app_name">Super FreeOllee (debug)</string>
+    <!-- Debug builds install as a separate app (….debug); the label leads with "Debug" so it
+         stays distinguishable from the release "Super FreeOllee" even when the launcher truncates
+         long titles (a trailing "(debug)" gets cut off and the two look identical otherwise). -->
+    <string name="app_name">Debug FreeOllee</string>
 </resources>
