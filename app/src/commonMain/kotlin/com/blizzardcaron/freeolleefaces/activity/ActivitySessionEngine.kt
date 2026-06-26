@@ -98,7 +98,14 @@ class ActivitySessionEngine(
             recording = recording,
             headingDeg = heading,
             altitudeM = coords.altM ?: _state.value.altitudeM,
+            pressureHpa = _state.value.pressureHpa,
         )
+    }
+
+    /** Fold a fresh barometric-pressure reading into state (null = unavailable). */
+    fun ingestPressure(hpa: Double?) {
+        if (session == null) return
+        _state.value = _state.value.copy(pressureHpa = hpa)
     }
 
     suspend fun tick(nowMs: Long) {
@@ -108,6 +115,7 @@ class ActivitySessionEngine(
             recording = recording,
             headingDeg = prev.headingDeg,
             altitudeM = prev.altitudeM,
+            pressureHpa = prev.pressureHpa,
         )
         val raw = selectedMetric.render(st, unit)
         val reachable = pusher.maybePush(watchAddress(), raw, nowMs, prev.watchReachable)
@@ -119,7 +127,7 @@ class ActivitySessionEngine(
             if (recording) {
                 ActivityMetric.entries
             } else {
-                listOf(ActivityMetric.ORIENTATION, ActivityMetric.ALTITUDE)
+                listOf(ActivityMetric.ORIENTATION, ActivityMetric.ALTITUDE, ActivityMetric.PRESSURE)
             }
         val idx = allowed.indexOf(selectedMetric).coerceAtLeast(0)
         selectedMetric = allowed[(idx + 1) % allowed.size]

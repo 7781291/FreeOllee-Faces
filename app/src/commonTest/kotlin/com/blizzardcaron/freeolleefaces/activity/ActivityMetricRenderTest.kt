@@ -57,6 +57,7 @@ class ActivityMetricRenderTest {
         assertEquals(ActivityMetric.TIME, ActivityMetric.DISTANCE.next())
         assertEquals(ActivityMetric.ORIENTATION, ActivityMetric.TIME.next())
         assertEquals(ActivityMetric.ALTITUDE, ActivityMetric.ORIENTATION.next())
-        assertEquals(ActivityMetric.PACE, ActivityMetric.ALTITUDE.next())
+        assertEquals(ActivityMetric.PRESSURE, ActivityMetric.ALTITUDE.next())
+        assertEquals(ActivityMetric.PACE, ActivityMetric.PRESSURE.next())
     }
 }

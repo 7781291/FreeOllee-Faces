@@ -1,15 +1,16 @@
 package com.blizzardcaron.freeolleefaces.activity
 
+import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
 import com.blizzardcaron.freeolleefaces.format.formatDecimal
 import kotlin.math.roundToInt
 
 /**
  * The metric currently shown on the watch name-tag. `render` is the only path that produces the
- * 6-char wire string. TODO (designed-for, not built): ORIENTATION, ALTITUDE, PRESSURE — add as
- * new entries plus render branches; the track schema (`TrackPoint.altM`) already reserves altitude.
+ * 6-char wire string. ORIENTATION/ALTITUDE/PRESSURE are the live-glance instruments (PRESSURE from
+ * the phone barometer, network fallback); the track schema (`TrackPoint.altM`) reserves altitude.
  */
 enum class ActivityMetric {
-    PACE, DISTANCE, TIME, ORIENTATION, ALTITUDE;
+    PACE, DISTANCE, TIME, ORIENTATION, ALTITUDE, PRESSURE;
 
     fun next(): ActivityMetric = entries[(ordinal + 1) % entries.size]
 
@@ -19,6 +20,7 @@ enum class ActivityMetric {
         TIME -> renderTime(state)
         ORIENTATION -> renderOrientation(state.headingDeg)
         ALTITUDE -> renderAltitude(state.altitudeM, unit)
+        PRESSURE -> renderPressure(state.pressureHpa, unit)
     }
 
     private companion object {
@@ -46,6 +48,13 @@ enum class ActivityMetric {
                 if (unit == ActivityUnit.IMPERIAL) (altM * FEET_PER_METER) to 'f' else altM to 'm'
             val num = value.roundToInt().toString()
             return if (num.length >= NAMEPLATE_WIDTH) num.take(NAMEPLATE_WIDTH) else "$num$suffix"
+        }
+
+        // Barometric pressure from the phone sensor (network fallback). Imperial → inHg ("29.91",
+        // '.' renders as a dash on the nameplate); metric → whole hPa ("1013").
+        fun renderPressure(hpa: Double?, unit: ActivityUnit): String {
+            if (hpa == null) return "----"
+            return DisplayFormatter.pressure(hpa, imperial = unit == ActivityUnit.IMPERIAL)
         }
 
         // The watch nameplate cells render ':' blank and '.' as a dash, and have no legible mi/km

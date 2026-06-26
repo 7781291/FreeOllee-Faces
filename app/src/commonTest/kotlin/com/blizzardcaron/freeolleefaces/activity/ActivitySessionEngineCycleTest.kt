@@ -15,24 +15,26 @@ class ActivitySessionEngineCycleTest {
         autoSleep = FakeSessionAutoSleep(), watchAddress = { "AA:BB" }, now = { 0L }, newId = { "trk" },
     )
 
-    @Test fun live_mode_cycles_only_orientation_and_altitude() = runTest {
+    @Test fun live_mode_cycles_orientation_altitude_pressure() = runTest {
         val e = engine()
         e.startLive()
         assertEquals(ActivityMetric.ORIENTATION, e.state.value.selectedMetric)
         e.cycleMetric()
         assertEquals(ActivityMetric.ALTITUDE, e.state.value.selectedMetric)
         e.cycleMetric()
+        assertEquals(ActivityMetric.PRESSURE, e.state.value.selectedMetric)
+        e.cycleMetric()
         assertEquals(ActivityMetric.ORIENTATION, e.state.value.selectedMetric)
     }
 
-    @Test fun recording_cycles_all_five() = runTest {
+    @Test fun recording_cycles_all_six() = runTest {
         val e = engine()
         e.start()
-        val seen = buildList { repeat(5) { add(e.state.value.selectedMetric); e.cycleMetric() } }
+        val seen = buildList { repeat(6) { add(e.state.value.selectedMetric); e.cycleMetric() } }
         assertEquals(
             listOf(
                 ActivityMetric.PACE, ActivityMetric.DISTANCE, ActivityMetric.TIME,
-                ActivityMetric.ORIENTATION, ActivityMetric.ALTITUDE,
+                ActivityMetric.ORIENTATION, ActivityMetric.ALTITUDE, ActivityMetric.PRESSURE,
             ),
             seen,
         )

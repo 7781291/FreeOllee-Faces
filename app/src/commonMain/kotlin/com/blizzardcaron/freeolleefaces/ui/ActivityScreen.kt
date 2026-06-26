@@ -88,6 +88,7 @@ private fun RunningContent(
     } else {
         MetricReadout("Compass", ActivityMetric.ORIENTATION, state, unit)
         MetricReadout("Altitude", ActivityMetric.ALTITUDE, state, unit)
+        MetricReadout("Pressure", ActivityMetric.PRESSURE, state, unit)
     }
     val watchStatusText = if (!watchSelected) {
         if (state.recording) "No watch — recording only" else "No watch — glance only"

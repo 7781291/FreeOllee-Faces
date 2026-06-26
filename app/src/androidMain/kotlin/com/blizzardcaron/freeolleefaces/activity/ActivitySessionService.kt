@@ -15,8 +15,11 @@ import androidx.core.content.ContextCompat
 import com.blizzardcaron.freeolleefaces.R
 import com.blizzardcaron.freeolleefaces.ble.AndroidBleClient
 import com.blizzardcaron.freeolleefaces.location.AndroidLocationStream
+import com.blizzardcaron.freeolleefaces.location.Coords
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
 import com.blizzardcaron.freeolleefaces.prefs.appSettings
+import com.blizzardcaron.freeolleefaces.weather.OpenMeteoClient
+import com.blizzardcaron.freeolleefaces.weather.RetryPolicy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -38,6 +41,10 @@ class ActivitySessionService : Service() {
     private lateinit var prefs: Prefs
     private lateinit var engine: ActivitySessionEngine
     private var loops: Job? = null
+
+    // Latest GPS fix, used by the network-pressure fallback when the phone has no barometer.
+    @Volatile
+    private var lastCoords: Coords? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -97,7 +104,10 @@ class ActivitySessionService : Service() {
         startEngine()
         val location = launch {
             AndroidLocationStream(this@ActivitySessionService).stream()
-                .onEach { engine.ingest(it, System.currentTimeMillis()) }
+                .onEach {
+                    lastCoords = it
+                    engine.ingest(it, System.currentTimeMillis())
+                }
                 .launchIn(this)
         }
         val ticker = launch {
@@ -108,8 +118,35 @@ class ActivitySessionService : Service() {
                 delay(TICK_MS)
             }
         }
+        val pressure = launch { drivePressure() }
         location.join()
         ticker.join()
+        pressure.join()
+    }
+
+    // Barometric pressure for the PRESSURE glance metric: prefer the phone sensor (live, local); if
+    // there's no barometer, fall back to network surface pressure at the latest GPS fix.
+    private suspend fun drivePressure() = kotlinx.coroutines.coroutineScope {
+        var sawSensor = false
+        val sensor = launch {
+            AndroidPressureStream(this@ActivitySessionService).stream().onEach {
+                sawSensor = true
+                engine.ingestPressure(it)
+            }.launchIn(this)
+        }
+        delay(PRESSURE_PROBE_MS)
+        if (sawSensor) {
+            sensor.join()
+            return@coroutineScope
+        }
+        sensor.cancel()
+        while (isActive) {
+            val hpa = lastCoords?.let {
+                OpenMeteoClient.currentPressureHpa(it.lat, it.lng, RetryPolicy.Preview).getOrNull()
+            }
+            engine.ingestPressure(hpa)
+            delay(PRESSURE_NETWORK_REFRESH_MS)
+        }
     }
 
     private fun stopSession(abnormal: Boolean) {
@@ -182,6 +219,8 @@ class ActivitySessionService : Service() {
         private const val CHANNEL_ID = "activity_session"
         private const val TICK_MS = 1000L
         private const val FLUSH_EVERY_TICKS = 10 // flush the track ~every 10s
+        private const val PRESSURE_PROBE_MS = 3000L // wait this long for a barometer sample
+        private const val PRESSURE_NETWORK_REFRESH_MS = 600_000L // network fallback refresh ~10 min
         const val ACTION_START = "com.blizzardcaron.freeolleefaces.activity.START"
         const val ACTION_START_LIVE = "com.blizzardcaron.freeolleefaces.activity.START_LIVE"
         const val ACTION_STOP = "com.blizzardcaron.freeolleefaces.activity.STOP"

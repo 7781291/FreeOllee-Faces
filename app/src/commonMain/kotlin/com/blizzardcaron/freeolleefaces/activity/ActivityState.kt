@@ -12,4 +12,5 @@ data class ActivityState(
     val lastPushText: String? = null,
     val headingDeg: Float? = null,
     val altitudeM: Double? = null,
+    val pressureHpa: Double? = null,
 )

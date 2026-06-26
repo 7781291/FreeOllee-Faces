@@ -31,4 +31,19 @@ class ActivityMetricInstrumentRenderTest {
         val s = ActivityState(altitudeM = null)
         assertEquals("---", ActivityMetric.ALTITUDE.render(s, metric))
     }
+
+    @Test fun pressure_metric_renders_whole_hpa() {
+        val s = ActivityState(pressureHpa = 1013.0)
+        assertEquals("  1013", ActivityMetric.PRESSURE.render(s, metric))
+    }
+
+    @Test fun pressure_imperial_renders_inhg() {
+        val s = ActivityState(pressureHpa = 1013.0)
+        assertEquals(" 29.91", ActivityMetric.PRESSURE.render(s, imperial))
+    }
+
+    @Test fun pressure_null_renders_placeholder() {
+        val s = ActivityState(pressureHpa = null)
+        assertEquals("----", ActivityMetric.PRESSURE.render(s, metric))
+    }
 }
