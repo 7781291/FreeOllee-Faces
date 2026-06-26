@@ -1,4 +1,4 @@
-package com.blizzardcaron.freeolleefaces.instruments
+package com.blizzardcaron.freeolleefaces.activity
 
 private val CARDINALS = listOf("N ", "NE", "E ", "SE", "S ", "SW", "W ", "NW")
 private const val SECTORS = 8

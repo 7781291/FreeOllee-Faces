@@ -5,5 +5,7 @@ fun ActiveComplication.displayLabel(): String = when (this) {
     ActiveComplication.TEMPERATURE -> "Temperature"
     ActiveComplication.SUN -> "Sun event"
     ActiveComplication.STEPS -> "Steps"
+    ActiveComplication.PRESSURE -> "Pressure"
+    ActiveComplication.ALTITUDE -> "Altitude"
     ActiveComplication.CUSTOM -> "Custom"
 }

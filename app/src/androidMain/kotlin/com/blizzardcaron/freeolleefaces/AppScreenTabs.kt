@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -16,9 +17,6 @@ import com.blizzardcaron.freeolleefaces.ui.ActivityDetailScreen
 import com.blizzardcaron.freeolleefaces.ui.ActivityHistoryCallbacks
 import com.blizzardcaron.freeolleefaces.ui.ActivityHistoryScreen
 import com.blizzardcaron.freeolleefaces.ui.ActivityScreen
-import com.blizzardcaron.freeolleefaces.ui.HomeState
-import com.blizzardcaron.freeolleefaces.ui.InstrumentsCallbacks
-import com.blizzardcaron.freeolleefaces.ui.InstrumentsScreen
 import com.blizzardcaron.freeolleefaces.ui.Screen
 
 @Composable
@@ -28,15 +26,31 @@ fun ActivityTab(viewModel: AppViewModel, modifier: Modifier) {
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
     ) { granted -> if (granted) viewModel.activity.onStart() }
+    val livePermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted -> if (granted) viewModel.activity.onShowLive() }
+    fun hasLocation() = ContextCompat.checkSelfPermission(
+        context, Manifest.permission.ACCESS_FINE_LOCATION,
+    ) == PackageManager.PERMISSION_GRANTED
     val startWithPermission: () -> Unit = {
-        val granted = ContextCompat.checkSelfPermission(
-            context, Manifest.permission.ACCESS_FINE_LOCATION,
-        ) == PackageManager.PERMISSION_GRANTED
-        if (granted) {
+        if (hasLocation()) {
             viewModel.activity.onStart()
         } else {
             permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
         }
+    }
+    val showLiveWithPermission: () -> Unit = {
+        if (hasLocation()) {
+            viewModel.activity.onShowLive()
+        } else {
+            livePermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+    }
+    // Auto-start the live instrument glance on tab entry — but only when location is already
+    // granted, so merely opening the Activity tab never fires a system permission dialog. If a
+    // session is already running (e.g. returning mid-recording), leave it untouched.
+    LaunchedEffect(Unit) {
+        if (!activityState.running && hasLocation()) viewModel.activity.onShowLive()
     }
     ActivityScreen(
         state = activityState,
@@ -45,42 +59,11 @@ fun ActivityTab(viewModel: AppViewModel, modifier: Modifier) {
         lastSummary = AndroidActivityTrackStore(context).latest()?.summary,
         callbacks = ActivityCallbacks(
             onStart = startWithPermission,
+            onShowLive = showLiveWithPermission,
             onStop = { viewModel.activity.onStop() },
             onMode = { viewModel.activity.onMode() },
             onToggleUnit = { viewModel.activity.toggleUnit() },
             onOpenHistory = { viewModel.navigateTo(Screen.ActivityHistory) },
-        ),
-        modifier = modifier,
-    )
-}
-
-@Composable
-fun InstrumentsTab(viewModel: AppViewModel, state: HomeState, modifier: Modifier) {
-    val context = LocalContext.current
-    val instrumentsState by viewModel.instruments.state.collectAsState()
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { _ -> viewModel.instruments.onStart() }
-    val startWithPermission: () -> Unit = {
-        val granted = ContextCompat.checkSelfPermission(
-            context, Manifest.permission.ACCESS_FINE_LOCATION,
-        ) == PackageManager.PERMISSION_GRANTED
-        if (granted) {
-            viewModel.instruments.onStart()
-        } else {
-            permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-        }
-    }
-    InstrumentsScreen(
-        state = instrumentsState,
-        unit = viewModel.instruments.activityUnit,
-        tempUnit = state.tempUnit,
-        watchSelected = viewModel.instruments.watchSelected,
-        callbacks = InstrumentsCallbacks(
-            onStart = startWithPermission,
-            onStop = { viewModel.instruments.onStop() },
-            onMode = { viewModel.instruments.onMode() },
-            onToggleUnit = { viewModel.instruments.toggleUnit() },
         ),
         modifier = modifier,
     )

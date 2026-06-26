@@ -30,6 +30,14 @@ data class HomeState(
     val sunUpdated: String? = null,
     val sunNext: String? = null,
 
+    val pressurePreview: PreviewState = PreviewState.WaitingForCoords,
+    val pressureUpdated: String? = null,
+    val pressureNext: String? = null,
+
+    val altitudePreview: PreviewState = PreviewState.WaitingForCoords,
+    val altitudeUpdated: String? = null,
+    val altitudeNext: String? = null,
+
     val stepsPreview: PreviewState = PreviewState.Loading,
     val stepsUpdated: String? = null,
     val stepsHealthGranted: Boolean = false,

@@ -14,6 +14,12 @@ enum class ActiveComplication {
     /** Today's step count, read from Health Connect. */
     STEPS,
 
+    /** Surface pressure from the weather network (hPa/inHg), polled like TEMPERATURE. */
+    PRESSURE,
+
+    /** Terrain elevation at the saved coords from the weather network (ft/m), polled like TEMPERATURE. */
+    ALTITUDE,
+
     /** Not reachable via [fromLegacyAutoSource] — the legacy AutoSource enum had no CUSTOM value. */
     CUSTOM;
 

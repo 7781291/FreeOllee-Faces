@@ -51,6 +51,9 @@ private fun IdleContent(
     callbacks: ActivityCallbacks,
 ) {
     Button(onClick = callbacks.onStart, modifier = Modifier.fillMaxWidth()) { Text("Start activity") }
+    OutlinedButton(onClick = callbacks.onShowLive, modifier = Modifier.fillMaxWidth()) {
+        Text("Instrument glance")
+    }
     OutlinedButton(onClick = callbacks.onToggleUnit, modifier = Modifier.fillMaxWidth()) {
         Text("Units: ${if (unit == ActivityUnit.IMPERIAL) "Miles" else "Kilometres"}")
     }
@@ -76,22 +79,43 @@ private fun RunningContent(
     watchSelected: Boolean,
     callbacks: ActivityCallbacks,
 ) {
-    // Show each metric exactly as the watch renders it (faithful segment preview).
-    Readout("Pace", ActivityMetric.PACE.render(state, unit), state.selectedMetric == ActivityMetric.PACE)
-    Readout("Distance", ActivityMetric.DISTANCE.render(state, unit), state.selectedMetric == ActivityMetric.DISTANCE)
-    Readout("Time", ActivityMetric.TIME.render(state, unit), state.selectedMetric == ActivityMetric.TIME)
+    // Show each metric exactly as the watch renders it (faithful segment preview). The visible
+    // set depends on mode: recording shows pace/distance/time, the live glance shows the instruments.
+    if (state.recording) {
+        MetricReadout("Pace", ActivityMetric.PACE, state, unit)
+        MetricReadout("Distance", ActivityMetric.DISTANCE, state, unit)
+        MetricReadout("Time", ActivityMetric.TIME, state, unit)
+    } else {
+        MetricReadout("Compass", ActivityMetric.ORIENTATION, state, unit)
+        MetricReadout("Altitude", ActivityMetric.ALTITUDE, state, unit)
+        MetricReadout("Pressure", ActivityMetric.PRESSURE, state, unit)
+    }
     val watchStatusText = if (!watchSelected) {
-        "No watch — recording only"
+        if (state.recording) "No watch — recording only" else "No watch — glance only"
     } else if (state.watchReachable) {
         "Watch: showing ${state.lastPushText ?: "…"}"
-    } else {
+    } else if (state.recording) {
         "Watch unreachable — recording continues"
+    } else {
+        "Watch unreachable"
     }
     Text(watchStatusText, style = MaterialTheme.typography.bodySmall)
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         OutlinedButton(onClick = callbacks.onMode, modifier = Modifier.weight(1f)) { Text("MODE") }
-        Button(onClick = callbacks.onStop, modifier = Modifier.weight(1f)) { Text("Stop") }
+        if (state.recording) {
+            Button(onClick = callbacks.onStop, modifier = Modifier.weight(1f)) { Text("Stop") }
+        } else {
+            Button(onClick = callbacks.onStart, modifier = Modifier.weight(1f)) { Text("Record") }
+        }
     }
+    if (!state.recording) {
+        OutlinedButton(onClick = callbacks.onStop, modifier = Modifier.fillMaxWidth()) { Text("Close glance") }
+    }
+}
+
+@Composable
+private fun MetricReadout(label: String, metric: ActivityMetric, state: ActivityState, unit: ActivityUnit) {
+    Readout(label, metric.render(state, unit), state.selectedMetric == metric)
 }
 
 @Composable

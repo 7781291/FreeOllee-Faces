@@ -1,15 +1,16 @@
 package com.blizzardcaron.freeolleefaces.activity
 
+import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
 import com.blizzardcaron.freeolleefaces.format.formatDecimal
 import kotlin.math.roundToInt
 
 /**
  * The metric currently shown on the watch name-tag. `render` is the only path that produces the
- * 6-char wire string. TODO (designed-for, not built): ORIENTATION, ALTITUDE, PRESSURE — add as
- * new entries plus render branches; the track schema (`TrackPoint.altM`) already reserves altitude.
+ * 6-char wire string. ORIENTATION/ALTITUDE/PRESSURE are the live-glance instruments (PRESSURE from
+ * the phone barometer, network fallback); the track schema (`TrackPoint.altM`) reserves altitude.
  */
 enum class ActivityMetric {
-    PACE, DISTANCE, TIME;
+    PACE, DISTANCE, TIME, ORIENTATION, ALTITUDE, PRESSURE;
 
     fun next(): ActivityMetric = entries[(ordinal + 1) % entries.size]
 
@@ -17,6 +18,9 @@ enum class ActivityMetric {
         PACE -> renderPace(state, unit)
         DISTANCE -> renderDistance(state, unit)
         TIME -> renderTime(state)
+        ORIENTATION -> renderOrientation(state.headingDeg)
+        ALTITUDE -> renderAltitude(state.altitudeM, unit)
+        PRESSURE -> renderPressure(state.pressureHpa, unit)
     }
 
     private companion object {
@@ -28,6 +32,30 @@ enum class ActivityMetric {
         const val NAMEPLATE_WIDTH = 6
         const val MILLIS_PER_SECOND = 1000L
         const val DISTANCE_TAG = "d" // lowercase d is legible & distinct; uppercase 'D' looks like '0'
+        const val FEET_PER_METER = 3.28084
+        const val FULL_CIRCLE = 360
+        const val COMPASS_DIGIT_WIDTH = 3
+
+        fun renderOrientation(headingDeg: Float?): String {
+            if (headingDeg == null) return "---#"
+            val deg = (headingDeg.roundToInt() % FULL_CIRCLE + FULL_CIRCLE) % FULL_CIRCLE
+            return "${deg.toString().padStart(COMPASS_DIGIT_WIDTH, '0')}#${cardinal8(headingDeg)}"
+        }
+
+        fun renderAltitude(altM: Double?, unit: ActivityUnit): String {
+            if (altM == null) return "---"
+            val (value, suffix) =
+                if (unit == ActivityUnit.IMPERIAL) (altM * FEET_PER_METER) to 'f' else altM to 'm'
+            val num = value.roundToInt().toString()
+            return if (num.length >= NAMEPLATE_WIDTH) num.take(NAMEPLATE_WIDTH) else "$num$suffix"
+        }
+
+        // Barometric pressure from the phone sensor (network fallback). Imperial → inHg ("29.91",
+        // '.' renders as a dash on the nameplate); metric → whole hPa ("1013").
+        fun renderPressure(hpa: Double?, unit: ActivityUnit): String {
+            if (hpa == null) return "----"
+            return DisplayFormatter.pressure(hpa, imperial = unit == ActivityUnit.IMPERIAL)
+        }
 
         // The watch nameplate cells render ':' blank and '.' as a dash, and have no legible mi/km
         // glyphs. So min/sec separators use a space (renders identically to the blank colon),

@@ -52,9 +52,12 @@ class ActivityMetricRenderTest {
         assertEquals("1h05", ActivityMetric.TIME.render(state(elapsedMs = (65 * 60) * 1000L), ActivityUnit.IMPERIAL))
     }
 
-    @Test fun next_cycles_pace_distance_time() {
+    @Test fun next_cycles_through_all_metrics() {
         assertEquals(ActivityMetric.DISTANCE, ActivityMetric.PACE.next())
         assertEquals(ActivityMetric.TIME, ActivityMetric.DISTANCE.next())
-        assertEquals(ActivityMetric.PACE, ActivityMetric.TIME.next())
+        assertEquals(ActivityMetric.ORIENTATION, ActivityMetric.TIME.next())
+        assertEquals(ActivityMetric.ALTITUDE, ActivityMetric.ORIENTATION.next())
+        assertEquals(ActivityMetric.PRESSURE, ActivityMetric.ALTITUDE.next())
+        assertEquals(ActivityMetric.PACE, ActivityMetric.PRESSURE.next())
     }
 }

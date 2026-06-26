@@ -15,8 +15,11 @@ import androidx.core.content.ContextCompat
 import com.blizzardcaron.freeolleefaces.R
 import com.blizzardcaron.freeolleefaces.ble.AndroidBleClient
 import com.blizzardcaron.freeolleefaces.location.AndroidLocationStream
+import com.blizzardcaron.freeolleefaces.location.Coords
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
 import com.blizzardcaron.freeolleefaces.prefs.appSettings
+import com.blizzardcaron.freeolleefaces.weather.OpenMeteoClient
+import com.blizzardcaron.freeolleefaces.weather.RetryPolicy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -38,6 +41,10 @@ class ActivitySessionService : Service() {
     private lateinit var prefs: Prefs
     private lateinit var engine: ActivitySessionEngine
     private var loops: Job? = null
+
+    // Latest GPS fix, used by the network-pressure fallback when the phone has no barometer.
+    @Volatile
+    private var lastCoords: Coords? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -62,6 +69,7 @@ class ActivitySessionService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_START -> startSession()
+            ACTION_START_LIVE -> startLiveSession()
             ACTION_STOP -> stopSession(abnormal = false)
             ACTION_CYCLE -> engine.cycleMetric()
             ACTION_SET_UNIT -> engine.setUnit(prefs.activityUnit)
@@ -71,28 +79,73 @@ class ActivitySessionService : Service() {
 
     // The location permission is gated upstream by ActivityController.onStart() — the engine
     // never reaches the service's ACTION_START without ACCESS_FINE_LOCATION already granted.
-    @SuppressLint("MissingPermission")
+    // When a live glance is already running, ACTION_START upgrades it in place to a recording.
     private fun startSession() {
+        if (ActivitySessionHost.isRunning) {
+            scope.launch { engine.beginRecording() }
+            return
+        }
+        ActivitySessionHost.isRunning = true
+        startForegroundCompat()
+        loops = launchLoops { engine.start() }
+    }
+
+    // Non-recording live glance (compass/altitude); same loops, no track saved. Permission is
+    // gated upstream by ActivityController.onShowLive() exactly as for ACTION_START.
+    private fun startLiveSession() {
         if (ActivitySessionHost.isRunning) return
         ActivitySessionHost.isRunning = true
         startForegroundCompat()
-        loops = scope.launch {
-            engine.start()
-            val location = launch {
-                AndroidLocationStream(this@ActivitySessionService).stream()
-                    .onEach { engine.ingest(it, System.currentTimeMillis()) }
-                    .launchIn(this)
-            }
-            val ticker = launch {
-                var ticks = 0
-                while (isActive) {
-                    engine.tick(System.currentTimeMillis())
-                    if (++ticks % FLUSH_EVERY_TICKS == 0) engine.flush()
-                    delay(TICK_MS)
+        loops = launchLoops { engine.startLive() }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun launchLoops(startEngine: suspend () -> Unit): Job = scope.launch {
+        startEngine()
+        val location = launch {
+            AndroidLocationStream(this@ActivitySessionService).stream()
+                .onEach {
+                    lastCoords = it
+                    engine.ingest(it, System.currentTimeMillis())
                 }
+                .launchIn(this)
+        }
+        val ticker = launch {
+            var ticks = 0
+            while (isActive) {
+                engine.tick(System.currentTimeMillis())
+                if (++ticks % FLUSH_EVERY_TICKS == 0) engine.flush()
+                delay(TICK_MS)
             }
-            location.join()
-            ticker.join()
+        }
+        val pressure = launch { drivePressure() }
+        location.join()
+        ticker.join()
+        pressure.join()
+    }
+
+    // Barometric pressure for the PRESSURE glance metric: prefer the phone sensor (live, local); if
+    // there's no barometer, fall back to network surface pressure at the latest GPS fix.
+    private suspend fun drivePressure() = kotlinx.coroutines.coroutineScope {
+        var sawSensor = false
+        val sensor = launch {
+            AndroidPressureStream(this@ActivitySessionService).stream().onEach {
+                sawSensor = true
+                engine.ingestPressure(it)
+            }.launchIn(this)
+        }
+        delay(PRESSURE_PROBE_MS)
+        if (sawSensor) {
+            sensor.join()
+            return@coroutineScope
+        }
+        sensor.cancel()
+        while (isActive) {
+            val hpa = lastCoords?.let {
+                OpenMeteoClient.currentPressureHpa(it.lat, it.lng, RetryPolicy.Preview).getOrNull()
+            }
+            engine.ingestPressure(hpa)
+            delay(PRESSURE_NETWORK_REFRESH_MS)
         }
     }
 
@@ -166,7 +219,10 @@ class ActivitySessionService : Service() {
         private const val CHANNEL_ID = "activity_session"
         private const val TICK_MS = 1000L
         private const val FLUSH_EVERY_TICKS = 10 // flush the track ~every 10s
+        private const val PRESSURE_PROBE_MS = 3000L // wait this long for a barometer sample
+        private const val PRESSURE_NETWORK_REFRESH_MS = 600_000L // network fallback refresh ~10 min
         const val ACTION_START = "com.blizzardcaron.freeolleefaces.activity.START"
+        const val ACTION_START_LIVE = "com.blizzardcaron.freeolleefaces.activity.START_LIVE"
         const val ACTION_STOP = "com.blizzardcaron.freeolleefaces.activity.STOP"
         const val ACTION_CYCLE = "com.blizzardcaron.freeolleefaces.activity.CYCLE"
         const val ACTION_SET_UNIT = "com.blizzardcaron.freeolleefaces.activity.SET_UNIT"
@@ -181,6 +237,7 @@ class ActivitySessionService : Service() {
         }
 
         fun start(context: Context) = send(context, ACTION_START, foreground = true)
+        fun startLive(context: Context) = send(context, ACTION_START_LIVE, foreground = true)
         fun stop(context: Context) = send(context, ACTION_STOP, foreground = false)
         fun cycle(context: Context) = send(context, ACTION_CYCLE, foreground = false)
         fun setUnit(context: Context) = send(context, ACTION_SET_UNIT, foreground = false)
