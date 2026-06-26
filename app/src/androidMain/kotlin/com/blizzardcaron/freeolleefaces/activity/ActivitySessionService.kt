@@ -8,8 +8,10 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.graphics.drawable.Icon
 import android.os.Build
 import android.os.IBinder
+import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.blizzardcaron.freeolleefaces.R
@@ -188,14 +190,36 @@ class ActivitySessionService : Service() {
             Intent(this, ActivitySessionService::class.java).setAction(ACTION_STOP),
             android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT,
         )
-        return NotificationCompat.Builder(this, CHANNEL_ID)
+        return if (Build.VERSION.SDK_INT >= API_37) {
+            buildPromotedNotification(text, stopIntent)
+        } else {
+            NotificationCompat.Builder(this, CHANNEL_ID)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle("Activity in progress")
+                .setContentText(text)
+                .setOngoing(true)
+                .addAction(0, "Stop", stopIntent)
+                .build()
+        }
+    }
+
+    // Android 17+: same ongoing notification, but requested as a promoted Live Update so the system
+    // can surface it on the lock screen / status bar chip for the duration of the activity.
+    @RequiresApi(API_37)
+    private fun buildPromotedNotification(
+        text: String,
+        stopIntent: android.app.PendingIntent,
+    ): Notification =
+        Notification.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle("Activity in progress")
             .setContentText(text)
             .setOngoing(true)
-            .addAction(0, "Stop", stopIntent)
+            .setRequestPromotedOngoing(true)
+            .addAction(
+                Notification.Action.Builder(null as Icon?, "Stop", stopIntent).build(),
+            )
             .build()
-    }
 
     private fun ensureChannel() {
         val mgr = ContextCompat.getSystemService(this, NotificationManager::class.java) ?: return
@@ -216,6 +240,7 @@ class ActivitySessionService : Service() {
 
     companion object {
         private const val NOTIF_ID = 4201
+        private const val API_37 = 37
         private const val CHANNEL_ID = "activity_session"
         private const val TICK_MS = 1000L
         private const val FLUSH_EVERY_TICKS = 10 // flush the track ~every 10s
