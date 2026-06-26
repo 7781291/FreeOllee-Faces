@@ -8,6 +8,8 @@ class ComplicationLabelTest {
         assertEquals("Temperature", ActiveComplication.TEMPERATURE.displayLabel())
         assertEquals("Sun event", ActiveComplication.SUN.displayLabel())
         assertEquals("Steps", ActiveComplication.STEPS.displayLabel())
+        assertEquals("Pressure", ActiveComplication.PRESSURE.displayLabel())
+        assertEquals("Altitude", ActiveComplication.ALTITUDE.displayLabel())
         assertEquals("Custom", ActiveComplication.CUSTOM.displayLabel())
     }
 }

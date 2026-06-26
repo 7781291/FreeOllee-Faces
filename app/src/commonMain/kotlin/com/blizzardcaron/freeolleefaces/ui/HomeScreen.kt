@@ -100,6 +100,8 @@ private fun ColumnScope.ComplicationCardsList(
 
         PressureCard(state = state, callbacks = callbacks)
 
+        AltitudeCard(state = state, callbacks = callbacks)
+
         StepsCard(
             state = state,
             callbacks = callbacks,

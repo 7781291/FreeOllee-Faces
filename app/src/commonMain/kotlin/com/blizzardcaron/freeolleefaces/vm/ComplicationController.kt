@@ -291,12 +291,56 @@ class ComplicationController(
         }
     }
 
+    fun refreshAltitude(push: Boolean) {
+        val c = validCoords()
+        if (c == null) {
+            update { it.copy(altitudePreview = PreviewState.Error("Location not set — open Settings (⚙)")) }
+            return
+        }
+        val (lat, lng) = c
+        val imperial = prefs.activityUnit == ActivityUnit.IMPERIAL
+        refreshJob?.cancel()
+        refreshJob = scope.launch {
+            update { it.copy(altitudePreview = PreviewState.Loading) }
+            OpenMeteoClient.currentElevationM(lat, lng, RetryPolicy.Preview)
+                .onSuccess { meters ->
+                    prefs.recordAltitudeFetch(meters)
+                    val payload = DisplayFormatter.altitude(meters, imperial)
+                    update {
+                        it.copy(
+                            altitudePreview = PreviewState.Ready(payload, "Elevation: ${formatDecimal(meters, 0)} m"),
+                            altitudeUpdated = "Updated ${clockTime(nowMs())}",
+                            altitudeNext = tempNextText(),
+                        )
+                    }
+                    if (push) pushIfWatch(payload)
+                }
+                .onFailure { err ->
+                    val cached = prefs.altitudeValueM
+                    if (cached != null) {
+                        val payload = DisplayFormatter.altitude(cached, imperial, stale = true)
+                        update {
+                            it.copy(
+                                altitudePreview = PreviewState.Ready(
+                                    payload, "Elevation: ${formatDecimal(cached, 0)} m (stale)",
+                                ),
+                            )
+                        }
+                        if (push) pushIfWatch(payload)
+                    } else {
+                        update { it.copy(altitudePreview = PreviewState.Error(WeatherErrorCopy.describe(err))) }
+                    }
+                }
+        }
+    }
+
     fun refreshActive(force: Boolean, push: Boolean) {
         when (state().activeComplication) {
             ActiveComplication.TEMPERATURE -> refreshTemp(force, push)
             ActiveComplication.SUN -> refreshSun(push)
             ActiveComplication.STEPS -> refreshSteps(push)
             ActiveComplication.PRESSURE -> refreshPressure(push)
+            ActiveComplication.ALTITUDE -> refreshAltitude(push)
             ActiveComplication.CUSTOM -> {}
         }
     }
@@ -311,6 +355,7 @@ class ComplicationController(
         refreshSun(push = false)
         refreshSteps(push = false)
         refreshPressure(push = false)
+        refreshAltitude(push = false)
         update {
             it.copy(
                 notificationCount = prefs.notificationCount,
@@ -332,6 +377,7 @@ class ComplicationController(
             ActiveComplication.SUN -> refreshSun(push = true)
             ActiveComplication.STEPS -> refreshSteps(push = true)
             ActiveComplication.PRESSURE -> refreshPressure(push = true)
+            ActiveComplication.ALTITUDE -> refreshAltitude(push = true)
             ActiveComplication.CUSTOM -> {
                 val text = prefs.customText
                 if (text.isNotEmpty()) sendCustom(text)

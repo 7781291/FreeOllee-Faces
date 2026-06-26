@@ -27,6 +27,8 @@ object DisplayFormatter {
     private const val INHG_PER_HPA = 0.0295299830714
     private const val INHG_DECIMALS = 2
 
+    private const val FEET_PER_METER = 3.28084
+
     fun temperature(value: Double, unit: TempUnit = TempUnit.FAHRENHEIT, stale: Boolean = false): String {
         // The watch's segment font (firmware OW-FW-APP, font table indexed by ASCII) maps '#'
         // (mask 0x63) to segments a+b+f+g — the top square that reads as a degree '°'. There is no
@@ -44,6 +46,18 @@ object DisplayFormatter {
         val value =
             if (imperial) formatDecimal(hpa * INHG_PER_HPA, INHG_DECIMALS) else hpa.roundToInt().toString()
         return markStale(value.padStart(LENGTH), stale)
+    }
+
+    /**
+     * Terrain altitude in [LENGTH] cells: feet (imperial, 'f' suffix) or metres (metric, 'm');
+     * right-justified like the other complications. 'E' marks a stale value when there's a leading pad.
+     */
+    fun altitude(meters: Double, imperial: Boolean, stale: Boolean = false): String {
+        val (value, suffix) =
+            if (imperial) (meters * FEET_PER_METER) to 'f' else meters to 'm'
+        val num = value.roundToInt().toString()
+        val fresh = if (num.length >= LENGTH) num.take(LENGTH) else "$num$suffix"
+        return markStale(fresh.padStart(LENGTH), stale)
     }
 
     fun sunTime(kind: SunEventKind, time: LocalTime, stale: Boolean = false): String {

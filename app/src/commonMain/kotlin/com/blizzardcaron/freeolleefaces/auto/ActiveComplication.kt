@@ -17,6 +17,9 @@ enum class ActiveComplication {
     /** Surface pressure from the weather network (hPa/inHg), polled like TEMPERATURE. */
     PRESSURE,
 
+    /** Terrain elevation at the saved coords from the weather network (ft/m), polled like TEMPERATURE. */
+    ALTITUDE,
+
     /** Not reachable via [fromLegacyAutoSource] — the legacy AutoSource enum had no CUSTOM value. */
     CUSTOM;
 

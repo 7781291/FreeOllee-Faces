@@ -42,6 +42,8 @@ object AutoUpdateScheduler {
 
             ActiveComplication.PRESSURE -> scheduleIntervalFace(ctx, prefs, prefs.updateIntervalMinutes)
 
+            ActiveComplication.ALTITUDE -> scheduleIntervalFace(ctx, prefs, prefs.updateIntervalMinutes)
+
             ActiveComplication.SUN -> enqueueNext(ctx, 0L, sendAttempt = 0)
         }
     }

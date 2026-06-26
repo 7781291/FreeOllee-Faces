@@ -87,6 +87,18 @@ internal fun PressureCard(state: HomeState, callbacks: HomeCallbacks) {
 }
 
 @Composable
+internal fun AltitudeCard(state: HomeState, callbacks: HomeCallbacks) {
+    ComplicationCard(
+        title = ActiveComplication.ALTITUDE.displayLabel(),
+        active = state.activeComplication == ActiveComplication.ALTITUDE,
+        onActivate = { callbacks.onActivate(ActiveComplication.ALTITUDE) },
+        face = FacePreview(state.altitudePreview, state.altitudeUpdated, state.altitudeNext),
+        expanded = false,
+        onToggle = null,
+    )
+}
+
+@Composable
 internal fun StepsCard(
     state: HomeState,
     callbacks: HomeCallbacks,
