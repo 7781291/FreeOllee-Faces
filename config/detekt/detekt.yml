@@ -21,10 +21,6 @@ complexity:
     # intentionally aggregate many small single-purpose methods extracted from the VM;
     # 35 comfortably covers the largest of them without grandfathering the count via baseline.
     thresholdInClasses: 35
-    # Singleton objects (ErrorNotifier, ...) split one Android-version branch into two small
-    # private builder helpers rather than one large branching function; 12 covers that split
-    # without grandfathering the count via baseline.
-    thresholdInObjects: 12
 style:
   MaxLineLength:
     active: true
