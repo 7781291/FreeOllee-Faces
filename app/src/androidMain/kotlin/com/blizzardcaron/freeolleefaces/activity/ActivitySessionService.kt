@@ -227,6 +227,10 @@ class ActivitySessionService : Service() {
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle("Activity in progress")
             .setContentText(text)
+            // The compact status string the system shows in the promoted Live Update chip; also one
+            // of the "promotable characteristics" the framework requires before it will promote at
+            // all (we deliberately don't use ProgressStyle for an open-ended session).
+            .setShortCriticalText(text)
             .setOngoing(true)
             .setRequestPromotedOngoing(true)
             .addAction(
