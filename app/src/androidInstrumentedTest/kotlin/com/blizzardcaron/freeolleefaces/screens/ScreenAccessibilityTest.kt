@@ -6,8 +6,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.junit4.accessibility.enableAccessibilityChecks
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.printToString
 import androidx.compose.ui.test.tryPerformAccessibilityChecks
 import com.blizzardcaron.freeolleefaces.ui.Screen
 import org.junit.Rule
@@ -33,10 +31,8 @@ class ScreenAccessibilityTest {
         var current by mutableStateOf<Screen>(allScreens.first())
         composeRule.enableAccessibilityChecks()
         composeRule.setContent { renderFor(current)() }
-        // Accumulate every screen's findings in one run (rather than fail-fast) so all remaining
-        // a11y issues surface together. TEMP DIAGNOSTIC: each failing screen also dumps its
-        // semantics tree (with bounds) to pinpoint the flagged node; strip the tree dump once
-        // findings are triaged.
+        // Check every screen and accumulate findings (rather than fail-fast) so a regression on
+        // several screens surfaces all at once, each tagged with the screen and ATF's report.
         val failures = StringBuilder()
         allScreens.forEach { screen ->
             composeRule.runOnUiThread { current = screen }
@@ -46,9 +42,7 @@ class ScreenAccessibilityTest {
                 composeRule.onAllNodes(isRoot()).tryPerformAccessibilityChecks()
             } catch (e: Throwable) {
                 failures.append("=== A11y failure on screen=").append(screen).append(" ===\n")
-                    .append(e.message).append('\n')
-                    .append(composeRule.onRoot().printToString(maxDepth = Int.MAX_VALUE))
-                    .append("\n\n")
+                    .append(e.message).append("\n\n")
             }
         }
         if (failures.isNotEmpty()) throw AssertionError(failures.toString())

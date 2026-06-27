@@ -53,7 +53,13 @@ jobs:
             ./gradlew :app:connectedDebugAndroidTest
             code=$?
             mkdir -p docs/screenshots
-            adb pull /sdcard/Android/data/com.blizzardcaron.freeolleefaces.debug/files/screenshots/. docs/screenshots/ || true
+            # The screenshot test writes PNGs to the instrumented app's external files dir; the
+            # exact package (app vs. test) varies, so locate then pull whatever was produced.
+            echo "--- locating screenshots on device ---"
+            adb shell 'find /sdcard/Android/data -path "*screenshots*.png" 2>/dev/null' || true
+            for pkg in com.blizzardcaron.freeolleefaces.debug com.blizzardcaron.freeolleefaces.debug.test; do
+              adb pull "/sdcard/Android/data/$pkg/files/screenshots/." docs/screenshots/ || true
+            done
             exit $code
       - name: Upload screenshots
         if: always()
