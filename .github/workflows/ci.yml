@@ -49,17 +49,21 @@ jobs:
           api-level: 34
           arch: x86_64
           # android-emulator-runner runs each script line as a separate `sh -c`, so every command
-          # must stand alone. connectedDebugAndroidTest runs first: if it fails (an a11y finding),
-          # the runner stops here and the job goes red. On success the run-as pulls below execute;
-          # they are best-effort (|| true) so screenshot delivery never reddens a green a11y gate.
-          # The screenshot test writes to internal filesDir (scoped storage blocks adb from the
-          # external app dir on API 30+); run-as reads it for the debuggable app/test package.
+          # stands alone. We install + `am instrument` instead of `connectedDebugAndroidTest`
+          # because that gradle task UNINSTALLS the APKs when it finishes, wiping the app-internal
+          # filesDir (and its screenshots) before they can be pulled. With the app left installed,
+          # `run-as` reads the screenshots the test wrote (scoped storage blocks adb from the
+          # external app dir on API 30+, so the test uses internal storage). The pull runs before
+          # the pass/fail check so screenshots upload even when an a11y finding fails the job.
           script: |
-            ./gradlew :app:connectedDebugAndroidTest
+            ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest
+            adb install -r -t app/build/outputs/apk/debug/app-debug.apk
+            adb install -r -t app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            adb shell am instrument -w com.blizzardcaron.freeolleefaces.debug.test/androidx.test.runner.AndroidJUnitRunner 2>&1 | tee instrument.log
             mkdir -p docs/screenshots
-            adb shell pm list packages | grep -i freeollee || true
-            for pkg in $(adb shell pm list packages | sed 's/package://' | grep -i freeollee | tr -d '\r'); do adb exec-out run-as $pkg tar c -C files/screenshots . 2>/dev/null | tar x -C docs/screenshots 2>/dev/null || true; done
+            adb exec-out run-as com.blizzardcaron.freeolleefaces.debug tar c -C files/screenshots . 2>/dev/null | tar x -C docs/screenshots 2>/dev/null || true
             ls -la docs/screenshots || true
+            grep -q "^OK (" instrument.log || { echo "Instrumented tests failed:"; cat instrument.log; exit 1; }
       - name: Upload screenshots
         if: always()
         uses: actions/upload-artifact@v4
