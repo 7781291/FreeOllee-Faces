@@ -48,6 +48,9 @@ jobs:
         with:
           api-level: 34
           arch: x86_64
+          # Pixel 7 profile: a realistic phone width (412dp) so touch targets fit naturally (the
+          # day-of-week chips sit on one row) and screenshots come out at full 1080x2400.
+          profile: pixel_7
           # android-emulator-runner runs each script line as a separate `sh -c`, so every command
           # stands alone. We install + `am instrument` instead of `connectedDebugAndroidTest`
           # because that gradle task UNINSTALLS the APKs when it finishes, wiping the app-internal
