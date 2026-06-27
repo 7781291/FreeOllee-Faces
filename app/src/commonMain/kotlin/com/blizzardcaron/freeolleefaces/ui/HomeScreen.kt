@@ -89,6 +89,17 @@ private fun ColumnScope.ComplicationCardsList(
             SettingsHint("No watch selected — open Settings (⚙)")
         }
 
+        SectionLabel("Weekday slot")
+
+        NotificationsCard(
+            state = state,
+            expanded = expanded == ComplicationCardId.NOTIFICATIONS,
+            onToggle = { onToggle(ComplicationCardId.NOTIFICATIONS) },
+            onToggleEnabled = callbacks.onToggleNotifications,
+            onGrantAccess = callbacks.onGrantNotificationAccess,
+            onUpdateNow = callbacks.onNotificationsUpdateNow,
+        )
+
         SectionLabel("Name tag")
 
         TemperatureCard(
@@ -116,17 +127,6 @@ private fun ColumnScope.ComplicationCardsList(
             callbacks = callbacks,
             expanded = expanded == ComplicationCardId.CUSTOM,
             onToggle = { onToggle(ComplicationCardId.CUSTOM) },
-        )
-
-        SectionLabel("Weekday slot")
-
-        NotificationsCard(
-            state = state,
-            expanded = expanded == ComplicationCardId.NOTIFICATIONS,
-            onToggle = { onToggle(ComplicationCardId.NOTIFICATIONS) },
-            onToggleEnabled = callbacks.onToggleNotifications,
-            onGrantAccess = callbacks.onGrantNotificationAccess,
-            onUpdateNow = callbacks.onNotificationsUpdateNow,
         )
     }
 }
