@@ -6,6 +6,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.junit4.accessibility.enableAccessibilityChecks
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.printToString
 import androidx.compose.ui.test.tryPerformAccessibilityChecks
 import com.blizzardcaron.freeolleefaces.ui.Screen
 import org.junit.Rule
@@ -34,7 +36,18 @@ class ScreenAccessibilityTest {
         allScreens.forEach { screen ->
             composeRule.runOnUiThread { current = screen }
             composeRule.waitForIdle()
-            composeRule.onAllNodes(isRoot()).tryPerformAccessibilityChecks()
+            @Suppress("TooGenericExceptionCaught")
+            try {
+                composeRule.onAllNodes(isRoot()).tryPerformAccessibilityChecks()
+            } catch (e: Throwable) {
+                // TEMP DIAGNOSTIC: append the failing screen's semantics tree (with bounds) so
+                // the CI test output pinpoints the flagged node. Remove once findings are triaged.
+                throw AssertionError(
+                    "A11y failure on screen=$screen\n" +
+                        composeRule.onRoot().printToString(maxDepth = Int.MAX_VALUE),
+                    e,
+                )
+            }
         }
     }
 }

@@ -8,7 +8,6 @@ import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.printToString
 import androidx.test.platform.app.InstrumentationRegistry
 import com.blizzardcaron.freeolleefaces.ui.Screen
 import org.junit.Rule
@@ -44,10 +43,6 @@ class ScreenScreenshotTest {
             File(outputDir, "${screen.slug()}.png").outputStream().use { out ->
                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
             }
-            // TEMP DIAGNOSTIC: dump the semantics tree (with bounds) so we can pinpoint which
-            // node ATF flags. Remove once a11y findings are triaged.
-            File(outputDir, "${screen.slug()}.semantics.txt")
-                .writeText(composeRule.onRoot().printToString(maxDepth = Int.MAX_VALUE))
         }
     }
 }
