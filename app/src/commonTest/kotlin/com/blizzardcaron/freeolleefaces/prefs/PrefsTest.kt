@@ -2,6 +2,7 @@ package com.blizzardcaron.freeolleefaces.prefs
 
 import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
 import com.blizzardcaron.freeolleefaces.auto.SleepWindow
+import com.blizzardcaron.freeolleefaces.format.BatteryReadout
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 import com.russhwolf.settings.MapSettings
 import kotlinx.datetime.Clock
@@ -337,5 +338,26 @@ class PrefsTest {
         assertEquals(AutoSleepProfile(true, 30), prefs.savedAutoSleepProfile)
         prefs.savedAutoSleepProfile = null
         assertNull(prefs.savedAutoSleepProfile)
+    }
+
+    @Test fun batteryReadout_defaultsToPercent() {
+        assertEquals(BatteryReadout.PERCENT, freshPrefs().batteryReadout)
+    }
+
+    @Test fun batteryReadout_roundtrips() {
+        val prefs = freshPrefs()
+        prefs.batteryReadout = BatteryReadout.VOLTS
+        assertEquals(BatteryReadout.VOLTS, prefs.batteryReadout)
+    }
+
+    @Test fun batteryValueMv_unset_isNull() {
+        assertNull(freshPrefs().batteryValueMv)
+    }
+
+    @Test fun recordBatteryFetch_persistsValueAndTimestamp() {
+        val prefs = Prefs(MapSettings(), FixedClock)
+        prefs.recordBatteryFetch(2850)
+        assertEquals(2850, prefs.batteryValueMv)
+        assertEquals(FixedClock.FIXED_MS, prefs.batteryFetchedMs)
     }
 }

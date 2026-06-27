@@ -3,6 +3,7 @@ package com.blizzardcaron.freeolleefaces.prefs
 import com.blizzardcaron.freeolleefaces.activity.ActivityUnit
 import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
 import com.blizzardcaron.freeolleefaces.auto.SleepWindow
+import com.blizzardcaron.freeolleefaces.format.BatteryReadout
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 import com.blizzardcaron.freeolleefaces.notify.FailureKind
 import com.russhwolf.settings.Settings
@@ -288,6 +289,30 @@ class Prefs(
         stepsFetchedMs = clock.now().toEpochMilliseconds()
     }
 
+    /** How the Battery face renders the watch voltage. Defaults to a percentage estimate. */
+    var batteryReadout: BatteryReadout
+        get() = settings.getStringOrNull(KEY_BATTERY_READOUT)
+            ?.let { runCatching { BatteryReadout.valueOf(it) }.getOrNull() }
+            ?: BatteryReadout.PERCENT
+        set(value) = settings.putString(KEY_BATTERY_READOUT, value.name)
+
+    /** Cached watch battery voltage in millivolts (raw; formatted on send). null when never read. */
+    var batteryValueMv: Int?
+        get() = if (settings.hasKey(KEY_BATTERY_VALUE_MV)) settings.getInt(KEY_BATTERY_VALUE_MV, 0) else null
+        set(value) =
+            if (value == null) settings.remove(KEY_BATTERY_VALUE_MV) else settings.putInt(KEY_BATTERY_VALUE_MV, value)
+
+    var batteryFetchedMs: Long?
+        get() = if (settings.hasKey(KEY_BATTERY_FETCHED_MS)) settings.getLong(KEY_BATTERY_FETCHED_MS, 0L) else null
+        set(value) =
+            if (value == null) settings.remove(KEY_BATTERY_FETCHED_MS) else settings.putLong(KEY_BATTERY_FETCHED_MS, value)
+
+    /** Stamp the cached battery voltage (millivolts) and the time it was read from the watch. */
+    fun recordBatteryFetch(milliVolts: Int) {
+        batteryValueMv = milliVolts
+        batteryFetchedMs = clock.now().toEpochMilliseconds()
+    }
+
     var powerSavingEnabled: Boolean
         get() = settings.getBoolean(KEY_PS_ENABLED, true)
         set(value) = settings.putBoolean(KEY_PS_ENABLED, value)
@@ -428,5 +453,8 @@ class Prefs(
         private const val MAX_MINUTE = 59
         private const val DEFAULT_ALARM_HOUR = 7
         private const val DEFAULT_QUICK_TIMER_SECONDS = 180
+        private const val KEY_BATTERY_READOUT = "battery_readout"
+        private const val KEY_BATTERY_VALUE_MV = "battery_value_mv"
+        private const val KEY_BATTERY_FETCHED_MS = "battery_fetched_ms"
     }
 }
