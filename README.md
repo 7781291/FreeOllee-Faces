@@ -5,11 +5,11 @@ over Bluetooth Low Energy.
 
 ## Screenshots
 
-| Complications | Alarm | Timer | Settings |
-|:---:|:---:|:---:|:---:|
-| <img src="docs/screenshots/complications.png" width="200" alt="Complications"> | <img src="docs/screenshots/alarm.png" width="200" alt="Alarm"> | <img src="docs/screenshots/timer.png" width="200" alt="Timer"> | <img src="docs/screenshots/settings.png" width="200" alt="Settings"> |
+| Complications | Activity | Alarms |
+|:---:|:---:|:---:|
+| <img src="docs/screenshots/home.png" width="220" alt="Complications"> | <img src="docs/screenshots/activity.png" width="220" alt="Activity"> | <img src="docs/screenshots/alarms.png" width="220" alt="Alarms"> |
 
-<sub>Watch address and location in the Settings shot are placeholder values.</sub>
+<sub>Generated per-screen by the accessibility + screenshot CI job.</sub>
 
 ## Features
 
