@@ -26,10 +26,6 @@ data class HomeState(
     val quietHoursStartMin: Int = DEFAULT_QH_START_HOUR * MINUTES_PER_HOUR,
     val quietHoursEndMin: Int = DEFAULT_QH_END_HOUR * MINUTES_PER_HOUR,
 
-    val sunPreview: PreviewState = PreviewState.WaitingForCoords,
-    val sunUpdated: String? = null,
-    val sunNext: String? = null,
-
     val pressurePreview: PreviewState = PreviewState.WaitingForCoords,
     val pressureUpdated: String? = null,
     val pressureNext: String? = null,

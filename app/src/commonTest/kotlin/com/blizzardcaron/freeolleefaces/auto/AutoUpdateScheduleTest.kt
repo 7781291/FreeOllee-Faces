@@ -94,14 +94,6 @@ class AutoUpdateScheduleTest {
         assertEquals(at(9, 0), result)
     }
 
-    // ----- nextSunWake -----
-
-    @Test
-    fun `sun wake adds the buffer to the event time`() {
-        val event = at(6, 29)
-        assertEquals(LocalDateTime(2026, 5, 25, 6, 30, 0), AutoUpdateSchedule.nextSunWake(event))
-    }
-
     // ----- backstop backoff + budget (Layer 2) -----
 
     @Test

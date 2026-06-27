@@ -9,7 +9,6 @@ package com.blizzardcaron.freeolleefaces.auto
  */
 enum class ActiveComplication {
     TEMPERATURE,
-    SUN,
 
     /** Today's step count, read from Health Connect. */
     STEPS,
@@ -20,15 +19,5 @@ enum class ActiveComplication {
     /** Terrain elevation at the saved coords from the weather network (ft/m), polled like TEMPERATURE. */
     ALTITUDE,
 
-    /** Not reachable via [fromLegacyAutoSource] — the legacy AutoSource enum had no CUSTOM value. */
-    CUSTOM;
-
-    companion object {
-        /** Map the legacy `AutoSource` pref name to an [ActiveComplication]. "OFF"/null/unknown -> TEMPERATURE. */
-        fun fromLegacyAutoSource(name: String?): ActiveComplication = when (name) {
-            "SUN" -> SUN
-            "TEMPERATURE" -> TEMPERATURE
-            else -> TEMPERATURE
-        }
-    }
+    CUSTOM,
 }

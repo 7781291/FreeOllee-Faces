@@ -56,9 +56,11 @@ class Prefs(
             stored?.let {
                 runCatching { ActiveComplication.valueOf(it) }.getOrNull()?.let { face -> return face }
             }
-            val migrated = ActiveComplication.fromLegacyAutoSource(settings.getStringOrNull(KEY_AUTO_SOURCE))
-            settings.putString(KEY_ACTIVE_COMPLICATION, migrated.name)
-            return migrated
+            // No stored/parseable active face: default to TEMPERATURE and write it in place. The
+            // legacy `auto_source` key only ever held TEMPERATURE or the now-retired SUN, both of
+            // which collapse to TEMPERATURE, so it no longer needs to be consulted.
+            settings.putString(KEY_ACTIVE_COMPLICATION, ActiveComplication.TEMPERATURE.name)
+            return ActiveComplication.TEMPERATURE
         }
         set(value) = settings.putString(KEY_ACTIVE_COMPLICATION, value.name)
 
@@ -381,7 +383,6 @@ class Prefs(
         private const val KEY_LNG = "last_lng"
         private const val KEY_WATCH = "watch_address"
         private const val KEY_TEMP_UNIT = "temp_unit"
-        private const val KEY_AUTO_SOURCE = "auto_source"
         private const val KEY_ACTIVE_COMPLICATION = "active_face"
         private const val KEY_TEMP_VALUE = "temp_value"
         private const val KEY_PRESSURE_VALUE_HPA = "pressure_value_hpa"

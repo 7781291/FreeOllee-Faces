@@ -18,7 +18,6 @@ import com.blizzardcaron.freeolleefaces.location.isLocationStale
 import com.blizzardcaron.freeolleefaces.notifications.NotificationAccessChecker
 import com.blizzardcaron.freeolleefaces.notifications.NotificationCount
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
-import com.blizzardcaron.freeolleefaces.sun.SunCalc
 import com.blizzardcaron.freeolleefaces.ui.HomeState
 import com.blizzardcaron.freeolleefaces.ui.PreviewState
 import com.blizzardcaron.freeolleefaces.weather.OpenMeteoClient
@@ -32,7 +31,7 @@ import kotlinx.datetime.toLocalDateTime
 
 /**
  * Owns the complication cluster extracted from [com.blizzardcaron.freeolleefaces.AppViewModel]:
- * weather/temperature/sun previews, steps, notifications, custom text, and the active-complication
+ * weather/temperature previews, steps, notifications, custom text, and the active-complication
  * refresh/activate path. Moved verbatim; the only renames are `viewModelScope` -> `scope`,
  * `state.X` -> `state().X`, `state = transform(state)` -> `update { transform(it) }`, and
  * `Clock.System` -> the injected [clock] (matching the [vm.AlarmController]/[vm.TimerController]
@@ -176,31 +175,6 @@ class ComplicationController(
         }
     }
 
-    fun refreshSun(push: Boolean) {
-        val c = validCoords()
-        if (c == null) {
-            update { it.copy(sunPreview = PreviewState.Error("Location not set — open Settings (⚙)")) }
-            return
-        }
-        val (lat, lng) = c
-        val event = SunCalc.nextEvent(clock.now(), lat, lng, TimeZone.currentSystemDefault())
-        if (event == null) {
-            update { it.copy(sunPreview = PreviewState.NoEvent, sunNext = null) }
-            return
-        }
-        val payload = DisplayFormatter.sunTime(event.kind, event.time.time)
-        val pretty = CLOCK.format(event.time.time)
-        val kindLabel = event.kind.name.lowercase().replaceFirstChar { it.uppercase() }
-        update {
-            it.copy(
-                sunPreview = PreviewState.Ready(payload, "$kindLabel at $pretty"),
-                sunUpdated = "Updated ${clockTime(nowMs())}",
-                sunNext = "Next: $kindLabel at $pretty",
-            )
-        }
-        if (push) pushIfWatch(payload)
-    }
-
     fun refreshSteps(push: Boolean) {
         scope.launch {
             if (!steps.hasReadPermission()) {
@@ -337,7 +311,6 @@ class ComplicationController(
     fun refreshActive(force: Boolean, push: Boolean) {
         when (state().activeComplication) {
             ActiveComplication.TEMPERATURE -> refreshTemp(force, push)
-            ActiveComplication.SUN -> refreshSun(push)
             ActiveComplication.STEPS -> refreshSteps(push)
             ActiveComplication.PRESSURE -> refreshPressure(push)
             ActiveComplication.ALTITUDE -> refreshAltitude(push)
@@ -348,11 +321,10 @@ class ComplicationController(
     /**
      * Refresh every face's preview for the dashboard. Never pushes to the watch. Cheap: only
      * temperature can hit the network, and only when its cache has expired (refreshTemp honors
-     * isTempCacheFresh); sun is local, steps is a local read, notifications is read from prefs.
+     * isTempCacheFresh); steps is a local read, notifications is read from prefs.
      */
     fun refreshAllPreviews() {
         refreshTemp(force = false, push = false)
-        refreshSun(push = false)
         refreshSteps(push = false)
         refreshPressure(push = false)
         refreshAltitude(push = false)
@@ -374,7 +346,6 @@ class ComplicationController(
         scheduler.reschedule()
         when (complication) {
             ActiveComplication.TEMPERATURE -> refreshTemp(force = false, push = true)
-            ActiveComplication.SUN -> refreshSun(push = true)
             ActiveComplication.STEPS -> refreshSteps(push = true)
             ActiveComplication.PRESSURE -> refreshPressure(push = true)
             ActiveComplication.ALTITUDE -> refreshAltitude(push = true)

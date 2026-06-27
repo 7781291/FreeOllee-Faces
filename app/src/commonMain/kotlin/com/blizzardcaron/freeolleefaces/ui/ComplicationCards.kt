@@ -65,18 +65,6 @@ internal fun TemperatureCard(
 }
 
 @Composable
-internal fun SunCard(state: HomeState, callbacks: HomeCallbacks) {
-    ComplicationCard(
-        title = ActiveComplication.SUN.displayLabel(),
-        active = state.activeComplication == ActiveComplication.SUN,
-        onActivate = { callbacks.onActivate(ActiveComplication.SUN) },
-        face = FacePreview(state.sunPreview, state.sunUpdated, state.sunNext),
-        expanded = false,
-        onToggle = null,
-    )
-}
-
-@Composable
 internal fun PressureCard(state: HomeState, callbacks: HomeCallbacks) {
     ComplicationCard(
         title = ActiveComplication.PRESSURE.displayLabel(),
@@ -241,7 +229,6 @@ private fun FaceValue(face: FacePreview) {
             LcdReadout(value = preview.payload, size = LcdSize.Md)
         }
         is PreviewState.Error -> Text(preview.message, style = MaterialTheme.typography.bodyMedium)
-        PreviewState.NoEvent -> Text("No sunrise/sunset in next 24 h.", style = MaterialTheme.typography.bodyMedium)
     }
     if (updated != null) Text(updated, style = MaterialTheme.typography.bodySmall)
     if (next != null) Text(next, style = MaterialTheme.typography.bodySmall)

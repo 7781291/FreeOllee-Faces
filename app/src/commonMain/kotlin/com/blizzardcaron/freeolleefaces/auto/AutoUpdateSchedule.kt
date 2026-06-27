@@ -20,7 +20,6 @@ object AutoUpdateSchedule {
     private val ARITHMETIC_ZONE = TimeZone.UTC
 
     private const val MINUTES_PER_HOUR = 60
-    private const val DEFAULT_SUN_WAKE_BUFFER_SECONDS = 60L
     private const val BACKSTOP_DELAY_1_MINUTES = 2L
     private const val BACKSTOP_DELAY_2_MINUTES = 5L
     private const val BACKSTOP_DELAY_3_MINUTES = 15L
@@ -56,10 +55,6 @@ object AutoUpdateSchedule {
         }
     }
 
-    /** Wake right after the event goes stale. */
-    fun nextSunWake(eventTime: LocalDateTime, bufferSeconds: Long = DEFAULT_SUN_WAKE_BUFFER_SECONDS): LocalDateTime =
-        eventTime.plusSeconds(bufferSeconds)
-
     /** Backstop retry budget: up to this many re-tries after the first failed send. */
     const val MAX_SEND_RETRIES = 3
 
@@ -68,7 +63,7 @@ object AutoUpdateSchedule {
 
     /**
      * Backoff before the backstop retry that follows the (0-based) failed [attempt]:
-     * 2 min → 5 min → 15 min, then held at 15 min. Replaces SUN's old flat 15/15/15.
+     * 2 min → 5 min → 15 min, then held at 15 min.
      */
     fun backstopDelayMs(attempt: Int): Long {
         val minutes = when (attempt) {
@@ -91,10 +86,5 @@ object AutoUpdateSchedule {
     private fun LocalDateTime.plusMinutes(minutes: Long): LocalDateTime =
         toInstant(ARITHMETIC_ZONE)
             .plus(minutes, DateTimeUnit.MINUTE)
-            .toLocalDateTime(ARITHMETIC_ZONE)
-
-    private fun LocalDateTime.plusSeconds(seconds: Long): LocalDateTime =
-        toInstant(ARITHMETIC_ZONE)
-            .plus(seconds, DateTimeUnit.SECOND)
             .toLocalDateTime(ARITHMETIC_ZONE)
 }

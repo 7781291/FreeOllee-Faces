@@ -4,7 +4,6 @@ import com.blizzardcaron.freeolleefaces.activity.ActivityMetric
 import com.blizzardcaron.freeolleefaces.activity.ActivityState
 import com.blizzardcaron.freeolleefaces.activity.ActivityUnit
 import com.blizzardcaron.freeolleefaces.glyph.NameplateGlyphs
-import kotlinx.datetime.LocalTime
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -42,22 +41,6 @@ class NameplateLegibilityTest {
                         DisplayFormatter.temperature(temp.toDouble(), unit, stale),
                         "temp=$temp unit=$unit stale=$stale",
                     )
-                }
-            }
-        }
-    }
-
-    @Test
-    fun sun_time_render_is_always_legible() {
-        for (kind in SunEventKind.entries) {
-            for (hour in 0..23) {
-                for (minute in listOf(0, 5, 30, 42, 59)) {
-                    for (stale in listOf(false, true)) {
-                        assertLegible(
-                            DisplayFormatter.sunTime(kind, LocalTime(hour, minute), stale),
-                            "sun=$kind $hour:$minute stale=$stale",
-                        )
-                    }
                 }
             }
         }

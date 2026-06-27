@@ -10,7 +10,6 @@ enum class FailureKind(val retryable: Boolean) {
     WATCH_UNREACHABLE(retryable = true),
     WEATHER_FETCH_FAILED(retryable = true),
     SETUP_INCOMPLETE(retryable = false),
-    SUN_UNREACHABLE(retryable = true),
     HEALTH_UNAVAILABLE(retryable = false),
     ALARM_UNREACHABLE(retryable = true),
 }
