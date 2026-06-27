@@ -6,6 +6,7 @@ import androidx.work.WorkerParameters
 import com.blizzardcaron.freeolleefaces.activity.ActivityUnit
 import com.blizzardcaron.freeolleefaces.ble.AndroidBleClient
 import com.blizzardcaron.freeolleefaces.ble.AutoSleepApply
+import com.blizzardcaron.freeolleefaces.ble.BatteryReadback
 import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
 import com.blizzardcaron.freeolleefaces.health.AndroidStepsProvider
 import com.blizzardcaron.freeolleefaces.notifications.AndroidNotificationAccess
@@ -73,6 +74,15 @@ class AutoUpdateWorker(
             }
 
             face == ActiveComplication.STEPS -> runSteps(ctx, prefs, address!!, now)
+
+            // BATTERY, like STEPS, needs only a watch (no coordinates); handle before the location guard.
+            face == ActiveComplication.BATTERY && address == null -> {
+                prefs.recordAutoSend("Skipped: set watch in app")
+                applyHealth(ctx, prefs, FailureKind.SETUP_INCOMPLETE, inSleepNow(prefs))
+                Result.success()
+            }
+
+            face == ActiveComplication.BATTERY -> runBattery(ctx, prefs, address!!, now)
 
             lat == null || lng == null || address == null -> {
                 prefs.recordAutoSend("Skipped: set location/watch in app")
@@ -178,6 +188,56 @@ class AutoUpdateWorker(
             val fire = AutoUpdateSchedule.nextTemperatureFire(now, prefs.updateIntervalMinutes, sleep)
             val delayMs = millisBetween(now, fire)
             AutoUpdateScheduler.enqueueNext(ctx, delayMs, sendAttempt = 0)
+        }
+        return Result.success()
+    }
+
+    private suspend fun runBattery(
+        ctx: Context,
+        prefs: Prefs,
+        address: String,
+        now: LocalDateTime,
+    ): Result {
+        val sleep = prefs.pushPauseWindow()
+        val nowMinOfDay = now.hour * MINUTES_PER_HOUR + now.minute
+        val inSleep = sleep != null &&
+            AutoUpdateSchedule.isInSleepWindow(nowMinOfDay, sleep.startMin, sleep.endMin)
+        var backstopped = false
+        if (!inSleep) {
+            val ble = AndroidBleClient(ctx)
+            val mv = BatteryReadback.read(ble, address)
+            if (mv != null) {
+                prefs.recordBatteryFetch(mv)
+                val payload = DisplayFormatter.battery(mv, prefs.batteryReadout)
+                ble.send(address, payload)
+                    .onSuccess {
+                        prefs.recordAutoSend("Sent '$payload'")
+                        applyHealth(ctx, prefs, null, inSleep)
+                    }
+                    .onFailure {
+                        backstopped = handleSendFailure(ctx, prefs, FailureKind.WATCH_UNREACHABLE, inSleep)
+                    }
+            } else {
+                // Read failed (link loss / malformed). Push the last cached voltage marked stale; if
+                // there's no cache, the watch link is the dependency -> treat as unreachable.
+                val cached = prefs.batteryValueMv
+                if (cached != null) {
+                    val payload = DisplayFormatter.battery(cached, prefs.batteryReadout, stale = true)
+                    ble.send(address, payload)
+                        .onSuccess { prefs.recordAutoSend("Sent stale '$payload'") }
+                        .onFailure {
+                            backstopped = handleSendFailure(ctx, prefs, FailureKind.WATCH_UNREACHABLE, inSleep)
+                        }
+                } else {
+                    backstopped = handleSendFailure(ctx, prefs, FailureKind.WATCH_UNREACHABLE, inSleep)
+                }
+            }
+        } else {
+            prefs.recordAutoSend("Asleep (power saving)")
+        }
+        if (!backstopped) {
+            val fire = AutoUpdateSchedule.nextTemperatureFire(now, prefs.updateIntervalMinutes, sleep)
+            AutoUpdateScheduler.enqueueNext(ctx, millisBetween(now, fire), sendAttempt = 0)
         }
         return Result.success()
     }
