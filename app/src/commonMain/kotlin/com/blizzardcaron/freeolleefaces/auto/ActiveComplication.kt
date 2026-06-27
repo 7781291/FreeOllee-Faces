@@ -13,6 +13,9 @@ enum class ActiveComplication {
     /** Today's step count, read from Health Connect. */
     STEPS,
 
+    /** Watch battery voltage, read over BLE from the watch's 0x4A version reply. */
+    BATTERY,
+
     /** Surface pressure from the weather network (hPa/inHg), polled like TEMPERATURE. */
     PRESSURE,
 

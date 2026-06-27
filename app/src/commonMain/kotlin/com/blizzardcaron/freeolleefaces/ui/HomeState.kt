@@ -2,6 +2,7 @@ package com.blizzardcaron.freeolleefaces.ui
 
 import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
 import com.blizzardcaron.freeolleefaces.ble.ConnectionStatus
+import com.blizzardcaron.freeolleefaces.format.BatteryReadout
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 
 data class HomeState(
@@ -25,6 +26,11 @@ data class HomeState(
     val quietHoursEnabled: Boolean = true,
     val quietHoursStartMin: Int = DEFAULT_QH_START_HOUR * MINUTES_PER_HOUR,
     val quietHoursEndMin: Int = DEFAULT_QH_END_HOUR * MINUTES_PER_HOUR,
+
+    val batteryReadout: BatteryReadout = BatteryReadout.PERCENT,
+    val batteryPreview: PreviewState = PreviewState.Loading,
+    val batteryUpdated: String? = null,
+    val batteryNext: String? = null,
 
     val pressurePreview: PreviewState = PreviewState.WaitingForCoords,
     val pressureUpdated: String? = null,

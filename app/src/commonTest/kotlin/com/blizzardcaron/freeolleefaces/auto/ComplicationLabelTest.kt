@@ -7,6 +7,7 @@ class ComplicationLabelTest {
     @Test fun labels_each_complication() {
         assertEquals("Temperature", ActiveComplication.TEMPERATURE.displayLabel())
         assertEquals("Steps", ActiveComplication.STEPS.displayLabel())
+        assertEquals("Battery", ActiveComplication.BATTERY.displayLabel())
         assertEquals("Pressure", ActiveComplication.PRESSURE.displayLabel())
         assertEquals("Altitude", ActiveComplication.ALTITUDE.displayLabel())
         assertEquals("Custom", ActiveComplication.CUSTOM.displayLabel())

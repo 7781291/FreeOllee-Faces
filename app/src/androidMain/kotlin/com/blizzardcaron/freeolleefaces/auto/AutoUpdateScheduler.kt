@@ -40,6 +40,8 @@ object AutoUpdateScheduler {
 
             ActiveComplication.STEPS -> scheduleIntervalFace(ctx, prefs, prefs.updateIntervalMinutes)
 
+            ActiveComplication.BATTERY -> scheduleIntervalFace(ctx, prefs, prefs.updateIntervalMinutes)
+
             ActiveComplication.PRESSURE -> scheduleIntervalFace(ctx, prefs, prefs.updateIntervalMinutes)
 
             ActiveComplication.ALTITUDE -> scheduleIntervalFace(ctx, prefs, prefs.updateIntervalMinutes)
