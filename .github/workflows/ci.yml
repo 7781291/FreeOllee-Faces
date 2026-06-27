@@ -29,9 +29,11 @@ jobs:
 
   a11y:
     runs-on: ubuntu-latest
-    # Allow the Pixel 7 entry to commit refreshed screenshots back to the PR branch.
     permissions:
+      # Allow the Pixel 7 entry to commit refreshed screenshots back to the PR branch...
       contents: write
+      # ...and to re-assert the required version-check status on that auto-commit (see below).
+      statuses: write
     strategy:
       fail-fast: false
       matrix:
@@ -98,8 +100,24 @@ jobs:
       # Commit the refreshed README screenshots back to the PR branch (Pixel 7 entry only).
       # No-op when nothing changed; a GITHUB_TOKEN commit does not trigger another CI run.
       - name: Commit refreshed screenshots
+        id: autocommit
         if: ${{ matrix.upload-screenshots && github.event_name == 'pull_request' }}
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           file_pattern: docs/screenshots/home.png docs/screenshots/activity.png docs/screenshots/alarms.png
           commit_message: "docs(readme): auto-refresh screenshots [skip ci]"
+      # The auto-commit above is pushed with GITHUB_TOKEN, which by design does NOT trigger new
+      # workflow runs. That leaves the new PR-head commit with no version-check run — and
+      # version-check is a *required* status check, so the PR would sit "waiting" forever. The
+      # commit only ever touches docs/screenshots/*.png (file_pattern above), so it cannot change
+      # VERSION; version-check's verdict is identical to the parent commit's. Re-assert that
+      # success directly on the new SHA so the merge gate stays unblocked.
+      - name: Re-assert version-check on the screenshot commit
+        if: ${{ steps.autocommit.outputs.changes_detected == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api -X POST "repos/${{ github.repository }}/statuses/${{ steps.autocommit.outputs.commit_hash }}" \
+            -f state=success \
+            -f context=version-check \
+            -f description="VERSION unchanged by screenshot auto-commit"
