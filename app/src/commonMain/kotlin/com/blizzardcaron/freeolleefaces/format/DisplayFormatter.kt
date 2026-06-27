@@ -20,6 +20,13 @@ object DisplayFormatter {
 
     private const val FEET_PER_METER = 3.28084
 
+    /** Battery percentage rails (millivolts): full at 3.00 V, empty at 2.40 V. */
+    private const val BATTERY_FULL_MV = 3000
+    private const val BATTERY_EMPTY_MV = 2400
+    private const val PERCENT_MAX = 100
+    private const val MV_PER_VOLT = 1000.0
+    private const val VOLT_DECIMALS = 2
+
     fun temperature(value: Double, unit: TempUnit = TempUnit.FAHRENHEIT, stale: Boolean = false): String {
         // The watch's segment font (firmware OW-FW-APP, font table indexed by ASCII) maps '#'
         // (mask 0x63) to segments a+b+f+g — the top square that reads as a degree '°'. There is no
@@ -85,4 +92,23 @@ object DisplayFormatter {
     /** Floor [count] to whole thousands and render as "Nk" (e.g. 100_234 -> "100k"). For the
      *  6-digit range 100_000..999_999 this is always 4 chars ("100k".."999k"). */
     private fun abbreviateThousands(count: Long): String = "${count / THOUSAND}k"
+
+    /**
+     * Watch battery, right-justified in [LENGTH] cells. VOLTS -> "2.85V" (the font draws '.' as a
+     * centered dash and 'V' as a 'U' — intended). PERCENT -> "85P" ('%' is unrenderable on the
+     * 7-seg font, so 'P' stands in). 'E' marks a stale value via the leading pad.
+     */
+    fun battery(milliVolts: Int, readout: BatteryReadout, stale: Boolean = false): String {
+        val fresh = when (readout) {
+            BatteryReadout.VOLTS -> "${formatDecimal(milliVolts / MV_PER_VOLT, VOLT_DECIMALS)}V"
+            BatteryReadout.PERCENT -> "${batteryPercent(milliVolts)}P"
+        }
+        return markStale(fresh.padStart(LENGTH), stale)
+    }
+
+    /** Linear battery estimate in percent, clamped 0..100 (100% = 3.00 V, 0% = 2.40 V). */
+    fun batteryPercent(milliVolts: Int): Int {
+        val raw = (milliVolts - BATTERY_EMPTY_MV) * PERCENT_MAX / (BATTERY_FULL_MV - BATTERY_EMPTY_MV)
+        return raw.coerceIn(0, PERCENT_MAX)
+    }
 }

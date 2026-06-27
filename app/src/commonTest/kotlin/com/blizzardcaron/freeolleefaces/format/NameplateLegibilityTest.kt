@@ -4,6 +4,8 @@ import com.blizzardcaron.freeolleefaces.activity.ActivityMetric
 import com.blizzardcaron.freeolleefaces.activity.ActivityState
 import com.blizzardcaron.freeolleefaces.activity.ActivityUnit
 import com.blizzardcaron.freeolleefaces.glyph.NameplateGlyphs
+import com.blizzardcaron.freeolleefaces.glyph.NameplateSanitizer
+import com.blizzardcaron.freeolleefaces.format.BatteryReadout
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -14,6 +16,9 @@ import kotlin.test.assertTrue
  */
 class NameplateLegibilityTest {
     private fun assertLegible(out: String, ctx: String) {
+        // The nameplate is exactly 6 cells; longer payloads are truncated by the sanitizer (dropping
+        // trailing glyphs like a percent 'P'), so an over-length render is itself a defect.
+        assertTrue(out.length <= NameplateSanitizer.MAX_CELLS, "$ctx -> \"$out\" exceeds ${NameplateSanitizer.MAX_CELLS} cells")
         out.forEach { c -> assertTrue(NameplateGlyphs.isLegible(c), "$ctx -> \"$out\" has illegible '$c'") }
     }
 
@@ -51,6 +56,14 @@ class NameplateLegibilityTest {
         val counts = listOf(0L, 5L, 999L, 12_345L, 100_234L, 999_999L, 1_500_000L)
         for (count in counts) for (stale in listOf(false, true)) {
             assertLegible(DisplayFormatter.steps(count, stale), "steps=$count stale=$stale")
+        }
+    }
+
+    @Test
+    fun battery_render_is_always_legible() {
+        val millivolts = listOf(2000, 2400, 2550, 2700, 2850, 3000, 3200)
+        for (mv in millivolts) for (readout in BatteryReadout.entries) for (stale in listOf(false, true)) {
+            assertLegible(DisplayFormatter.battery(mv, readout, stale), "mv=$mv readout=$readout stale=$stale")
         }
     }
 }
