@@ -155,7 +155,11 @@ private fun SlotEditor(
             OutlinedTextField(
                 value = slot.label,
                 onValueChange = callbacks.onLabelChange,
-                label = { Text("Label (optional)") },
+                // Slot-specific so each field has a distinct, present accessible name (a bare
+                // "Label (optional)" on an empty field was flagged by ATF's
+                // SpeakableTextPresentCheck, and is ambiguous to a screen reader navigating
+                // field-by-field across slots).
+                label = { Text("Slot ${index + 1} label (optional)") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )

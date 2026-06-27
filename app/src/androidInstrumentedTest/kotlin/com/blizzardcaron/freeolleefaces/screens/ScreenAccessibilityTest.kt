@@ -33,6 +33,11 @@ class ScreenAccessibilityTest {
         var current by mutableStateOf<Screen>(allScreens.first())
         composeRule.enableAccessibilityChecks()
         composeRule.setContent { renderFor(current)() }
+        // Accumulate every screen's findings in one run (rather than fail-fast) so all remaining
+        // a11y issues surface together. TEMP DIAGNOSTIC: each failing screen also dumps its
+        // semantics tree (with bounds) to pinpoint the flagged node; strip the tree dump once
+        // findings are triaged.
+        val failures = StringBuilder()
         allScreens.forEach { screen ->
             composeRule.runOnUiThread { current = screen }
             composeRule.waitForIdle()
@@ -40,14 +45,12 @@ class ScreenAccessibilityTest {
             try {
                 composeRule.onAllNodes(isRoot()).tryPerformAccessibilityChecks()
             } catch (e: Throwable) {
-                // TEMP DIAGNOSTIC: append the failing screen's semantics tree (with bounds) so
-                // the CI test output pinpoints the flagged node. Remove once findings are triaged.
-                throw AssertionError(
-                    "A11y failure on screen=$screen\n" +
-                        composeRule.onRoot().printToString(maxDepth = Int.MAX_VALUE),
-                    e,
-                )
+                failures.append("=== A11y failure on screen=").append(screen).append(" ===\n")
+                    .append(e.message).append('\n')
+                    .append(composeRule.onRoot().printToString(maxDepth = Int.MAX_VALUE))
+                    .append("\n\n")
             }
         }
+        if (failures.isNotEmpty()) throw AssertionError(failures.toString())
     }
 }
