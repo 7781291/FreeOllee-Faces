@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Debug-only screenshot host (see ScreenshotHostActivity). Exported so it can be launched
+         via `adb am start` to capture the README home screenshot on a real device. -->
+    <application>
+        <activity
+            android:name=".ScreenshotHostActivity"
+            android:exported="true"
+            android:theme="@style/Theme.SuperFreeOllee" />
+    </application>
+</manifest>

@@ -1,11 +1,14 @@
 package com.blizzardcaron.freeolleefaces.vm
 
 import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
+import com.blizzardcaron.freeolleefaces.ble.BatteryReadback
+import com.blizzardcaron.freeolleefaces.ble.OlleeProtocol
 import com.blizzardcaron.freeolleefaces.fakes.FakeBleClient
 import com.blizzardcaron.freeolleefaces.fakes.FakeLocationProvider
 import com.blizzardcaron.freeolleefaces.fakes.FakeNotificationAccessChecker
 import com.blizzardcaron.freeolleefaces.fakes.FakeScheduler
 import com.blizzardcaron.freeolleefaces.fakes.FakeStepsProvider
+import com.blizzardcaron.freeolleefaces.format.BatteryReadout
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 import com.blizzardcaron.freeolleefaces.health.StepsProvider
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
@@ -216,6 +219,51 @@ class ComplicationControllerTest {
 
         assertTrue(holder.st.stepsPreview is PreviewState.Ready, "expected Ready preview")
         assertEquals(1234L, prefs.lastStepCount, "step count should be persisted via prefs.recordStepsFetch")
+    }
+
+    // ---------------------------------------------------------------------------
+    // refreshBattery — success caches voltage + sets Ready; no watch -> Error preview
+    // ---------------------------------------------------------------------------
+
+    @Test
+    fun refreshBattery_success_setsReadyAndCaches() = runTest(testScheduler) {
+        val callLog = mutableListOf<String>()
+        val ble = FakeBleClient(callLog)
+        val scheduler = FakeScheduler(callLog)
+        val prefs = Prefs(MapSettings())
+        prefs.watchAddress = watchAddress
+
+        val payload = ByteArray(BatteryReadback.VOLTAGE_OFFSET + 2)
+        payload[BatteryReadback.VOLTAGE_OFFSET] = 0x0B
+        payload[BatteryReadback.VOLTAGE_OFFSET + 1] = 0x22 // 0x0B22 = 2850 mV
+        ble.awaitResult = Result.success(
+            OlleeProtocol.Frame(cmd = 0x02, target = 0x4a, payload = payload, crcOk = true),
+        )
+
+        val holder = StateHolder(HomeState(batteryReadout = BatteryReadout.PERCENT))
+        val comp = controller(prefs, ble, scheduler, this, holder = holder)
+
+        comp.refreshBattery(push = false)
+        advanceUntilIdle()
+
+        val preview = holder.st.batteryPreview
+        assertTrue(preview is PreviewState.Ready, "expected Ready, got $preview")
+        assertEquals("   75P", (preview as PreviewState.Ready).payload)
+        assertEquals(2850, prefs.batteryValueMv)
+    }
+
+    @Test
+    fun refreshBattery_noWatch_setsError() = runTest(testScheduler) {
+        val ble = FakeBleClient(mutableListOf())
+        val scheduler = FakeScheduler(mutableListOf())
+        val prefs = Prefs(MapSettings()) // no watchAddress
+        val holder = StateHolder()
+        val comp = controller(prefs, ble, scheduler, this, holder = holder)
+
+        comp.refreshBattery(push = false)
+        advanceUntilIdle()
+
+        assertTrue(holder.st.batteryPreview is PreviewState.Error, "expected Error")
     }
 
     // ---------------------------------------------------------------------------

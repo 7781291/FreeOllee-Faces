@@ -8,6 +8,7 @@ import com.blizzardcaron.freeolleefaces.activity.ActivityUnit
 import com.blizzardcaron.freeolleefaces.activity.TrackPoint
 import com.blizzardcaron.freeolleefaces.alarm.Alarm
 import com.blizzardcaron.freeolleefaces.ble.ConnectionStatus
+import com.blizzardcaron.freeolleefaces.format.BatteryReadout
 import com.blizzardcaron.freeolleefaces.timer.TimerSet
 import com.blizzardcaron.freeolleefaces.timer.TimerSlot
 import com.blizzardcaron.freeolleefaces.ui.ActivityCallbacks
@@ -16,6 +17,7 @@ import com.blizzardcaron.freeolleefaces.ui.ActivityMetricsConfigCallbacks
 import com.blizzardcaron.freeolleefaces.ui.AlarmsCallbacks
 import com.blizzardcaron.freeolleefaces.ui.HomeCallbacks
 import com.blizzardcaron.freeolleefaces.ui.HomeState
+import com.blizzardcaron.freeolleefaces.ui.PreviewState
 import com.blizzardcaron.freeolleefaces.ui.QuickTimerState
 import com.blizzardcaron.freeolleefaces.ui.SettingsCallbacks
 import com.blizzardcaron.freeolleefaces.ui.TimerSetsCallbacks
@@ -24,16 +26,50 @@ import com.blizzardcaron.freeolleefaces.ui.TimerSetsCallbacks
 object ScreenFakes {
     val unit = ActivityUnit.METRIC
 
+    // Every face populated with a representative reading so the README hero shot shows real
+    // values (no "Off" / "Waiting for coordinates" placeholders). Payloads are the exact 6-cell
+    // nameplate strings DisplayFormatter would emit; human strings match the controller wording.
     val homeState = HomeState(
         watchLabel = "Watch: Ollee",
         watchSelected = true,
         connectionStatus = ConnectionStatus.Connected,
-        versionLabel = "v0.0.0",
+        versionLabel = "v0.31.0",
+
+        locationLabel = "Location: 40.015, -105.270",
+        locationFreshness = "just now",
+        lat = "40.015",
+        lng = "-105.270",
+
+        tempPreview = PreviewState.Ready("  72#F", "Currently: 72.0°F"),
+        tempUpdated = "Updated 2:45 PM",
+        tempNext = "Next update 3:00 PM",
+
+        batteryReadout = BatteryReadout.PERCENT,
+        batteryPreview = PreviewState.Ready("   85P", "Battery: 85%"),
+        batteryUpdated = "Updated 2:45 PM",
+        batteryNext = "Next update 3:00 PM",
+
+        pressurePreview = PreviewState.Ready("  1013", "Currently: 1013.0 hPa"),
+        pressureUpdated = "Updated 2:45 PM",
+        pressureNext = "Next update 3:00 PM",
+
+        altitudePreview = PreviewState.Ready(" 1609m", "Elevation: 1609 m"),
+        altitudeUpdated = "Updated 2:45 PM",
+        altitudeNext = "Next update 3:00 PM",
+
+        stepsPreview = PreviewState.Ready("  8432", "Today: 8,432 steps"),
+        stepsUpdated = "Updated 2:45 PM",
+        stepsHealthGranted = true,
+
+        notificationCount = 3,
+        notificationAccessGranted = true,
+        notificationsEnabled = true,
     )
     val homeCallbacks = HomeCallbacks(
         onActivate = {},
         onUpdateNow = {},
         onTempUnitChange = {},
+        onSetBatteryReadout = {},
         onCustomChange = {},
         onSendCustom = {},
         onGrantHealth = {},

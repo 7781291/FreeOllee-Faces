@@ -27,6 +27,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
 import com.blizzardcaron.freeolleefaces.auto.displayLabel
+import com.blizzardcaron.freeolleefaces.format.BatteryReadout
 import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 import com.blizzardcaron.freeolleefaces.glyph.NameplateSanitizer
@@ -60,6 +61,37 @@ internal fun TemperatureCard(
                 onClick = { callbacks.onTempUnitChange(TempUnit.CELSIUS) },
                 shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
             ) { Text("°C") }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun BatteryCard(
+    state: HomeState,
+    callbacks: HomeCallbacks,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+) {
+    ComplicationCard(
+        title = ActiveComplication.BATTERY.displayLabel(),
+        active = state.activeComplication == ActiveComplication.BATTERY,
+        onActivate = { callbacks.onActivate(ActiveComplication.BATTERY) },
+        face = FacePreview(state.batteryPreview, state.batteryUpdated, state.batteryNext),
+        expanded = expanded,
+        onToggle = onToggle,
+    ) {
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+            SegmentedButton(
+                selected = state.batteryReadout == BatteryReadout.PERCENT,
+                onClick = { callbacks.onSetBatteryReadout(BatteryReadout.PERCENT) },
+                shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+            ) { Text("Percent") }
+            SegmentedButton(
+                selected = state.batteryReadout == BatteryReadout.VOLTS,
+                onClick = { callbacks.onSetBatteryReadout(BatteryReadout.VOLTS) },
+                shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+            ) { Text("Volts") }
         }
     }
 }

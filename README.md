@@ -17,6 +17,8 @@ over Bluetooth Low Energy.
 (held under ALARM on the Clock face), refreshed automatically in the background:
 
 - The current temperature in °F (via Open-Meteo).
+- The watch's own battery, read over BLE from its firmware reply and shown as volts or a
+  percentage estimate (100% = 3.0 V, 0% = 2.4 V) — toggle between the two on the card.
 - Today's step count, read from Android Health Connect (whatever app you use writes it
   there — a fitness ring, phone pedometer, etc.).
 - A custom 6-character string (for experimentation).

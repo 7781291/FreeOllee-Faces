@@ -228,6 +228,7 @@ private fun rememberAppCallbacks(
         onActivate = { viewModel.complications.activate(it) },
         onUpdateNow = { viewModel.complications.refreshActive(force = true, push = true) },
         onTempUnitChange = { newUnit -> viewModel.complications.setTempUnit(newUnit) },
+        onSetBatteryReadout = { viewModel.complications.setBatteryReadout(it) },
         onCustomChange = { text -> viewModel.complications.setCustomText(text) },
         onSendCustom = { viewModel.complications.sendCustom(state.custom) },
         onGrantHealth = { perms.requestHealth() },
@@ -271,7 +272,9 @@ private suspend fun runStartupLocation(viewModel: AppViewModel, context: Context
         haveCoords && hasAnyLocation -> {
             viewModel.complications.setLocating(true)
             viewModel.complications.fetchLocation()
-                .onSuccess { coords -> viewModel.complications.onLocationFetchedSilent(coords.lat, coords.lng) }
+                .onSuccess { coords ->
+                    viewModel.complications.onLocationFetched(coords.lat, coords.lng, refresh = false)
+                }
                 .onFailure { viewModel.complications.onLocationRefreshFailed() }
         }
 
@@ -279,7 +282,9 @@ private suspend fun runStartupLocation(viewModel: AppViewModel, context: Context
         !haveCoords && hasAnyLocation -> {
             viewModel.complications.setLocating(true)
             viewModel.complications.fetchLocation()
-                .onSuccess { coords -> viewModel.complications.onLocationFetchedSilent(coords.lat, coords.lng) }
+                .onSuccess { coords ->
+                    viewModel.complications.onLocationFetched(coords.lat, coords.lng, refresh = false)
+                }
                 .onFailure { viewModel.complications.setLocating(false) }
         }
 

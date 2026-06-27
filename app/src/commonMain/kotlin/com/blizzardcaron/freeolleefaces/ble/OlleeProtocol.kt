@@ -82,6 +82,9 @@ object OlleeProtocol {
     const val TARGET_GET_TIMER = 0x2C
     const val RESPONSE_TARGET_OFFSET = 0x20
 
+    /** Firmware / version read (drives image selection); its 0x4A reply also carries battery voltage. */
+    const val TARGET_VERSION = 0x2a
+
     /** Config-register read/write (settings bitmask + autosleep period). Reply at 0x52. */
     const val TARGET_GET_CONFIG = 0x32
     const val TARGET_SET_CONFIG = 0x33

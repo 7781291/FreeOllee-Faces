@@ -5,8 +5,10 @@ import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
 import com.blizzardcaron.freeolleefaces.auto.AutoUpdateSchedule
 import com.blizzardcaron.freeolleefaces.auto.Scheduler
 import com.blizzardcaron.freeolleefaces.auto.isTempCacheFresh
+import com.blizzardcaron.freeolleefaces.ble.BatteryReadback
 import com.blizzardcaron.freeolleefaces.ble.BleClient
 import com.blizzardcaron.freeolleefaces.ble.OlleeProtocol
+import com.blizzardcaron.freeolleefaces.format.BatteryReadout
 import com.blizzardcaron.freeolleefaces.format.DisplayFormatter
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 import com.blizzardcaron.freeolleefaces.format.WeatherErrorCopy
@@ -222,6 +224,58 @@ class ComplicationController(
         }
     }
 
+    fun refreshBattery(push: Boolean) {
+        val addr = prefs.watchAddress
+        if (addr == null) {
+            update { it.copy(batteryPreview = PreviewState.Error("Pair a watch to read battery")) }
+            return
+        }
+        refreshJob?.cancel()
+        refreshJob = scope.launch {
+            update { it.copy(batteryPreview = PreviewState.Loading) }
+            val mv = BatteryReadback.read(ble, addr)
+            if (mv != null) {
+                prefs.recordBatteryFetch(mv)
+                val payload = DisplayFormatter.battery(mv, state().batteryReadout)
+                update {
+                    it.copy(
+                        batteryPreview = PreviewState.Ready(
+                            payload, DisplayFormatter.batteryHuman(mv, state().batteryReadout),
+                        ),
+                        batteryUpdated = "Updated ${clockTime(prefs.batteryFetchedMs!!)}",
+                        batteryNext = tempNextText(),
+                    )
+                }
+                if (push) pushIfWatch(payload)
+            } else {
+                // Read failed (watch unreachable / malformed) — fall back to the last cached voltage,
+                // marked stale with 'E'. No cache -> show the error.
+                val cached = prefs.batteryValueMv
+                if (cached != null) {
+                    val payload = DisplayFormatter.battery(cached, state().batteryReadout, stale = true)
+                    update {
+                        it.copy(
+                            batteryPreview = PreviewState.Ready(
+                                payload,
+                                DisplayFormatter.batteryHuman(cached, state().batteryReadout) + " (stale)",
+                            ),
+                            batteryUpdated = prefs.batteryFetchedMs?.let { ms -> "Updated ${clockTime(ms)}" },
+                        )
+                    }
+                    if (push) pushIfWatch(payload)
+                } else {
+                    update { it.copy(batteryPreview = PreviewState.Error("Couldn't read battery from the watch")) }
+                }
+            }
+        }
+    }
+
+    fun setBatteryReadout(readout: BatteryReadout) {
+        prefs.batteryReadout = readout
+        update { it.copy(batteryReadout = readout) }
+        refreshBattery(push = state().activeComplication == ActiveComplication.BATTERY)
+    }
+
     fun refreshPressure(push: Boolean) {
         val c = validCoords()
         if (c == null) {
@@ -312,6 +366,7 @@ class ComplicationController(
         when (state().activeComplication) {
             ActiveComplication.TEMPERATURE -> refreshTemp(force, push)
             ActiveComplication.STEPS -> refreshSteps(push)
+            ActiveComplication.BATTERY -> refreshBattery(push)
             ActiveComplication.PRESSURE -> refreshPressure(push)
             ActiveComplication.ALTITUDE -> refreshAltitude(push)
             ActiveComplication.CUSTOM -> {}
@@ -326,6 +381,7 @@ class ComplicationController(
     fun refreshAllPreviews() {
         refreshTemp(force = false, push = false)
         refreshSteps(push = false)
+        refreshBattery(push = false)
         refreshPressure(push = false)
         refreshAltitude(push = false)
         update {
@@ -347,6 +403,7 @@ class ComplicationController(
         when (complication) {
             ActiveComplication.TEMPERATURE -> refreshTemp(force = false, push = true)
             ActiveComplication.STEPS -> refreshSteps(push = true)
+            ActiveComplication.BATTERY -> refreshBattery(push = true)
             ActiveComplication.PRESSURE -> refreshPressure(push = true)
             ActiveComplication.ALTITUDE -> refreshAltitude(push = true)
             ActiveComplication.CUSTOM -> {
@@ -406,28 +463,12 @@ class ComplicationController(
 
     suspend fun fetchLocation() = location.fetch() // Activity calls when it holds permission
 
-    fun onLocationFetched(lat: Double, lng: Double) {
-        prefs.lastLat = lat
-        prefs.lastLng = lng
-        prefs.lastLocationFetchedMs = nowMs()
-        update {
-            it.copy(
-                lat = lat.toString(),
-                lng = lng.toString(),
-                locating = false,
-                locationLabel = locLabel(lat, lng),
-                locationFreshness = "just now",
-            )
-        }
-        refreshActive(force = true, push = false)
-    }
-
     /**
-     * Silent-refresh variant used by the location bootstrap: same persistence + state update as
-     * [onLocationFetched], but does not trigger a face refresh (the bootstrap refreshes the active
-     * face once at the end).
+     * Persist fetched coords + update state, then (by default) refresh the active face. The location
+     * bootstrap passes [refresh] = false — it does its own single refresh at the end — which is the
+     * old `onLocationFetchedSilent` behavior folded in here.
      */
-    fun onLocationFetchedSilent(lat: Double, lng: Double) {
+    fun onLocationFetched(lat: Double, lng: Double, refresh: Boolean = true) {
         prefs.lastLat = lat
         prefs.lastLng = lng
         prefs.lastLocationFetchedMs = nowMs()
@@ -440,6 +481,7 @@ class ComplicationController(
                 locationFreshness = "just now",
             )
         }
+        if (refresh) refreshActive(force = true, push = false)
     }
 
     /** Bootstrap-refresh failure where saved coords exist: mark "refresh failed" and warn. */

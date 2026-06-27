@@ -163,4 +163,29 @@ class DisplayFormatterTest {
     fun `steps not stale six digit stays full`() {
         assertEquals("100234", DisplayFormatter.steps(100_234, stale = false))
     }
+
+    @Test fun battery_volts_twoDecimalsWithV() {
+        assertEquals(" 2.85V", DisplayFormatter.battery(2850, BatteryReadout.VOLTS))
+        assertEquals(" 3.00V", DisplayFormatter.battery(3000, BatteryReadout.VOLTS))
+        assertEquals(" 2.40V", DisplayFormatter.battery(2400, BatteryReadout.VOLTS))
+    }
+
+    @Test fun battery_volts_stalePrefixesE() {
+        assertEquals("E2.85V", DisplayFormatter.battery(2850, BatteryReadout.VOLTS, stale = true))
+    }
+
+    @Test fun battery_percent_linearWithPSuffix() {
+        assertEquals("   50P", DisplayFormatter.battery(2700, BatteryReadout.PERCENT))
+        assertEquals("   75P", DisplayFormatter.battery(2850, BatteryReadout.PERCENT))
+        assertEquals("  100P", DisplayFormatter.battery(3200, BatteryReadout.PERCENT))
+    }
+
+    @Test fun battery_percent_clampsBothRails() {
+        assertEquals(0, DisplayFormatter.batteryPercent(2000))
+        assertEquals(0, DisplayFormatter.batteryPercent(2400))
+        assertEquals(100, DisplayFormatter.batteryPercent(3000))
+        assertEquals(100, DisplayFormatter.batteryPercent(3500))
+        assertEquals(50, DisplayFormatter.batteryPercent(2700))
+        assertEquals(75, DisplayFormatter.batteryPercent(2850))
+    }
 }

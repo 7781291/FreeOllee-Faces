@@ -4,6 +4,7 @@ package com.blizzardcaron.freeolleefaces.auto
 fun ActiveComplication.displayLabel(): String = when (this) {
     ActiveComplication.TEMPERATURE -> "Temperature"
     ActiveComplication.STEPS -> "Steps"
+    ActiveComplication.BATTERY -> "Battery"
     ActiveComplication.PRESSURE -> "Pressure"
     ActiveComplication.ALTITUDE -> "Altitude"
     ActiveComplication.CUSTOM -> "Custom"
