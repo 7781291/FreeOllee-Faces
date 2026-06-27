@@ -127,13 +127,17 @@ class PrefsTest {
         assertEquals(ActiveComplication.TEMPERATURE, face2, "second read after migration should still be TEMPERATURE")
     }
 
-    /** No active_face but auto_source = "SUN" → should migrate via fromLegacyAutoSource → SUN. */
-    @Test fun activeFace_legacyAutoSource_sun_migratesCorrectly() {
+    /** A stale legacy `auto_source` (incl. the retired "SUN") is ignored now and defaults to TEMPERATURE. */
+    @Test fun activeFace_legacyAutoSource_sun_defaultsToTemperature() {
         val prefs = freshPrefs("auto_source" to "SUN")
-        assertEquals(ActiveComplication.SUN, prefs.activeComplication, "auto_source=SUN should migrate to ActiveComplication.SUN")
+        assertEquals(
+            ActiveComplication.TEMPERATURE,
+            prefs.activeComplication,
+            "a stale auto_source=SUN should now default to TEMPERATURE",
+        )
     }
 
-    /** No active_face, no auto_source → fromLegacyAutoSource(null) → TEMPERATURE. */
+    /** No active_face, no legacy key → defaults to TEMPERATURE. */
     @Test fun activeFace_noLegacy_defaultsToTemperature() {
         val prefs = freshPrefs()
         assertEquals(ActiveComplication.TEMPERATURE, prefs.activeComplication, "no stored face should default to TEMPERATURE")

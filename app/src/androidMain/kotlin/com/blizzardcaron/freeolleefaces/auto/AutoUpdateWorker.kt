@@ -17,7 +17,6 @@ import com.blizzardcaron.freeolleefaces.notify.NotifyDecision
 import com.blizzardcaron.freeolleefaces.notify.StepsFailureClassifier
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
 import com.blizzardcaron.freeolleefaces.prefs.appSettings
-import com.blizzardcaron.freeolleefaces.sun.SunCalc
 import com.blizzardcaron.freeolleefaces.weather.OpenMeteoClient
 import com.blizzardcaron.freeolleefaces.weather.RetryPolicy
 import com.blizzardcaron.freeolleefaces.weather.WeatherFetchError
@@ -38,10 +37,6 @@ class AutoUpdateWorker(
 
     companion object {
         private const val MINUTES_PER_HOUR = 60
-        private const val POLAR_RESCHEDULE_HOURS = 12L
-        private const val MINUTES_PER_HOUR_L = 60L
-        private const val SECONDS_PER_MINUTE_L = 60L
-        private const val MILLIS_PER_SECOND_L = 1000L
 
         const val KEY_SEND_ATTEMPT = "send_attempt"
     }
@@ -86,7 +81,6 @@ class AutoUpdateWorker(
             }
 
             face == ActiveComplication.TEMPERATURE -> runTemperature(ctx, prefs, lat, lng, address, now)
-            face == ActiveComplication.SUN -> runSun(ctx, prefs, lat, lng, address, now)
             face == ActiveComplication.PRESSURE -> runPressure(ctx, prefs, lat, lng, address, now)
             face == ActiveComplication.ALTITUDE -> runAltitude(ctx, prefs, lat, lng, address, now)
 
@@ -369,51 +363,6 @@ class AutoUpdateWorker(
             AutoUpdateScheduler.enqueueNext(ctx, millisBetween(now, fire), sendAttempt = 0)
         }
         return Result.success()
-    }
-
-    private suspend fun runSun(
-        ctx: Context,
-        prefs: Prefs,
-        lat: Double,
-        lng: Double,
-        address: String,
-        now: LocalDateTime,
-    ): Result {
-        val inSleep = inSleepNow(prefs)
-        val event = SunCalc.nextEvent(
-            now.toInstant(TimeZone.currentSystemDefault()),
-            lat,
-            lng,
-            TimeZone.currentSystemDefault(),
-        )
-        if (event == null) {
-            prefs.recordAutoSend("Skipped: no sun event (polar)")
-            AutoUpdateScheduler.enqueueNext(
-                ctx,
-                POLAR_RESCHEDULE_HOURS * MINUTES_PER_HOUR_L * SECONDS_PER_MINUTE_L * MILLIS_PER_SECOND_L,
-                sendAttempt = 0,
-            )
-            return Result.success()
-        }
-
-        val payload = DisplayFormatter.sunTime(event.kind, event.time.time)
-        val sendResult = AndroidBleClient(ctx).send(address, payload)
-
-        if (sendResult.isSuccess) {
-            prefs.recordAutoSend("Sent '$payload'")
-            applyHealth(ctx, prefs, null, inSleep)
-            scheduleAfterEvent(ctx, now, event.time)
-        } else if (!handleSendFailure(ctx, prefs, FailureKind.SUN_UNREACHABLE, inSleep)) {
-            // Budget exhausted — resume the normal sun chain after the (missed) event.
-            scheduleAfterEvent(ctx, now, event.time)
-        }
-        return Result.success()
-    }
-
-    private fun scheduleAfterEvent(ctx: Context, now: LocalDateTime, eventTime: LocalDateTime) {
-        val wake = AutoUpdateSchedule.nextSunWake(eventTime)
-        val delayMs = millisBetween(now, wake)
-        AutoUpdateScheduler.enqueueNext(ctx, delayMs, sendAttempt = 0)
     }
 
     /**

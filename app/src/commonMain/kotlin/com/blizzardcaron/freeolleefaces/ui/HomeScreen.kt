@@ -109,8 +109,6 @@ private fun ColumnScope.ComplicationCardsList(
             onToggle = { onToggle(ComplicationCardId.TEMPERATURE) },
         )
 
-        SunCard(state = state, callbacks = callbacks)
-
         PressureCard(state = state, callbacks = callbacks)
 
         AltitudeCard(state = state, callbacks = callbacks)

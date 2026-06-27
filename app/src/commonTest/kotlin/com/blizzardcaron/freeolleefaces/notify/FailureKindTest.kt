@@ -10,7 +10,6 @@ class FailureKindTest {
     @Test fun transientFailuresAreRetryable() {
         assertTrue(FailureKind.WATCH_UNREACHABLE.retryable)
         assertTrue(FailureKind.WEATHER_FETCH_FAILED.retryable)
-        assertTrue(FailureKind.SUN_UNREACHABLE.retryable)
         assertTrue(FailureKind.ALARM_UNREACHABLE.retryable)
     }
 
@@ -20,7 +19,7 @@ class FailureKindTest {
     }
 
     @Test fun everyKindHasAnExplicitRetryableValue() {
-        // Guard against a future kind silently defaulting; exactly four are retryable today.
-        assertEquals(4, FailureKind.entries.count { it.retryable })
+        // Guard against a future kind silently defaulting; exactly three are retryable today.
+        assertEquals(3, FailureKind.entries.count { it.retryable })
     }
 }

@@ -13,11 +13,10 @@ over Bluetooth Low Energy.
 
 ## Features
 
-**Complications** — pushes one of four values to the watch's 6-character "Name tag"
+**Complications** — pushes one of several values to the watch's 6-character "Name tag"
 (held under ALARM on the Clock face), refreshed automatically in the background:
 
 - The current temperature in °F (via Open-Meteo).
-- The next sunrise or sunset time (computed locally with the NOAA solar algorithm).
 - Today's step count, read from Android Health Connect (whatever app you use writes it
   there — a fitness ring, phone pedometer, etc.).
 - A custom 6-character string (for experimentation).

@@ -1,9 +1,6 @@
 package com.blizzardcaron.freeolleefaces.format
 
-import kotlinx.datetime.LocalTime
 import kotlin.math.roundToInt
-
-enum class SunEventKind { SUNRISE, SUNSET }
 
 object DisplayFormatter {
 
@@ -11,12 +8,6 @@ object DisplayFormatter {
 
     /** Width of the temperature digits field (degree glyph + unit letter fill the remaining 2 cells). */
     private const val TEMP_DIGITS_WIDTH = 4
-
-    /** Hours in a 12-hour clock half — both the noon/midnight rollover point and the hour count. */
-    private const val HOUR_12 = 12
-
-    /** Single-digit hour threshold (1..9) below which the am/pm marker is included. */
-    private const val SINGLE_DIGIT_HOUR_MAX = 10
 
     /** Steps clamp ceiling: no real day of walking comes close, so this only guards bogus aggregates. */
     private const val MAX_STEPS = 999_999L
@@ -58,31 +49,6 @@ object DisplayFormatter {
         val num = value.roundToInt().toString()
         val fresh = if (num.length >= LENGTH) num.take(LENGTH) else "$num$suffix"
         return markStale(fresh.padStart(LENGTH), stale)
-    }
-
-    fun sunTime(kind: SunEventKind, time: LocalTime, stale: Boolean = false): String {
-        val hour24 = time.hour
-        val minute = time.minute
-        val isAm = hour24 < HOUR_12
-        val hour12 = when {
-            hour24 == 0 -> HOUR_12
-            hour24 > HOUR_12 -> hour24 - HOUR_12
-            else -> hour24
-        }
-        val eventChar = if (kind == SunEventKind.SUNRISE) 'r' else 's'
-
-        val mm = minute.toString().padStart(2, '0')
-        // The watch renders ':' as a blank cell, so use a space separator (same look, legible).
-        val fresh = if (hour12 < SINGLE_DIGIT_HOUR_MAX) {
-            // single-digit hour: include am/pm marker -> "H MMar" or "H MMps"
-            val ampm = if (isAm) 'a' else 'p'
-            "$hour12 $mm$ampm$eventChar"
-        } else {
-            // two-digit hour (10, 11, 12): drop am/pm -> "HH MMr" or "HH MMs"
-            "$hour12 $mm$eventChar"
-        }
-        // Sun fills all 6 chars (no pad) — to mark stale, drop the trailing r/s and prefix 'E'.
-        return if (stale) "E" + fresh.dropLast(1) else fresh
     }
 
     // Right-justified (leading spaces) so custom text aligns flush-right like the watch nameplate
