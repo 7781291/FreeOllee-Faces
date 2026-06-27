@@ -4,6 +4,7 @@ import com.blizzardcaron.freeolleefaces.activity.ActivityMetric
 import com.blizzardcaron.freeolleefaces.activity.ActivityMode
 import com.blizzardcaron.freeolleefaces.alarm.Alarm
 import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
+import com.blizzardcaron.freeolleefaces.format.BatteryReadout
 import com.blizzardcaron.freeolleefaces.format.TempUnit
 import com.blizzardcaron.freeolleefaces.timer.TimerSet
 
@@ -11,6 +12,7 @@ data class HomeCallbacks(
     val onActivate: (ActiveComplication) -> Unit,
     val onUpdateNow: () -> Unit,
     val onTempUnitChange: (TempUnit) -> Unit,
+    val onSetBatteryReadout: (BatteryReadout) -> Unit = {},
     val onCustomChange: (String) -> Unit,
     val onSendCustom: () -> Unit,
     val onGrantHealth: () -> Unit,

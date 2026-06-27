@@ -228,6 +228,7 @@ private fun rememberAppCallbacks(
         onActivate = { viewModel.complications.activate(it) },
         onUpdateNow = { viewModel.complications.refreshActive(force = true, push = true) },
         onTempUnitChange = { newUnit -> viewModel.complications.setTempUnit(newUnit) },
+        onSetBatteryReadout = { viewModel.complications.setBatteryReadout(it) },
         onCustomChange = { text -> viewModel.complications.setCustomText(text) },
         onSendCustom = { viewModel.complications.sendCustom(state.custom) },
         onGrantHealth = { perms.requestHealth() },

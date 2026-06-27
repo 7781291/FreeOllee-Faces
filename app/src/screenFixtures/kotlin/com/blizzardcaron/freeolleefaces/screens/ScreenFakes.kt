@@ -34,6 +34,7 @@ object ScreenFakes {
         onActivate = {},
         onUpdateNow = {},
         onTempUnitChange = {},
+        onSetBatteryReadout = {},
         onCustomChange = {},
         onSendCustom = {},
         onGrantHealth = {},

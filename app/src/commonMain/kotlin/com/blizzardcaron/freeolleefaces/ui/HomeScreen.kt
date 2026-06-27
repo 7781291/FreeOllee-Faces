@@ -109,6 +109,13 @@ private fun ColumnScope.ComplicationCardsList(
             onToggle = { onToggle(ComplicationCardId.TEMPERATURE) },
         )
 
+        BatteryCard(
+            state = state,
+            callbacks = callbacks,
+            expanded = expanded == ComplicationCardId.BATTERY,
+            onToggle = { onToggle(ComplicationCardId.BATTERY) },
+        )
+
         PressureCard(state = state, callbacks = callbacks)
 
         AltitudeCard(state = state, callbacks = callbacks)
