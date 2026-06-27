@@ -1,6 +1,10 @@
 package com.blizzardcaron.freeolleefaces.screens
 
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import com.blizzardcaron.freeolleefaces.ble.ConnectionStatus
 import com.blizzardcaron.freeolleefaces.ui.ActivityDetailScreen
 import com.blizzardcaron.freeolleefaces.ui.ActivityHistoryScreen
@@ -28,12 +32,16 @@ fun Screen.slug(): String = when (this) {
 }
 
 /**
- * Renders [screen] with representative fakes, wrapped in the real [FreeOlleeFacesTheme] so
- * accessibility contrast checks and screenshots reflect the app's actual colors and fonts.
+ * Renders [screen] with representative fakes, wrapped in the real [FreeOlleeFacesTheme] and a
+ * [Surface] painting `colorScheme.background` (as the app's Scaffold does). This gives
+ * accessibility contrast checks the real dark background — not the bare window's white — and
+ * makes screenshots match the shipped look.
  */
 fun renderFor(screen: Screen): @Composable () -> Unit = {
     FreeOlleeFacesTheme {
-        screenContent(screen)()
+        Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+            screenContent(screen)()
+        }
     }
 }
 
