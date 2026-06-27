@@ -57,9 +57,8 @@ jobs:
           script: |
             ./gradlew :app:connectedDebugAndroidTest
             mkdir -p docs/screenshots
-            adb exec-out run-as com.blizzardcaron.freeolleefaces.debug ls -R files/screenshots || true
-            adb exec-out run-as com.blizzardcaron.freeolleefaces.debug tar c -C files/screenshots . 2>/dev/null | tar x -C docs/screenshots 2>/dev/null || true
-            adb exec-out run-as com.blizzardcaron.freeolleefaces.debug.test tar c -C files/screenshots . 2>/dev/null | tar x -C docs/screenshots 2>/dev/null || true
+            adb shell pm list packages | grep -i freeollee || true
+            for pkg in $(adb shell pm list packages | sed 's/package://' | grep -i freeollee | tr -d '\r'); do adb exec-out run-as $pkg tar c -C files/screenshots . 2>/dev/null | tar x -C docs/screenshots 2>/dev/null || true; done
             ls -la docs/screenshots || true
       - name: Upload screenshots
         if: always()
