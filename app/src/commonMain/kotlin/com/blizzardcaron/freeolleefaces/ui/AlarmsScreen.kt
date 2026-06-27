@@ -29,6 +29,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.blizzardcaron.freeolleefaces.alarm.Alarm
 import com.blizzardcaron.freeolleefaces.alarm.AlarmSchedule
@@ -116,7 +118,11 @@ private fun AlarmCard(
                         Text(if (isPm) "PM" else "AM")
                     }
                 }
-                Switch(checked = alarm.enabled, onCheckedChange = onToggle)
+                Switch(
+                    checked = alarm.enabled,
+                    onCheckedChange = onToggle,
+                    modifier = Modifier.semantics { contentDescription = "Enable alarm" },
+                )
             }
 
             DayChips(mask = alarm.daysMask) { onSave(alarm.copy(daysMask = it)) }

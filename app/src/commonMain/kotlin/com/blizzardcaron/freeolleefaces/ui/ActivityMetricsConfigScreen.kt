@@ -14,6 +14,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.blizzardcaron.freeolleefaces.activity.ActivityMetric
@@ -94,6 +96,7 @@ private fun MetricRow(
             checked = item.enabled,
             onCheckedChange = { on -> if (on || canDisable) callbacks.onToggle(mode, item.metric, on) },
             enabled = item.enabled.not() || canDisable,
+            modifier = Modifier.semantics { contentDescription = "Show ${metricLabel(item.metric)}" },
         )
         TextButton(onClick = { callbacks.onMoveUp(mode, index) }, enabled = index > 0) { Text("▲") }
         TextButton(onClick = { callbacks.onMoveDown(mode, index) }, enabled = index < lastIndex) { Text("▼") }

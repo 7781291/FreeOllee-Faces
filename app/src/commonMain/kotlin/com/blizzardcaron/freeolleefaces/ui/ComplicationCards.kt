@@ -22,6 +22,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
 import com.blizzardcaron.freeolleefaces.auto.displayLabel
@@ -201,7 +203,11 @@ private fun ComplicationCard(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        RadioButton(selected = active, onClick = onActivate)
+                        RadioButton(
+                            selected = active,
+                            onClick = onActivate,
+                            modifier = Modifier.semantics { contentDescription = "Activate $title" },
+                        )
                         Text(title, style = MaterialTheme.typography.titleMedium)
                     }
                     if (onToggle != null) {

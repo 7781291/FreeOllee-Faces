@@ -28,6 +28,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
@@ -234,7 +236,11 @@ private fun NotificationsExpandedContent(
         modifier = Modifier.fillMaxWidth(),
     ) {
         Text("Show count in weekday slot", style = MaterialTheme.typography.bodyLarge)
-        Switch(checked = state.notificationsEnabled, onCheckedChange = onToggleEnabled)
+        Switch(
+            checked = state.notificationsEnabled,
+            onCheckedChange = onToggleEnabled,
+            modifier = Modifier.semantics { contentDescription = "Show count in weekday slot" },
+        )
     }
     if (state.notificationsEnabled && !state.notificationAccessGranted) {
         Text("Notification access needed", style = MaterialTheme.typography.titleSmall)

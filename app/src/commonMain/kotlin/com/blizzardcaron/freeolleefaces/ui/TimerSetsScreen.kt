@@ -23,6 +23,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.blizzardcaron.freeolleefaces.ble.ConnectionStatus
 import com.blizzardcaron.freeolleefaces.timer.QuickAlarm
@@ -209,7 +211,12 @@ private fun ToggleRow(
         modifier = Modifier.fillMaxWidth(),
     ) {
         Text(label, style = MaterialTheme.typography.bodyLarge)
-        Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            enabled = enabled,
+            modifier = Modifier.semantics { contentDescription = label },
+        )
     }
 }
 
@@ -241,7 +248,15 @@ private fun TimerSetRow(
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                     // Radio = send: timerActiveId only updates on a successful send, so the radio
                     // moves when the push lands and stays put on failure (snackbar covers errors).
-                    RadioButton(selected = active, onClick = callbacks.onSend, enabled = !sending)
+                    RadioButton(
+                        selected = active,
+                        onClick = callbacks.onSend,
+                        enabled = !sending,
+                        modifier = Modifier.semantics {
+                            contentDescription =
+                                "Send timer set ${if (set.name.isBlank()) "(unnamed)" else set.name} to watch"
+                        },
+                    )
                     Text(
                         if (set.name.isBlank()) "(unnamed)" else set.name,
                         style = MaterialTheme.typography.titleMedium
