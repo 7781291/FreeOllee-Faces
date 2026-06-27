@@ -66,21 +66,14 @@ class AutoUpdateWorker(
                 Result.success()
             }
 
-            // STEPS needs only a watch (no coordinates); handle before the location guard.
-            face == ActiveComplication.STEPS && address == null -> {
+            // STEPS and BATTERY need only a watch (no coordinates); handle before the location guard.
+            (face == ActiveComplication.STEPS || face == ActiveComplication.BATTERY) && address == null -> {
                 prefs.recordAutoSend("Skipped: set watch in app")
                 applyHealth(ctx, prefs, FailureKind.SETUP_INCOMPLETE, inSleepNow(prefs))
                 Result.success()
             }
 
             face == ActiveComplication.STEPS -> runSteps(ctx, prefs, address!!, now)
-
-            // BATTERY, like STEPS, needs only a watch (no coordinates); handle before the location guard.
-            face == ActiveComplication.BATTERY && address == null -> {
-                prefs.recordAutoSend("Skipped: set watch in app")
-                applyHealth(ctx, prefs, FailureKind.SETUP_INCOMPLETE, inSleepNow(prefs))
-                Result.success()
-            }
 
             face == ActiveComplication.BATTERY -> runBattery(ctx, prefs, address!!, now)
 

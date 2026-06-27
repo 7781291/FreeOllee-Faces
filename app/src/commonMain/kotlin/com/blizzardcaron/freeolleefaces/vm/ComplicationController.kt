@@ -239,7 +239,9 @@ class ComplicationController(
                 val payload = DisplayFormatter.battery(mv, state().batteryReadout)
                 update {
                     it.copy(
-                        batteryPreview = PreviewState.Ready(payload, batteryHuman(mv, state().batteryReadout)),
+                        batteryPreview = PreviewState.Ready(
+                            payload, DisplayFormatter.batteryHuman(mv, state().batteryReadout),
+                        ),
                         batteryUpdated = "Updated ${clockTime(prefs.batteryFetchedMs!!)}",
                         batteryNext = tempNextText(),
                     )
@@ -254,7 +256,8 @@ class ComplicationController(
                     update {
                         it.copy(
                             batteryPreview = PreviewState.Ready(
-                                payload, batteryHuman(cached, state().batteryReadout) + " (stale)",
+                                payload,
+                                DisplayFormatter.batteryHuman(cached, state().batteryReadout) + " (stale)",
                             ),
                             batteryUpdated = prefs.batteryFetchedMs?.let { ms -> "Updated ${clockTime(ms)}" },
                         )
@@ -271,11 +274,6 @@ class ComplicationController(
         prefs.batteryReadout = readout
         update { it.copy(batteryReadout = readout) }
         refreshBattery(push = state().activeComplication == ActiveComplication.BATTERY)
-    }
-
-    private fun batteryHuman(milliVolts: Int, readout: BatteryReadout): String = when (readout) {
-        BatteryReadout.VOLTS -> "Battery: ${formatDecimal(milliVolts / 1000.0, 2)} V"
-        BatteryReadout.PERCENT -> "Battery: ${DisplayFormatter.batteryPercent(milliVolts)}%"
     }
 
     fun refreshPressure(push: Boolean) {
@@ -465,28 +463,12 @@ class ComplicationController(
 
     suspend fun fetchLocation() = location.fetch() // Activity calls when it holds permission
 
-    fun onLocationFetched(lat: Double, lng: Double) {
-        prefs.lastLat = lat
-        prefs.lastLng = lng
-        prefs.lastLocationFetchedMs = nowMs()
-        update {
-            it.copy(
-                lat = lat.toString(),
-                lng = lng.toString(),
-                locating = false,
-                locationLabel = locLabel(lat, lng),
-                locationFreshness = "just now",
-            )
-        }
-        refreshActive(force = true, push = false)
-    }
-
     /**
-     * Silent-refresh variant used by the location bootstrap: same persistence + state update as
-     * [onLocationFetched], but does not trigger a face refresh (the bootstrap refreshes the active
-     * face once at the end).
+     * Persist fetched coords + update state, then (by default) refresh the active face. The location
+     * bootstrap passes [refresh] = false — it does its own single refresh at the end — which is the
+     * old `onLocationFetchedSilent` behavior folded in here.
      */
-    fun onLocationFetchedSilent(lat: Double, lng: Double) {
+    fun onLocationFetched(lat: Double, lng: Double, refresh: Boolean = true) {
         prefs.lastLat = lat
         prefs.lastLng = lng
         prefs.lastLocationFetchedMs = nowMs()
@@ -499,6 +481,7 @@ class ComplicationController(
                 locationFreshness = "just now",
             )
         }
+        if (refresh) refreshActive(force = true, push = false)
     }
 
     /** Bootstrap-refresh failure where saved coords exist: mark "refresh failed" and warn. */

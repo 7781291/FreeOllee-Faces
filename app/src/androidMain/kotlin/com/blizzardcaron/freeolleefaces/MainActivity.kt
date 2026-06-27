@@ -272,7 +272,9 @@ private suspend fun runStartupLocation(viewModel: AppViewModel, context: Context
         haveCoords && hasAnyLocation -> {
             viewModel.complications.setLocating(true)
             viewModel.complications.fetchLocation()
-                .onSuccess { coords -> viewModel.complications.onLocationFetchedSilent(coords.lat, coords.lng) }
+                .onSuccess { coords ->
+                    viewModel.complications.onLocationFetched(coords.lat, coords.lng, refresh = false)
+                }
                 .onFailure { viewModel.complications.onLocationRefreshFailed() }
         }
 
@@ -280,7 +282,9 @@ private suspend fun runStartupLocation(viewModel: AppViewModel, context: Context
         !haveCoords && hasAnyLocation -> {
             viewModel.complications.setLocating(true)
             viewModel.complications.fetchLocation()
-                .onSuccess { coords -> viewModel.complications.onLocationFetchedSilent(coords.lat, coords.lng) }
+                .onSuccess { coords ->
+                    viewModel.complications.onLocationFetched(coords.lat, coords.lng, refresh = false)
+                }
                 .onFailure { viewModel.complications.setLocating(false) }
         }
 

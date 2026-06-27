@@ -304,8 +304,13 @@ class Prefs(
 
     var batteryFetchedMs: Long?
         get() = if (settings.hasKey(KEY_BATTERY_FETCHED_MS)) settings.getLong(KEY_BATTERY_FETCHED_MS, 0L) else null
-        set(value) =
-            if (value == null) settings.remove(KEY_BATTERY_FETCHED_MS) else settings.putLong(KEY_BATTERY_FETCHED_MS, value)
+        set(value) {
+            if (value == null) {
+                settings.remove(KEY_BATTERY_FETCHED_MS)
+            } else {
+                settings.putLong(KEY_BATTERY_FETCHED_MS, value)
+            }
+        }
 
     /** Stamp the cached battery voltage (millivolts) and the time it was read from the watch. */
     fun recordBatteryFetch(milliVolts: Int) {

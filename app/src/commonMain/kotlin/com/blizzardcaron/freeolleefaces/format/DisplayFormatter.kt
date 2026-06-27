@@ -111,4 +111,10 @@ object DisplayFormatter {
         val raw = (milliVolts - BATTERY_EMPTY_MV) * PERCENT_MAX / (BATTERY_FULL_MV - BATTERY_EMPTY_MV)
         return raw.coerceIn(0, PERCENT_MAX)
     }
+
+    /** Human-readable battery summary for the dashboard card (not the watch nameplate). */
+    fun batteryHuman(milliVolts: Int, readout: BatteryReadout): String = when (readout) {
+        BatteryReadout.VOLTS -> "Battery: ${formatDecimal(milliVolts / MV_PER_VOLT, VOLT_DECIMALS)} V"
+        BatteryReadout.PERCENT -> "Battery: ${batteryPercent(milliVolts)}%"
+    }
 }
