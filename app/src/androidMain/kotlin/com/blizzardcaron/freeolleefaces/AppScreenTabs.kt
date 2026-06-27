@@ -62,6 +62,7 @@ fun ActivityTab(viewModel: AppViewModel, modifier: Modifier) {
         unit = viewModel.activity.activityUnit,
         watchSelected = viewModel.activity.watchSelected,
         lastSummary = AndroidActivityTrackStore(context).latest()?.summary,
+        config = viewModel.activity.metricsConfig(),
         callbacks = ActivityCallbacks(
             onStart = startWithPermission,
             onShowLive = showLiveWithPermission,
