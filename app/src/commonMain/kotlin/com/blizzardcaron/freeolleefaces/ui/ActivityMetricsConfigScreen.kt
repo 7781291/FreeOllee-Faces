@@ -3,8 +3,11 @@ package com.blizzardcaron.freeolleefaces.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -14,6 +17,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.blizzardcaron.freeolleefaces.activity.ActivityMetric
@@ -40,7 +45,13 @@ fun ActivityMetricsConfigScreen(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier.fillMaxWidth().padding(16.dp),
+        // Two metric sections (12 rows) plus a Done button overflow short screens; without a
+        // scroll the bottom row was clipped to ~22dp tall (ATF TouchTargetSizeCheck) and Done
+        // was unreachable. Scroll so every row keeps its full height and the button is reachable.
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text("Configure metrics", style = MaterialTheme.typography.headlineSmall)
@@ -94,6 +105,7 @@ private fun MetricRow(
             checked = item.enabled,
             onCheckedChange = { on -> if (on || canDisable) callbacks.onToggle(mode, item.metric, on) },
             enabled = item.enabled.not() || canDisable,
+            modifier = Modifier.semantics { contentDescription = "Show ${metricLabel(item.metric)}" },
         )
         TextButton(onClick = { callbacks.onMoveUp(mode, index) }, enabled = index > 0) { Text("▲") }
         TextButton(onClick = { callbacks.onMoveDown(mode, index) }, enabled = index < lastIndex) { Text("▼") }

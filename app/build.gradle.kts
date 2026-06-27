@@ -61,8 +61,24 @@ kotlin {
             }
         }
         val androidUnitTest by getting {
+            // Shared, test-only screen fakes + the exhaustive renderFor() coverage gate,
+            // compiled into BOTH this (the JVM-reflection coverage test) and the instrumented
+            // a11y + screenshot compilation. A plain extra source root (not a KMP source set)
+            // avoids dragging commonTest's JVM unit tests into the instrumented APK and avoids
+            // disrupting Compose Multiplatform resource generation.
+            kotlin.srcDir("src/screenFixtures/kotlin")
             dependencies {
                 implementation(libs.junit)
+                implementation(kotlin("reflect"))
+            }
+        }
+        val androidInstrumentedTest by getting {
+            kotlin.srcDir("src/screenFixtures/kotlin")
+            dependencies {
+                implementation(libs.androidx.compose.ui.test.junit4)
+                implementation(libs.androidx.compose.ui.test.accessibility)
+                implementation(libs.androidx.test.runner)
+                implementation(libs.androidx.test.ext.junit)
             }
         }
     }
@@ -78,6 +94,7 @@ android {
         targetSdk = 37
         versionCode = appVersionCode
         versionName = appVersionName
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
@@ -127,4 +144,5 @@ compose.resources {
 
 dependencies {
     debugImplementation(compose.uiTooling)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

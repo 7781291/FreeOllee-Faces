@@ -27,6 +27,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.blizzardcaron.freeolleefaces.ble.ConnectionStatus
 import com.blizzardcaron.freeolleefaces.timer.Reorder
@@ -157,7 +159,13 @@ private fun SlotEditor(
                 onValueChange = callbacks.onLabelChange,
                 label = { Text("Label (optional)") },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
+                // The OutlinedTextField label isn't reliably exposed as the field's accessible
+                // name (empty + clipped at the scroll fold, ATF's SpeakableTextPresentCheck saw
+                // no label). A contentDescription stays on the node regardless and disambiguates
+                // the two slots' identically-labelled fields for a screen reader.
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics { contentDescription = "Slot ${index + 1} label, optional" },
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 NumberField("H", h) { callbacks.onDurationChange(TimerSetEditing.hmsToSeconds(it, m, s)) }

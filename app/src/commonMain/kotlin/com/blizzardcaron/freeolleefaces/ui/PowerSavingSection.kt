@@ -15,6 +15,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.blizzardcaron.freeolleefaces.ble.OlleeProtocol
 
@@ -29,6 +31,7 @@ internal fun PowerSavingSection(state: HomeState, callbacks: SettingsCallbacks) 
         Switch(
             checked = state.powerSavingEnabled,
             onCheckedChange = callbacks.onPowerSavingEnabledChange,
+            modifier = Modifier.semantics { contentDescription = "Power saving" },
         )
     }
     if (state.powerSavingEnabled) {
@@ -54,6 +57,7 @@ private fun PowerSavingBody(state: HomeState, callbacks: SettingsCallbacks) {
         Switch(
             checked = state.quietHoursEnabled,
             onCheckedChange = callbacks.onQuietHoursEnabledChange,
+            modifier = Modifier.semantics { contentDescription = "Quiet hours" },
         )
     }
 

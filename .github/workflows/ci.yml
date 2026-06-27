@@ -26,3 +26,80 @@ jobs:
         run: ./gradlew :app:lintDebug
       - name: detekt
         run: ./gradlew :app:detekt
+
+  a11y:
+    runs-on: ubuntu-latest
+    # Allow the Pixel 7 entry to commit refreshed screenshots back to the PR branch.
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Pixel 7 (412dp) — the daily-driver layout; also the source of README screenshots.
+          - device: Pixel 7
+            profile: pixel_7
+            upload-screenshots: true
+          # Default AVD (~320dp, smallest supported width) — the accessibility-compliance floor
+          # where the day-of-week chips reflow to two rows but every target stays >= 48dp.
+          - device: 320dp floor
+            profile: ""
+            upload-screenshots: false
+    name: a11y (${{ matrix.device }})
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Check out the PR branch itself (not the detached merge ref) so the screenshot
+          # auto-commit below can push back to it.
+          ref: ${{ github.head_ref }}
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Accessibility checks + screenshots (emulator)
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          # Two widths (matrix): Pixel 7 at 412dp (full-size screenshots, chips on one row) and
+          # the default ~320dp AVD (smallest supported width, the a11y-compliance floor).
+          profile: ${{ matrix.profile }}
+          # android-emulator-runner runs each script line as a separate `sh -c`, so every command
+          # stands alone. We install + `am instrument` instead of `connectedDebugAndroidTest`
+          # because that gradle task UNINSTALLS the APKs when it finishes, wiping the app-internal
+          # filesDir (and its screenshots) before they can be pulled. With the app left installed,
+          # `run-as` reads the screenshots the test wrote (scoped storage blocks adb from the
+          # external app dir on API 30+, so the test uses internal storage). The pull runs before
+          # the pass/fail check so screenshots upload even when an a11y finding fails the job.
+          script: |
+            ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest
+            adb install -r -t app/build/outputs/apk/debug/app-debug.apk
+            adb install -r -t app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            adb shell am instrument -w com.blizzardcaron.freeolleefaces.debug.test/androidx.test.runner.AndroidJUnitRunner 2>&1 | tee instrument.log
+            mkdir -p docs/screenshots
+            adb exec-out run-as com.blizzardcaron.freeolleefaces.debug tar c -C files/screenshots . 2>/dev/null | tar x -C docs/screenshots 2>/dev/null || true
+            ls -la docs/screenshots || true
+            grep -q "^OK (" instrument.log || { echo "Instrumented tests failed:"; cat instrument.log; exit 1; }
+      - name: Upload screenshots
+        if: ${{ matrix.upload-screenshots }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: docs/screenshots/
+          if-no-files-found: warn
+      # Commit the refreshed README screenshots back to the PR branch (Pixel 7 entry only).
+      # No-op when nothing changed; a GITHUB_TOKEN commit does not trigger another CI run.
+      - name: Commit refreshed screenshots
+        if: ${{ matrix.upload-screenshots && github.event_name == 'pull_request' }}
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          file_pattern: docs/screenshots/home.png docs/screenshots/activity.png docs/screenshots/alarms.png
+          commit_message: "docs(readme): auto-refresh screenshots [skip ci]"

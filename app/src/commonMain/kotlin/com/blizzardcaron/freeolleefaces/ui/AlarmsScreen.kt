@@ -3,10 +3,14 @@ package com.blizzardcaron.freeolleefaces.ui
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -29,6 +33,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.blizzardcaron.freeolleefaces.alarm.Alarm
 import com.blizzardcaron.freeolleefaces.alarm.AlarmSchedule
@@ -116,7 +122,11 @@ private fun AlarmCard(
                         Text(if (isPm) "PM" else "AM")
                     }
                 }
-                Switch(checked = alarm.enabled, onCheckedChange = onToggle)
+                Switch(
+                    checked = alarm.enabled,
+                    onCheckedChange = onToggle,
+                    modifier = Modifier.semantics { contentDescription = "Enable alarm" },
+                )
             }
 
             DayChips(mask = alarm.daysMask) { onSave(alarm.copy(daysMask = it)) }
@@ -144,30 +154,64 @@ private fun AlarmCard(
 /** Sunday-first week, matching the official Ollee app's alarm screen. */
 private val WEEK_SUNDAY_FIRST = listOf(DayOfWeek.SUNDAY) + DayOfWeek.entries.filter { it != DayOfWeek.SUNDAY }
 
+/** Material/ATF minimum touch-target size. */
+private val MIN_TOUCH_TARGET = 48.dp
+
+/** Gap between day chips when they share one row (kept small so all seven fit a Pixel-width card). */
+private val DAY_CHIP_GAP = 2.dp
+
 /** One toggle chip per weekday, Sunday-first: S M T W T F S. */
 @Composable
 private fun DayChips(mask: Int, onChange: (Int) -> Unit) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        for (day in WEEK_SUNDAY_FIRST) {
-            val bit = Alarm.bit(day)
-            val selected = mask and bit != 0
-            FilterChip(
-                selected = selected,
-                onClick = { onChange(if (selected) mask and bit.inv() else mask or bit) },
-                label = { Text(day.name.take(1)) },
-                // Default M3 selected chips (secondaryContainer) read nearly the same as
-                // unselected on this theme — use primary so active days are unmistakable.
-                colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = MaterialTheme.colorScheme.primary,
-                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-                ),
-                modifier = Modifier.weight(1f),
-            )
+    // 48dp is ATF's minimum touch target. Seven of them only fit one row on a wide enough card
+    // (e.g. Pixel 7), so when there's room we fill the row with equal weighted chips; otherwise
+    // (e.g. the 320dp floor) we wrap, keeping every chip a full 48x48dp target on a second line.
+    val oneRowMinWidth = MIN_TOUCH_TARGET * WEEK_SUNDAY_FIRST.size +
+        DAY_CHIP_GAP * (WEEK_SUNDAY_FIRST.size - 1)
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        if (maxWidth >= oneRowMinWidth) {
+            Row(horizontalArrangement = Arrangement.spacedBy(DAY_CHIP_GAP)) {
+                WEEK_SUNDAY_FIRST.forEach { day ->
+                    DayChip(day, mask, onChange, Modifier.weight(1f).heightIn(min = MIN_TOUCH_TARGET))
+                }
+            }
+        } else {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                WEEK_SUNDAY_FIRST.forEach { day ->
+                    DayChip(
+                        day = day,
+                        mask = mask,
+                        onChange = onChange,
+                        modifier = Modifier.defaultMinSize(
+                            minWidth = MIN_TOUCH_TARGET,
+                            minHeight = MIN_TOUCH_TARGET,
+                        ),
+                    )
+                }
+            }
         }
     }
+}
+
+@Composable
+private fun DayChip(day: DayOfWeek, mask: Int, onChange: (Int) -> Unit, modifier: Modifier) {
+    val bit = Alarm.bit(day)
+    val selected = mask and bit != 0
+    FilterChip(
+        selected = selected,
+        onClick = { onChange(if (selected) mask and bit.inv() else mask or bit) },
+        label = { Text(day.name.take(1)) },
+        // Default M3 selected chips (secondaryContainer) read nearly the same as unselected on
+        // this theme — use primary so active days are unmistakable.
+        colors = FilterChipDefaults.filterChipColors(
+            selectedContainerColor = MaterialTheme.colorScheme.primary,
+            selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+        ),
+        modifier = modifier,
+    )
 }
 
 @Composable
