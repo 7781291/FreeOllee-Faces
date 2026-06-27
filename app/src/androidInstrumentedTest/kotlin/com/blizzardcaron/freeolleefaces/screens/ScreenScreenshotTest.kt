@@ -15,10 +15,11 @@ import org.junit.Test
 import java.io.File
 
 /**
- * Records one screenshot per [Screen] on the emulator into the app's external files dir
- * (`<externalFilesDir>/screenshots/<slug>.png`), which CI pulls and uploads as the
- * `screenshots` artifact for the README. Running on a real emulator (not Robolectric) means
- * the actual APK assets — fonts and drawables — load correctly.
+ * Records one screenshot per [Screen] on the emulator into the app's internal files dir
+ * (`<filesDir>/screenshots/<slug>.png`), which CI pulls via `run-as` and uploads as the
+ * `screenshots` artifact for the README. Internal storage (not the external app dir) is used
+ * because API 30+ scoped storage blocks adb from reading `/sdcard/Android/data/<pkg>`. Running
+ * on a real emulator (not Robolectric) means the actual APK assets — fonts and drawables — load.
  *
  * Instrumented (emulator/device) only; the Pi cannot run an emulator.
  */
@@ -29,7 +30,7 @@ class ScreenScreenshotTest {
     @Test
     fun captureEveryScreen() {
         val outputDir = File(
-            InstrumentationRegistry.getInstrumentation().targetContext.getExternalFilesDir(null),
+            InstrumentationRegistry.getInstrumentation().targetContext.filesDir,
             "screenshots",
         ).apply { mkdirs() }
 

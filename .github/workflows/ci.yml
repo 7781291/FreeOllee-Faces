@@ -48,19 +48,19 @@ jobs:
         with:
           api-level: 34
           arch: x86_64
+          # android-emulator-runner runs each script line as a separate `sh -c`, so every command
+          # must stand alone. connectedDebugAndroidTest runs first: if it fails (an a11y finding),
+          # the runner stops here and the job goes red. On success the run-as pulls below execute;
+          # they are best-effort (|| true) so screenshot delivery never reddens a green a11y gate.
+          # The screenshot test writes to internal filesDir (scoped storage blocks adb from the
+          # external app dir on API 30+); run-as reads it for the debuggable app/test package.
           script: |
-            set +e
             ./gradlew :app:connectedDebugAndroidTest
-            code=$?
             mkdir -p docs/screenshots
-            # The screenshot test writes PNGs to the instrumented app's external files dir; the
-            # exact package (app vs. test) varies, so locate then pull whatever was produced.
-            echo "--- locating screenshots on device ---"
-            adb shell 'find /sdcard/Android/data -path "*screenshots*.png" 2>/dev/null' || true
-            for pkg in com.blizzardcaron.freeolleefaces.debug com.blizzardcaron.freeolleefaces.debug.test; do
-              adb pull "/sdcard/Android/data/$pkg/files/screenshots/." docs/screenshots/ || true
-            done
-            exit $code
+            adb exec-out run-as com.blizzardcaron.freeolleefaces.debug ls -R files/screenshots || true
+            adb exec-out run-as com.blizzardcaron.freeolleefaces.debug tar c -C files/screenshots . 2>/dev/null | tar x -C docs/screenshots 2>/dev/null || true
+            adb exec-out run-as com.blizzardcaron.freeolleefaces.debug.test tar c -C files/screenshots . 2>/dev/null | tar x -C docs/screenshots 2>/dev/null || true
+            ls -la docs/screenshots || true
       - name: Upload screenshots
         if: always()
         uses: actions/upload-artifact@v4
