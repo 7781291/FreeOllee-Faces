@@ -29,6 +29,20 @@ jobs:
 
   a11y:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Pixel 7 (412dp) — the daily-driver layout; also the source of README screenshots.
+          - device: Pixel 7
+            profile: pixel_7
+            upload-screenshots: true
+          # Default AVD (~320dp, smallest supported width) — the accessibility-compliance floor
+          # where the day-of-week chips reflow to two rows but every target stays >= 48dp.
+          - device: 320dp floor
+            profile: ""
+            upload-screenshots: false
+    name: a11y (${{ matrix.device }})
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 17
@@ -48,9 +62,9 @@ jobs:
         with:
           api-level: 34
           arch: x86_64
-          # Pixel 7 profile: a realistic phone width (412dp) so touch targets fit naturally (the
-          # day-of-week chips sit on one row) and screenshots come out at full 1080x2400.
-          profile: pixel_7
+          # Two widths (matrix): Pixel 7 at 412dp (full-size screenshots, chips on one row) and
+          # the default ~320dp AVD (smallest supported width, the a11y-compliance floor).
+          profile: ${{ matrix.profile }}
           # android-emulator-runner runs each script line as a separate `sh -c`, so every command
           # stands alone. We install + `am instrument` instead of `connectedDebugAndroidTest`
           # because that gradle task UNINSTALLS the APKs when it finishes, wiping the app-internal
@@ -68,7 +82,7 @@ jobs:
             ls -la docs/screenshots || true
             grep -q "^OK (" instrument.log || { echo "Instrumented tests failed:"; cat instrument.log; exit 1; }
       - name: Upload screenshots
-        if: always()
+        if: ${{ matrix.upload-screenshots }}
         uses: actions/upload-artifact@v4
         with:
           name: screenshots
