@@ -4,7 +4,6 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.compose.multiplatform)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.roborazzi)
 }
 
 // Single source of truth for the app version: the root-level VERSION file.
@@ -63,20 +62,14 @@ kotlin {
         }
         val androidUnitTest by getting {
             // Shared, test-only screen fakes + the exhaustive renderFor() coverage gate,
-            // compiled into BOTH this (Roborazzi screenshots + coverage test) and the
-            // instrumented a11y compilation. A plain extra source root (not a KMP source
-            // set) avoids dragging commonTest's JVM unit tests into the instrumented APK
-            // and avoids disrupting Compose Multiplatform resource generation.
+            // compiled into BOTH this (the JVM-reflection coverage test) and the instrumented
+            // a11y + screenshot compilation. A plain extra source root (not a KMP source set)
+            // avoids dragging commonTest's JVM unit tests into the instrumented APK and avoids
+            // disrupting Compose Multiplatform resource generation.
             kotlin.srcDir("src/screenFixtures/kotlin")
             dependencies {
                 implementation(libs.junit)
                 implementation(kotlin("reflect"))
-                implementation(libs.robolectric)
-                implementation(libs.roborazzi)
-                implementation(libs.roborazzi.compose)
-                implementation(libs.roborazzi.junit)
-                implementation(libs.androidx.compose.ui.test.junit4)
-                implementation(libs.androidx.compose.ui.test.manifest)
             }
         }
         val androidInstrumentedTest by getting {
@@ -134,13 +127,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    testOptions {
-        unitTests {
-            isIncludeAndroidResources = true
-            isReturnDefaultValues = true
-        }
     }
 
     lint {

@@ -12,6 +12,7 @@ import com.blizzardcaron.freeolleefaces.ui.Screen
 import com.blizzardcaron.freeolleefaces.ui.SettingsScreen
 import com.blizzardcaron.freeolleefaces.ui.TimerSetEditScreen
 import com.blizzardcaron.freeolleefaces.ui.TimerSetsScreen
+import com.blizzardcaron.freeolleefaces.ui.theme.FreeOlleeFacesTheme
 
 /** Stable filename slug per screen (used for screenshot names). */
 fun Screen.slug(): String = when (this) {
@@ -27,11 +28,21 @@ fun Screen.slug(): String = when (this) {
 }
 
 /**
- * Renders [screen] with representative fakes. The `when` is exhaustive with no `else`:
- * adding a new Screen subtype makes this file fail to compile until a case is added,
- * which is the build-breaking coverage gate.
+ * Renders [screen] with representative fakes, wrapped in the real [FreeOlleeFacesTheme] so
+ * accessibility contrast checks and screenshots reflect the app's actual colors and fonts.
  */
-fun renderFor(screen: Screen): @Composable () -> Unit = when (screen) {
+fun renderFor(screen: Screen): @Composable () -> Unit = {
+    FreeOlleeFacesTheme {
+        screenContent(screen)()
+    }
+}
+
+/**
+ * Maps [screen] to its composable content with representative fakes. The `when` is exhaustive
+ * with no `else`: adding a new Screen subtype makes this file fail to compile until a case is
+ * added, which is the build-breaking coverage gate.
+ */
+private fun screenContent(screen: Screen): @Composable () -> Unit = when (screen) {
     Screen.Home -> {
         { HomeScreen(state = ScreenFakes.homeState, callbacks = ScreenFakes.homeCallbacks) }
     }

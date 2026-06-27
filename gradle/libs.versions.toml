@@ -15,8 +15,6 @@ lifecycleViewmodel = "2.9.1"
 workManager = "2.10.0"
 healthConnect = "1.1.0"
 detekt = "1.23.7"
-roborazzi = "1.46.1"
-robolectric = "4.16"
 androidxComposeUiTest = "1.8.2"
 androidxTest = "1.6.1"
 androidxTestExtJunit = "1.2.1"
@@ -38,10 +36,6 @@ multiplatform-settings = { group = "com.russhwolf", name = "multiplatform-settin
 multiplatform-settings-test = { group = "com.russhwolf", name = "multiplatform-settings-test", version.ref = "multiplatformSettings" }
 androidx-lifecycle-viewmodel-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodel" }
 detekt-formatting = { group = "io.gitlab.arturbosch.detekt", name = "detekt-formatting", version.ref = "detekt" }
-roborazzi = { group = "io.github.takahirom.roborazzi", name = "roborazzi", version.ref = "roborazzi" }
-roborazzi-compose = { group = "io.github.takahirom.roborazzi", name = "roborazzi-compose", version.ref = "roborazzi" }
-roborazzi-junit = { group = "io.github.takahirom.roborazzi", name = "roborazzi-junit-rule", version.ref = "roborazzi" }
-robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4-android", version.ref = "androidxComposeUiTest" }
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest", version.ref = "androidxComposeUiTest" }
 androidx-compose-ui-test-accessibility = { group = "androidx.compose.ui", name = "ui-test-junit4-accessibility", version.ref = "androidxComposeUiTest" }
@@ -55,4 +49,3 @@ kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref 
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
-roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }
