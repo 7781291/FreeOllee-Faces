@@ -4,7 +4,9 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -153,8 +155,12 @@ private val WEEK_SUNDAY_FIRST = listOf(DayOfWeek.SUNDAY) + DayOfWeek.entries.fil
 /** One toggle chip per weekday, Sunday-first: S M T W T F S. */
 @Composable
 private fun DayChips(mask: Int, onChange: (Int) -> Unit) {
-    Row(
+    // FlowRow (not a 7-wide weighted Row): seven 48dp-min chips can't fit one phone-width row,
+    // so a weighted row produced ~38dp-wide chips below ATF's 48dp touch-target minimum. Wrapping
+    // lets every chip keep a full 48x48dp target and reflow to a second line on narrow screens.
+    FlowRow(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
         for (day in WEEK_SUNDAY_FIRST) {
@@ -170,7 +176,7 @@ private fun DayChips(mask: Int, onChange: (Int) -> Unit) {
                     selectedContainerColor = MaterialTheme.colorScheme.primary,
                     selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
                 ),
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp),
             )
         }
     }

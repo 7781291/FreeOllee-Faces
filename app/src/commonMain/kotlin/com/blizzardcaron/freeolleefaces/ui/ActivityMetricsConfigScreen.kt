@@ -3,8 +3,11 @@ package com.blizzardcaron.freeolleefaces.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -42,7 +45,13 @@ fun ActivityMetricsConfigScreen(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier.fillMaxWidth().padding(16.dp),
+        // Two metric sections (12 rows) plus a Done button overflow short screens; without a
+        // scroll the bottom row was clipped to ~22dp tall (ATF TouchTargetSizeCheck) and Done
+        // was unreachable. Scroll so every row keeps its full height and the button is reachable.
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text("Configure metrics", style = MaterialTheme.typography.headlineSmall)
