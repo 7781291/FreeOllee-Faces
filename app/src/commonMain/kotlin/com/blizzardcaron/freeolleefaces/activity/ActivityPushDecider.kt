@@ -5,14 +5,20 @@ object ActivityPushDecider {
 
     const val HEARTBEAT_MS = 3_000L
 
+    /** Hard floor: never write the name-tag more than once per second, whatever the reason. */
+    const val MIN_PUSH_INTERVAL_MS = 1_000L
+
     fun shouldPush(
         lastPushedText: String?,
         newText: String,
         msSinceLastPush: Long,
         forced: Boolean,
-    ): Boolean =
-        forced ||
+    ): Boolean {
+        // The 1 Hz floor applies only between pushes, never to the first push
+        if (lastPushedText != null && msSinceLastPush < MIN_PUSH_INTERVAL_MS) return false
+        return forced ||
             lastPushedText == null ||
             newText != lastPushedText ||
             msSinceLastPush >= HEARTBEAT_MS
+    }
 }

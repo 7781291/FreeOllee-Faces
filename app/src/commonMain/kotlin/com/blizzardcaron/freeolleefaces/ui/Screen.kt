@@ -9,4 +9,5 @@ sealed interface Screen {
     data object Activity : Screen
     data object ActivityHistory : Screen
     data object ActivityDetail : Screen
+    data object ActivityMetricsConfig : Screen
 }

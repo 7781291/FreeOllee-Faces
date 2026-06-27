@@ -1,5 +1,6 @@
 package com.blizzardcaron.freeolleefaces
 
+import com.blizzardcaron.freeolleefaces.activity.ActivityMetricsRepository
 import com.blizzardcaron.freeolleefaces.activity.ActivityTrack
 import com.blizzardcaron.freeolleefaces.activity.ActivityTrackStore
 import com.blizzardcaron.freeolleefaces.activity.ActivityUnit
@@ -71,6 +72,7 @@ class AppViewModelTest {
         location = FakeLocationProvider(),
         notificationAccess = FakeNotificationAccessChecker(),
         timerRepo = TimerSetsRepository(MapSettings()),
+        metricsRepo = ActivityMetricsRepository(MapSettings()),
         scheduler = FakeScheduler(callLog),
         alarmRepo = AlarmsRepository(MapSettings()),
         alarmScheduler = FakeAlarmScheduler(callLog),

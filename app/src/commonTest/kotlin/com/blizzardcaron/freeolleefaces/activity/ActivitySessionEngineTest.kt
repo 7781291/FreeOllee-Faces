@@ -70,7 +70,7 @@ class ActivitySessionEngineTest {
         h.engine.tick(0L)
         val before = h.ble.sentNameplate().size
         h.engine.cycleMetric()   // PACE -> DISTANCE
-        h.engine.tick(500L)      // within heartbeat, but forced
+        h.engine.tick(1_000L)    // at floor boundary, but forced
         assertEquals(before + 1, h.ble.sentNameplate().size)
         assertEquals(ActivityMetric.DISTANCE, h.engine.state.value.selectedMetric)
     }

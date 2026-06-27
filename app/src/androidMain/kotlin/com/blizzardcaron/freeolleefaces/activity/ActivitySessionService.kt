@@ -65,6 +65,7 @@ class ActivitySessionService : Service() {
             autoSleep = ActivityAutoSleepManager(ble, prefs),
             watchAddress = { prefs.watchAddress },
             now = { System.currentTimeMillis() },
+            metricsConfig = { ActivityMetricsRepository(appSettings(this)).get() },
         )
         engine.state
             .onEach {

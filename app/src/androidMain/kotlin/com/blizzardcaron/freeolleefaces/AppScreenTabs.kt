@@ -8,6 +8,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
@@ -16,6 +19,8 @@ import com.blizzardcaron.freeolleefaces.ui.ActivityCallbacks
 import com.blizzardcaron.freeolleefaces.ui.ActivityDetailScreen
 import com.blizzardcaron.freeolleefaces.ui.ActivityHistoryCallbacks
 import com.blizzardcaron.freeolleefaces.ui.ActivityHistoryScreen
+import com.blizzardcaron.freeolleefaces.ui.ActivityMetricsConfigCallbacks
+import com.blizzardcaron.freeolleefaces.ui.ActivityMetricsConfigScreen
 import com.blizzardcaron.freeolleefaces.ui.ActivityScreen
 import com.blizzardcaron.freeolleefaces.ui.Screen
 
@@ -57,6 +62,7 @@ fun ActivityTab(viewModel: AppViewModel, modifier: Modifier) {
         unit = viewModel.activity.activityUnit,
         watchSelected = viewModel.activity.watchSelected,
         lastSummary = AndroidActivityTrackStore(context).latest()?.summary,
+        config = viewModel.activity.metricsConfig(),
         callbacks = ActivityCallbacks(
             onStart = startWithPermission,
             onShowLive = showLiveWithPermission,
@@ -64,6 +70,7 @@ fun ActivityTab(viewModel: AppViewModel, modifier: Modifier) {
             onMode = { viewModel.activity.onMode() },
             onToggleUnit = { viewModel.activity.toggleUnit() },
             onOpenHistory = { viewModel.navigateTo(Screen.ActivityHistory) },
+            onConfigureMetrics = { viewModel.navigateTo(Screen.ActivityMetricsConfig) },
         ),
         modifier = modifier,
     )
@@ -97,4 +104,30 @@ fun ActivityDetailTab(viewModel: AppViewModel, modifier: Modifier) {
             modifier = modifier,
         )
     }
+}
+
+@Composable
+fun ActivityMetricsConfigTab(viewModel: AppViewModel, modifier: Modifier) {
+    var revision by remember { mutableStateOf(0) }
+    revision // read so edits recompose
+    ActivityMetricsConfigScreen(
+        config = viewModel.activity.metricsConfig(),
+        unit = viewModel.activity.activityUnit,
+        callbacks = ActivityMetricsConfigCallbacks(
+            onMoveUp = { mode, i ->
+                viewModel.activity.moveMetricUp(mode, i)
+                revision++
+            },
+            onMoveDown = { mode, i ->
+                viewModel.activity.moveMetricDown(mode, i)
+                revision++
+            },
+            onToggle = { mode, m, on ->
+                viewModel.activity.setMetricEnabled(mode, m, on)
+                revision++
+            },
+            onBack = { viewModel.navigateTo(Screen.Activity) },
+        ),
+        modifier = modifier,
+    )
 }

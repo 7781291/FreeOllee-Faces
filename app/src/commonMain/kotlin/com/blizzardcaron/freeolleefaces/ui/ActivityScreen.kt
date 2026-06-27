@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -17,6 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.blizzardcaron.freeolleefaces.activity.ActivityMetric
+import com.blizzardcaron.freeolleefaces.activity.ActivityMetricsConfig
+import com.blizzardcaron.freeolleefaces.activity.ActivityMode
 import com.blizzardcaron.freeolleefaces.activity.ActivityState
 import com.blizzardcaron.freeolleefaces.activity.ActivitySummary
 import com.blizzardcaron.freeolleefaces.activity.ActivityUnit
@@ -29,6 +32,7 @@ fun ActivityScreen(
     unit: ActivityUnit,
     watchSelected: Boolean,
     lastSummary: ActivitySummary?,
+    config: ActivityMetricsConfig,
     callbacks: ActivityCallbacks,
     modifier: Modifier = Modifier,
 ) {
@@ -37,7 +41,7 @@ fun ActivityScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         if (state.running) {
-            RunningContent(state, unit, watchSelected, callbacks)
+            RunningContent(state, unit, watchSelected, config, callbacks)
         } else {
             IdleContent(unit, lastSummary, callbacks)
         }
@@ -60,6 +64,9 @@ private fun IdleContent(
     OutlinedButton(onClick = callbacks.onOpenHistory, modifier = Modifier.fillMaxWidth()) {
         Text("History")
     }
+    OutlinedButton(onClick = callbacks.onConfigureMetrics, modifier = Modifier.fillMaxWidth()) {
+        Text("Configure metrics")
+    }
     if (lastSummary != null) {
         Card(elevation = CardDefaults.cardElevation()) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -77,18 +84,20 @@ private fun RunningContent(
     state: ActivityState,
     unit: ActivityUnit,
     watchSelected: Boolean,
+    config: ActivityMetricsConfig,
     callbacks: ActivityCallbacks,
 ) {
-    // Show each metric exactly as the watch renders it (faithful segment preview). The visible
-    // set depends on mode: recording shows pace/distance/time, the live glance shows the instruments.
-    if (state.recording) {
-        MetricReadout("Pace", ActivityMetric.PACE, state, unit)
-        MetricReadout("Distance", ActivityMetric.DISTANCE, state, unit)
-        MetricReadout("Time", ActivityMetric.TIME, state, unit)
-    } else {
-        MetricReadout("Compass", ActivityMetric.ORIENTATION, state, unit)
-        MetricReadout("Altitude", ActivityMetric.ALTITUDE, state, unit)
-        MetricReadout("Pressure", ActivityMetric.PRESSURE, state, unit)
+    if (!state.hasFix) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            CircularProgressIndicator(modifier = Modifier.padding(2.dp))
+            Text("Acquiring GPS…", style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+    // Show each metric exactly as the watch renders it (faithful segment preview), for whichever
+    // metrics are enabled (and in the order configured) for the current mode.
+    val mode = if (state.recording) ActivityMode.RECORDING else ActivityMode.GLANCE
+    for (metric in config.enabledOrder(mode)) {
+        MetricReadout(metricLabel(metric), metric, state, unit)
     }
     val watchStatusText = if (!watchSelected) {
         if (state.recording) "No watch — recording only" else "No watch — glance only"
@@ -113,15 +122,34 @@ private fun RunningContent(
     }
 }
 
-@Composable
-private fun MetricReadout(label: String, metric: ActivityMetric, state: ActivityState, unit: ActivityUnit) {
-    Readout(label, metric.render(state, unit), state.selectedMetric == metric)
+private fun metricLabel(metric: ActivityMetric): String = when (metric) {
+    ActivityMetric.PACE -> "Pace"
+    ActivityMetric.DISTANCE -> "Distance"
+    ActivityMetric.TIME -> "Time"
+    ActivityMetric.ORIENTATION -> "Compass"
+    ActivityMetric.ALTITUDE -> "Altitude"
+    ActivityMetric.PRESSURE -> "Pressure"
 }
 
 @Composable
-private fun Readout(label: String, watchValue: String, selected: Boolean) {
+private fun MetricReadout(label: String, metric: ActivityMetric, state: ActivityState, unit: ActivityUnit) {
+    // Match the watch: until a fix lands, every GPS-derived metric blanks to the acquiring banner.
+    // Pressure is barometer-derived, so it shows its real value even during acquisition.
+    val human = if (!state.hasFix && metric != ActivityMetric.PRESSURE) {
+        "Acquiring GPS…"
+    } else {
+        metric.human(state, unit) ?: "—"
+    }
+    Readout(label, human, metric.render(state, unit), state.selectedMetric == metric)
+}
+
+@Composable
+private fun Readout(label: String, human: String, watchValue: String, selected: Boolean) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(if (selected) "▶ $label" else label, modifier = Modifier.weight(1f))
+        Column(Modifier.weight(1f)) {
+            Text(if (selected) "▶ $label" else label)
+            Text(human, style = MaterialTheme.typography.bodySmall)
+        }
         SegmentReadout(
             value = watchValue,
             cellHeight = if (selected) 36.dp else 26.dp,

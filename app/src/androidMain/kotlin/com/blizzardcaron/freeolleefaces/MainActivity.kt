@@ -31,6 +31,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.blizzardcaron.freeolleefaces.activity.ActivityMetricsRepository
 import com.blizzardcaron.freeolleefaces.activity.AndroidActivitySessionLauncher
 import com.blizzardcaron.freeolleefaces.activity.AndroidActivityTrackStore
 import com.blizzardcaron.freeolleefaces.alarm.AlarmsRepository
@@ -183,6 +184,7 @@ private fun rememberAppViewModel(context: Context): AppViewModel = remember {
         location = AndroidLocationProvider(context),
         notificationAccess = AndroidNotificationAccess(context),
         timerRepo = TimerSetsRepository(timerSettings(context)),
+        metricsRepo = ActivityMetricsRepository(appSettings(context)),
         scheduler = AndroidScheduler(context),
         alarmRepo = AlarmsRepository(alarmSettings(context)),
         alarmScheduler = AndroidAlarmScheduler(context),
@@ -380,6 +382,7 @@ private fun AppContent(
         Screen.Activity -> ActivityTab(viewModel, modifier)
         Screen.ActivityHistory -> ActivityHistoryTab(viewModel, modifier)
         Screen.ActivityDetail -> ActivityDetailTab(viewModel, modifier)
+        Screen.ActivityMetricsConfig -> ActivityMetricsConfigTab(viewModel, modifier)
         Screen.Settings -> SettingsScreen(
             state = state,
             callbacks = settingsCallbacks,

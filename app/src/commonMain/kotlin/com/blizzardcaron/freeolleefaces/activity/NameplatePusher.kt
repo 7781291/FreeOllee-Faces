@@ -27,9 +27,9 @@ class NameplatePusher(private val ble: BleClient) {
     ): Boolean {
         val text = NameplateSanitizer.sanitize(rawText)
         var reachable = currentlyReachable
-        if (address != null &&
+        val approved = address != null &&
             ActivityPushDecider.shouldPush(lastPushedText, text, nowMs - lastPushMs, force)
-        ) {
+        if (approved) {
             ble.send(address, text, OlleeProtocol.TARGET_NAMEPLATE)
                 .onSuccess {
                     lastPushedText = text
@@ -37,8 +37,8 @@ class NameplatePusher(private val ble: BleClient) {
                     reachable = true
                 }
                 .onFailure { reachable = false }
+            force = false // clear only once an approved write was attempted
         }
-        force = false
         return reachable
     }
 }
