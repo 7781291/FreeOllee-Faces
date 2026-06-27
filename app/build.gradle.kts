@@ -64,6 +64,7 @@ kotlin {
         val androidUnitTest by getting {
             dependencies {
                 implementation(libs.junit)
+                implementation(kotlin("reflect"))
                 implementation(libs.robolectric)
                 implementation(libs.roborazzi)
                 implementation(libs.roborazzi.compose)
