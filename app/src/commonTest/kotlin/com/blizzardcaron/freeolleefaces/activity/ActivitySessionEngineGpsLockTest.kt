@@ -38,7 +38,10 @@ class ActivitySessionEngineGpsLockTest {
         val e = engine(ble)
         e.startLive() // selected = ORIENTATION (GPS-derived)
         e.tick(nowMs = 0L)
-        assertEquals("GPS", ble.sentNameplate().last().trim())
+        // Pin the exact 6-cell token, not just the trimmed text: the cell width is the binding
+        // wire constraint, so a regression in the padding must fail here.
+        assertEquals(" GPS  ", ble.sentNameplate().last())
+        assertEquals(6, ble.sentNameplate().last().length)
     }
 
     @Test fun pressure_pushes_real_value_before_first_fix() = runTest {

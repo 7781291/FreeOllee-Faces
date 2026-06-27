@@ -133,8 +133,13 @@ private fun metricLabel(metric: ActivityMetric): String = when (metric) {
 
 @Composable
 private fun MetricReadout(label: String, metric: ActivityMetric, state: ActivityState, unit: ActivityUnit) {
-    val human = metric.human(state, unit)
-        ?: if (!state.hasFix) "Acquiring GPS…" else "—"
+    // Match the watch: until a fix lands, every GPS-derived metric blanks to the acquiring banner.
+    // Pressure is barometer-derived, so it shows its real value even during acquisition.
+    val human = if (!state.hasFix && metric != ActivityMetric.PRESSURE) {
+        "Acquiring GPS…"
+    } else {
+        metric.human(state, unit) ?: "—"
+    }
     Readout(label, human, metric.render(state, unit), state.selectedMetric == metric)
 }
 
