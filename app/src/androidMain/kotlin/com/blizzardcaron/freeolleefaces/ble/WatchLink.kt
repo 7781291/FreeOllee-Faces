@@ -110,7 +110,7 @@ object WatchLink {
             val ok = runCatching {
                 withTimeout(CONNECT_TIMEOUT_MS) { openHeld(context, address) }
             }.onFailure { Log.w("OLLEE_BLE", "connectHeld failed for $address", it) }
-             .getOrDefault(false)
+                .getOrDefault(false)
             if (ok) {
                 _status.value = ConnectionStatus.Connected
             } else {
