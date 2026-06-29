@@ -109,10 +109,12 @@ object WatchLink {
             _status.value = ConnectionStatus.Connecting
             val ok = runCatching {
                 withTimeout(CONNECT_TIMEOUT_MS) { openHeld(context, address) }
-            }.getOrDefault(false)
+            }.onFailure { Log.w("OLLEE_BLE", "connectHeld failed for $address", it) }
+                .getOrDefault(false)
             if (ok) {
                 _status.value = ConnectionStatus.Connected
             } else {
+                Log.w("OLLEE_BLE", "connectHeld: unable to open held link to $address — marking NotReachable")
                 closeHeldLocked()
                 _status.value = ConnectionStatus.NotReachable
             }
