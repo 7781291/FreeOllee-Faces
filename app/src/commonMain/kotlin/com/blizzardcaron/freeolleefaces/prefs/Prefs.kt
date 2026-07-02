@@ -213,6 +213,21 @@ class Prefs(
         get() = settings.getInt(KEY_NOTIFICATION_COUNT, 0)
         set(value) = settings.putInt(KEY_NOTIFICATION_COUNT, value)
 
+    /**
+     * Whether the watch plays a chime when the notification count *increases* (new notification).
+     * Independent of [notificationsEnabled]'s badge overlay, but the listener service only chimes
+     * while the overlay itself is on. Suppressed inside the quiet-hours window (see
+     * [quietHoursEnabled]) so the watch stays silent at night.
+     */
+    var notificationChimeEnabled: Boolean
+        get() = settings.getBoolean(KEY_NOTIFICATION_CHIME_ENABLED, true)
+        set(value) = settings.putBoolean(KEY_NOTIFICATION_CHIME_ENABLED, value)
+
+    /** Chime tone for the notification chime: 0x00 Classic, 0x01 Breeze, 0x02 Westminster, … */
+    var notificationChimeIndex: Int
+        get() = settings.getInt(KEY_NOTIFICATION_CHIME_INDEX, 0)
+        set(value) = settings.putInt(KEY_NOTIFICATION_CHIME_INDEX, value.coerceIn(0, MAX_CHIME_INDEX))
+
     /** Stamp the cached temperature value, the unit it was fetched in, and the fetch time. */
     fun recordTempFetch(value: Double, unit: TempUnit) {
         tempValue = value
@@ -430,6 +445,9 @@ class Prefs(
         private const val KEY_CUSTOM_SENT_MS = "custom_sent_ms"
         private const val KEY_NOTIFICATION_COUNT = "notification_count"
         private const val KEY_NOTIFICATIONS_ENABLED = "notifications_enabled"
+        private const val KEY_NOTIFICATION_CHIME_ENABLED = "notification_chime_enabled"
+        private const val KEY_NOTIFICATION_CHIME_INDEX = "notification_chime_index"
+        private const val MAX_CHIME_INDEX = 0xFF
         private const val KEY_ACTIVITY_ACTIVE = "activity_active"
         private const val KEY_ACTIVITY_UNIT = "activity_unit"
         private const val KEY_SAVED_AS_PRESENT = "activity_saved_as_present"
