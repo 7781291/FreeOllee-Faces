@@ -19,6 +19,8 @@ data class HomeCallbacks(
     val onGrantNotificationAccess: () -> Unit,
     val onToggleNotifications: (Boolean) -> Unit,
     val onNotificationsUpdateNow: () -> Unit,
+    val onToggleChime: (Boolean) -> Unit = {},
+    val onSelectChime: (Int) -> Unit = {},
     val onReconnect: () -> Unit = {},
 )
 
