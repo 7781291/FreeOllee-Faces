@@ -11,7 +11,8 @@ internal object Everforest {
     val Bg3 = Color(0xFF475258) // border
     val Bg4 = Color(0xFF4F585E) // strong border
 
-    val BgGreen = Color(0xFF3C4841) // active/selected wash (primaryContainer)
+    val BgGreen = Color(0xFF3C4841) // legacy green wash — kept for reference, no longer wired to primaryContainer
+    val BgBlue = Color(0xFF33454A) // active/selected wash (primaryContainer), blue theme
     val BgRed = Color(0xFF543A48) // error container
 
     val Fg = Color(0xFFD3C6AA) // primary text (warm tan)
@@ -20,21 +21,22 @@ internal object Everforest {
 
     val Red = Color(0xFFE67E80)
     val Yellow = Color(0xFFDBBC7F)
-    val Green = Color(0xFFA7C080) // signature accent
+    val Green = Color(0xFFA7C080) // legacy signature accent — kept for reference, no longer primary
     val Aqua = Color(0xFF83C092)
-    val Blue = Color(0xFF7FBBB3)
+    val Blue = Color(0xFF7FBBB3) // signature accent
 
-    // Named for its M3 role (light green text on the green container); the design has
+    // Named for its M3 role (light text on the primary container); the design has
     // no separate palette name for this tint.
-    val OnPrimaryContainer = Color(0xFFCBE0A6)
+    val OnPrimaryContainer = Color(0xFFCBE0A6) // legacy green-tinted text — kept for reference
+    val OnPrimaryContainerBlue = Color(0xFFBFE3E6) // blue-tinted text
     val MarkerRed = Color(0xFFF85552) // wordmark only
 }
 
 /** LCD readout colors not represented in the Material color scheme. */
 object BrandColors {
     val LcdScreen = Color(0xFF1A1F1C)
-    val LcdOn = Everforest.Green
+    val LcdOn = Everforest.Blue
     val LcdOnAqua = Everforest.Aqua
-    val LcdOff = Everforest.Green.copy(alpha = 0.10f)
+    val LcdOff = Everforest.Blue.copy(alpha = 0.10f)
     val MarkerRed = Everforest.MarkerRed
 }
