@@ -21,4 +21,13 @@ interface StepsProvider {
      * access is missing, or the read fails.
      */
     suspend fun todaySteps(): Result<Long>
+
+    /**
+     * Sum of steps from [sinceEpochMs] (a wall-clock epoch millisecond timestamp) to now, as
+     * written by any source. Used by an in-progress Activity session (e.g. a step-based workout
+     * like Pickleball) to show a session-scoped count rather than the whole day's total. Returns
+     * 0 when there are no records yet in that window; [Result.failure] under the same conditions
+     * as [todaySteps].
+     */
+    suspend fun stepsSince(sinceEpochMs: Long): Result<Long>
 }
