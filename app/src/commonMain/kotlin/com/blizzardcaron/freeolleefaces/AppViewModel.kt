@@ -175,6 +175,8 @@ class AppViewModel(
         notificationCount = prefs.notificationCount,
         notificationAccessGranted = notificationAccess.isGranted(),
         notificationsEnabled = prefs.notificationsEnabled,
+        notificationChimeEnabled = prefs.notificationChimeEnabled,
+        notificationChimeIndex = prefs.notificationChimeIndex,
         versionLabel = versionLabel,
     )
 
