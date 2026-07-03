@@ -95,6 +95,7 @@ class FakeStepsProvider(
     override suspend fun hasReadPermission(): Boolean = readPermission
 
     override suspend fun todaySteps(): Result<Long> = stepsResult
+    override suspend fun stepsSince(sinceEpochMs: Long): Result<Long> = stepsResult
 }
 
 // ---------------------------------------------------------------------------
