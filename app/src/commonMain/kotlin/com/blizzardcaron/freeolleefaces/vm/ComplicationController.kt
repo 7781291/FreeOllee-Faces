@@ -432,6 +432,18 @@ class ComplicationController(
         }
     }
 
+    /** Toggle whether a chime plays when the notification count rises. */
+    fun setNotificationChimeEnabled(enabled: Boolean) {
+        prefs.notificationChimeEnabled = enabled
+        update { it.copy(notificationChimeEnabled = enabled) }
+    }
+
+    /** Choose which chime tone the notification plays (0 = Classic, 1 = Breeze, 2 = Westminster). */
+    fun setNotificationChimeIndex(index: Int) {
+        prefs.notificationChimeIndex = index
+        update { it.copy(notificationChimeIndex = prefs.notificationChimeIndex) }
+    }
+
     fun setTempUnit(unit: TempUnit) {
         prefs.tempUnit = unit
         update { it.copy(tempUnit = unit) }
