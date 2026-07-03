@@ -5,13 +5,13 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 
 private val FreeOlleeColorScheme = darkColorScheme(
-    primary = Everforest.Green,
+    primary = Everforest.Blue,
     onPrimary = Everforest.BgDim,
-    primaryContainer = Everforest.BgGreen,
-    onPrimaryContainer = Everforest.OnPrimaryContainer,
+    primaryContainer = Everforest.BgBlue,
+    onPrimaryContainer = Everforest.OnPrimaryContainerBlue,
     secondary = Everforest.Aqua,
     onSecondary = Everforest.BgDim,
-    tertiary = Everforest.Blue,
+    tertiary = Everforest.Green,
     onTertiary = Everforest.BgDim,
     background = Everforest.BgDim,
     onBackground = Everforest.Fg,
