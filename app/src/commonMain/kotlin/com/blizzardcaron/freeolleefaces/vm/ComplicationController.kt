@@ -444,6 +444,22 @@ class ComplicationController(
         update { it.copy(notificationChimeIndex = prefs.notificationChimeIndex) }
     }
 
+    /** Play the currently selected notification chime once as a preview (transient, not persisted). */
+    fun previewNotificationChime() {
+        val addr = prefs.watchAddress ?: return
+        scope.launch {
+            ble.sendPacket(
+                addr,
+                OlleeProtocol.buildAlarmPacket(
+                    hour = 0,
+                    minute = 0,
+                    chimeIndex = prefs.notificationChimeIndex,
+                    playNow = true,
+                ),
+            ).onFailure { showSnackbar("Send failed — long-press ALARM to wake the watch, then retry") }
+        }
+    }
+
     fun setTempUnit(unit: TempUnit) {
         prefs.tempUnit = unit
         update { it.copy(tempUnit = unit) }
