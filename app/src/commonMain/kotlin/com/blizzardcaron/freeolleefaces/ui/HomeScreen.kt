@@ -18,6 +18,9 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -98,6 +101,8 @@ private fun ColumnScope.ComplicationCardsList(
             onToggleEnabled = callbacks.onToggleNotifications,
             onGrantAccess = callbacks.onGrantNotificationAccess,
             onUpdateNow = callbacks.onNotificationsUpdateNow,
+            onToggleChime = callbacks.onToggleChime,
+            onSelectChime = callbacks.onSelectChime,
         )
 
         SectionLabel("Name tag")
@@ -183,6 +188,8 @@ private fun NotificationsCard(
     onToggleEnabled: (Boolean) -> Unit,
     onGrantAccess: () -> Unit,
     onUpdateNow: () -> Unit,
+    onToggleChime: (Boolean) -> Unit,
+    onSelectChime: (Int) -> Unit,
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -221,7 +228,14 @@ private fun NotificationsCard(
                     modifier = Modifier.fillMaxWidth().padding(12.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    NotificationsExpandedContent(state, onToggleEnabled, onGrantAccess, onUpdateNow)
+                    NotificationsExpandedContent(
+                        state,
+                        onToggleEnabled,
+                        onGrantAccess,
+                        onUpdateNow,
+                        onToggleChime,
+                        onSelectChime,
+                    )
                 }
             }
         }
@@ -234,6 +248,8 @@ private fun NotificationsExpandedContent(
     onToggleEnabled: (Boolean) -> Unit,
     onGrantAccess: () -> Unit,
     onUpdateNow: () -> Unit,
+    onToggleChime: (Boolean) -> Unit,
+    onSelectChime: (Int) -> Unit,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -246,6 +262,31 @@ private fun NotificationsExpandedContent(
             onCheckedChange = onToggleEnabled,
             modifier = Modifier.semantics { contentDescription = "Show count in weekday slot" },
         )
+    }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Text("Notification sound", style = MaterialTheme.typography.bodyLarge)
+        Switch(
+            checked = state.notificationChimeEnabled,
+            onCheckedChange = onToggleChime,
+            modifier = Modifier.semantics { contentDescription = "Notification sound" },
+        )
+    }
+    if (state.notificationChimeEnabled) {
+        Text("Chime melody", style = MaterialTheme.typography.titleSmall)
+        val melodies = listOf("Classic", "Breeze", "Westminster")
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+            melodies.forEachIndexed { index, name ->
+                SegmentedButton(
+                    selected = state.notificationChimeIndex == index,
+                    onClick = { onSelectChime(index) },
+                    shape = SegmentedButtonDefaults.itemShape(index = index, count = melodies.size),
+                ) { Text(name) }
+            }
+        }
     }
     if (state.notificationsEnabled && !state.notificationAccessGranted) {
         Text("Notification access needed", style = MaterialTheme.typography.titleSmall)
