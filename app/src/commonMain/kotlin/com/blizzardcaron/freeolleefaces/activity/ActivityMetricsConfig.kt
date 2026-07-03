@@ -51,6 +51,7 @@ data class ActivityMetricsConfig(
             ActivityMetric.PACE,
             ActivityMetric.DISTANCE,
             ActivityMetric.TIME,
+            ActivityMetric.STEPS,
             ActivityMetric.ORIENTATION,
             ActivityMetric.ALTITUDE,
             ActivityMetric.PRESSURE,
