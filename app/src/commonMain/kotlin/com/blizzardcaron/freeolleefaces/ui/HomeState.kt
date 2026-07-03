@@ -50,6 +50,8 @@ data class HomeState(
     val notificationCount: Int = 0,
     val notificationAccessGranted: Boolean = false,
     val notificationsEnabled: Boolean = false,
+    val notificationChimeEnabled: Boolean = true,
+    val notificationChimeIndex: Int = 0,
 
     val lat: String = "",
     val lng: String = "",
