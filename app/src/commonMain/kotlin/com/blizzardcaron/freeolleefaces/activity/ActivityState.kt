@@ -13,5 +13,6 @@ data class ActivityState(
     val headingDeg: Float? = null,
     val altitudeM: Double? = null,
     val pressureHpa: Double? = null,
+    val stepsCount: Long? = null,
     val hasFix: Boolean = false,
 )
