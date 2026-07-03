@@ -64,6 +64,7 @@ class AndroidStepsProvider(context: Context) : StepsProvider {
             )
             result[StepsRecord.COUNT_TOTAL] ?: 0L
         }
+    }
 
     /**
      * Sum of steps from [sinceEpochMs] to now, as written by any source. Used for an in-progress
@@ -91,8 +92,7 @@ class AndroidStepsProvider(context: Context) : StepsProvider {
             result[StepsRecord.COUNT_TOTAL] ?: 0L
         }
     }
-    }
-
+    
     private fun client(): HealthConnectClient = HealthConnectClient.getOrCreate(appContext)
 
     companion object {
