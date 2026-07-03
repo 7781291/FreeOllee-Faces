@@ -16,6 +16,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.blizzardcaron.freeolleefaces.R
 import com.blizzardcaron.freeolleefaces.ble.AndroidBleClient
+import com.blizzardcaron.freeolleefaces.health.AndroidStepsProvider
 import com.blizzardcaron.freeolleefaces.location.AndroidLocationStream
 import com.blizzardcaron.freeolleefaces.location.Coords
 import com.blizzardcaron.freeolleefaces.prefs.Prefs
@@ -42,6 +43,7 @@ class ActivitySessionService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private lateinit var prefs: Prefs
     private lateinit var engine: ActivitySessionEngine
+    private lateinit var stepsProvider: AndroidStepsProvider
     private var loops: Job? = null
 
     // Latest GPS fix, used by the network-pressure fallback when the phone has no barometer.
@@ -58,6 +60,7 @@ class ActivitySessionService : Service() {
         super.onCreate()
         prefs = Prefs(appSettings(this))
         val ble = AndroidBleClient(this)
+        stepsProvider = AndroidStepsProvider(this)
         engine = ActivitySessionEngine(
             ble = ble,
             store = AndroidActivityTrackStore(this),
@@ -118,6 +121,12 @@ class ActivitySessionService : Service() {
                     engine.ingest(it, System.currentTimeMillis())
                 }
                 .launchIn(this)
+        }
+        val steps = launch {
+            while (isActive) {
+                stepsProvider.stepsSince(engine.sessionStartMs).onSuccess { engine.ingestSteps(it) }
+                delay(STEPS_REFRESH_MS)
+            }
         }
         val ticker = launch {
             var ticks = 0
@@ -263,6 +272,7 @@ class ActivitySessionService : Service() {
         private const val FLUSH_EVERY_TICKS = 10 // flush the track ~every 10s
         private const val PRESSURE_PROBE_MS = 3000L // wait this long for a barometer sample
         private const val PRESSURE_NETWORK_REFRESH_MS = 600_000L // network fallback refresh ~10 min
+        private const val STEPS_REFRESH_MS = 30_000L // session step-count refresh ~30s
         const val ACTION_START = "com.blizzardcaron.freeolleefaces.activity.START"
         const val ACTION_START_LIVE = "com.blizzardcaron.freeolleefaces.activity.START_LIVE"
         const val ACTION_STOP = "com.blizzardcaron.freeolleefaces.activity.STOP"
