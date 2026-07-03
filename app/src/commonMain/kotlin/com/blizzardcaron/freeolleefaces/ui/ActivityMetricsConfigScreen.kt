@@ -32,6 +32,7 @@ private fun metricLabel(metric: ActivityMetric): String = when (metric) {
     ActivityMetric.PACE -> "Pace"
     ActivityMetric.DISTANCE -> "Distance"
     ActivityMetric.TIME -> "Time"
+    ActivityMetric.STEPS -> "Steps"
     ActivityMetric.ORIENTATION -> "Compass"
     ActivityMetric.ALTITUDE -> "Altitude"
     ActivityMetric.PRESSURE -> "Pressure"
