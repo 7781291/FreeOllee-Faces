@@ -126,6 +126,7 @@ private fun metricLabel(metric: ActivityMetric): String = when (metric) {
     ActivityMetric.PACE -> "Pace"
     ActivityMetric.DISTANCE -> "Distance"
     ActivityMetric.TIME -> "Time"
+    ActivityMetric.STEPS -> "Steps"
     ActivityMetric.ORIENTATION -> "Compass"
     ActivityMetric.ALTITUDE -> "Altitude"
     ActivityMetric.PRESSURE -> "Pressure"
@@ -135,7 +136,7 @@ private fun metricLabel(metric: ActivityMetric): String = when (metric) {
 private fun MetricReadout(label: String, metric: ActivityMetric, state: ActivityState, unit: ActivityUnit) {
     // Match the watch: until a fix lands, every GPS-derived metric blanks to the acquiring banner.
     // Pressure is barometer-derived, so it shows its real value even during acquisition.
-    val human = if (!state.hasFix && metric != ActivityMetric.PRESSURE) {
+    val human = if (!state.hasFix && metric != ActivityMetric.PRESSURE && metric != ActivityMetric.STEPS) {
         "Acquiring GPS…"
     } else {
         metric.human(state, unit) ?: "—"
