@@ -2,6 +2,7 @@ package com.blizzardcaron.freeolleefaces.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -18,9 +19,8 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -35,6 +35,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
+import com.blizzardcaron.freeolleefaces.alarm.AlarmSchedule
 import com.blizzardcaron.freeolleefaces.auto.ActiveComplication
 import com.blizzardcaron.freeolleefaces.ble.ConnectionStatus
 import com.blizzardcaron.freeolleefaces.ble.connectionChip
@@ -103,6 +104,7 @@ private fun ColumnScope.ComplicationCardsList(
             onUpdateNow = callbacks.onNotificationsUpdateNow,
             onToggleChime = callbacks.onToggleChime,
             onSelectChime = callbacks.onSelectChime,
+            onPreviewChime = callbacks.onPreviewChime,
         )
 
         SectionLabel("Name tag")
@@ -190,6 +192,7 @@ private fun NotificationsCard(
     onUpdateNow: () -> Unit,
     onToggleChime: (Boolean) -> Unit,
     onSelectChime: (Int) -> Unit,
+    onPreviewChime: () -> Unit,
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -235,6 +238,7 @@ private fun NotificationsCard(
                         onUpdateNow,
                         onToggleChime,
                         onSelectChime,
+                        onPreviewChime,
                     )
                 }
             }
@@ -250,6 +254,7 @@ private fun NotificationsExpandedContent(
     onUpdateNow: () -> Unit,
     onToggleChime: (Boolean) -> Unit,
     onSelectChime: (Int) -> Unit,
+    onPreviewChime: () -> Unit,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -276,17 +281,35 @@ private fun NotificationsExpandedContent(
         )
     }
     if (state.notificationChimeEnabled) {
-        Text("Chime melody", style = MaterialTheme.typography.titleSmall)
-        val melodies = listOf("Classic", "Breeze", "Westminster")
-        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-            melodies.forEachIndexed { index, name ->
-                SegmentedButton(
-                    selected = state.notificationChimeIndex == index,
-                    onClick = { onSelectChime(index) },
-                    shape = SegmentedButtonDefaults.itemShape(index = index, count = melodies.size),
-                ) { Text(name) }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("Chime melody", style = MaterialTheme.typography.titleSmall)
+            var menuOpen by remember { mutableStateOf(false) }
+            Box {
+                TextButton(onClick = { menuOpen = true }) {
+                    Text(AlarmSchedule.chimeName(state.notificationChimeIndex))
+                }
+                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    AlarmSchedule.CHIME_NAMES.forEachIndexed { index, name ->
+                        DropdownMenuItem(
+                            text = { Text(name) },
+                            onClick = {
+                                onSelectChime(index)
+                                menuOpen = false
+                            },
+                        )
+                    }
+                }
             }
         }
+        Button(
+            onClick = onPreviewChime,
+            enabled = state.watchSelected,
+            modifier = Modifier.fillMaxWidth(),
+        ) { Text("Listen") }
     }
     if (state.notificationsEnabled && !state.notificationAccessGranted) {
         Text("Notification access needed", style = MaterialTheme.typography.titleSmall)
