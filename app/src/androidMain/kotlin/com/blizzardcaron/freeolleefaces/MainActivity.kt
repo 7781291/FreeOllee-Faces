@@ -237,6 +237,7 @@ private fun rememberAppCallbacks(
         onNotificationsUpdateNow = { viewModel.complications.pushCountIfWatch() },
         onToggleChime = { viewModel.complications.setNotificationChimeEnabled(it) },
         onSelectChime = { viewModel.complications.setNotificationChimeIndex(it) },
+        onPreviewChime = { viewModel.complications.previewNotificationChime() },
         onReconnect = { viewModel.onReconnect() },
     )
     val settingsCallbacks = SettingsCallbacks(
