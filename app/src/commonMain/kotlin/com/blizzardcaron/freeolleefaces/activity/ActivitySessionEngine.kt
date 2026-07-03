@@ -32,6 +32,8 @@ class ActivitySessionEngine(
 ) {
     private val _state = MutableStateFlow(ActivityState())
     val state: StateFlow<ActivityState> = _state.asStateFlow()
+    /** Wall-clock start of the current session, for callers polling session-scoped data (e.g. steps). */
+    val sessionStartMs: Long get() = startedAtMs
 
     private var session: ActivitySession? = null
     private var trackId: String = ""
@@ -103,6 +105,7 @@ class ActivitySessionEngine(
             headingDeg = heading,
             altitudeM = coords.altM ?: _state.value.altitudeM,
             pressureHpa = _state.value.pressureHpa,
+            stepsCount = _state.value.stepsCount,
             hasFix = true,
         )
     }
@@ -113,6 +116,12 @@ class ActivitySessionEngine(
         _state.value = _state.value.copy(pressureHpa = hpa)
     }
 
+    /** Fold a fresh session step count into state (null = unavailable). */
+    fun ingestSteps(count: Long?) {
+        if (session == null) return
+        _state.value = _state.value.copy(stepsCount = count)
+    }
+
     suspend fun tick(nowMs: Long) {
         val s = session ?: return
         val prev = _state.value
@@ -121,11 +130,14 @@ class ActivitySessionEngine(
             headingDeg = prev.headingDeg,
             altitudeM = prev.altitudeM,
             pressureHpa = prev.pressureHpa,
+            stepsCount = prev.stepsCount,
             hasFix = prev.hasFix,
         )
         val raw = when {
             prev.hasFix -> selectedMetric.render(st, unit)
             selectedMetric == ActivityMetric.PRESSURE && st.pressureHpa != null ->
+                selectedMetric.render(st, unit)
+            selectedMetric == ActivityMetric.STEPS && st.stepsCount != null ->
                 selectedMetric.render(st, unit)
             else -> ACQUIRING_NAMEPLATE
         }
