@@ -302,13 +302,6 @@ private fun NotificationsExpandedContent(
                             },
                         )
                     }
-                DropdownMenuItem(
-                    text = { Text(AlarmSchedule.chimeName(AlarmSchedule.SILENT_CHIME_INDEX)) },
-                    onClick = {
-                        onSelectChime(AlarmSchedule.SILENT_CHIME_INDEX)
-                        menuOpen = false
-                    },
-                )
                 }
             }
         }
