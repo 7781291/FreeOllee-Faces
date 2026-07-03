@@ -64,6 +64,33 @@ class AndroidStepsProvider(context: Context) : StepsProvider {
             )
             result[StepsRecord.COUNT_TOTAL] ?: 0L
         }
+
+    /**
+     * Sum of steps from [sinceEpochMs] to now, as written by any source. Used for an in-progress
+     * Activity session's step count rather than the whole day's total. Same failure surface as
+     * [todaySteps].
+     */
+    override suspend fun stepsSince(sinceEpochMs: Long): Result<Long> {
+        val failure: Throwable? = when {
+            availability() != StepsProvider.Availability.AVAILABLE ->
+                IllegalStateException("Health Connect unavailable")
+            !hasReadPermission() ->
+                SecurityException("Steps read permission not granted")
+            else -> null
+        }
+        if (failure != null) return Result.failure(failure)
+        val start = java.time.Instant.ofEpochMilli(sinceEpochMs)
+        val end = java.time.Instant.now()
+        return runCatching {
+            val result: AggregationResult = client().aggregate(
+                AggregateRequest(
+                    metrics = setOf(StepsRecord.COUNT_TOTAL),
+                    timeRangeFilter = TimeRangeFilter.between(start, end),
+                )
+            )
+            result[StepsRecord.COUNT_TOTAL] ?: 0L
+        }
+    }
     }
 
     private fun client(): HealthConnectClient = HealthConnectClient.getOrCreate(appContext)
