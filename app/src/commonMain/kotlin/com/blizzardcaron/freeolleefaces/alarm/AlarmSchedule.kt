@@ -78,20 +78,8 @@ object AlarmSchedule {
         return "Next: $day $h12:$mm $amPm · ${chimeName(next.chimeIndex)}"
     }
 
-    /**
-     * Sentinel chime index with no matching watch tone. The firmware has no melody to play at
-     * this index, so the notification fires silently — but the watch's screen flash still fires
-     * with it, since the flash is tied to the chime-fire event itself, not to which tone plays.
-     * Lets the notification chime act as a "flash only" mode without needing a real (and often
-     * too-long) melody. Not offered for alarms — only wired into the notification-chime picker.
-     */
-    const val SILENT_CHIME_INDEX = 15
-
-    /** Watch chime tone name for indices 0x00..0x0E, or [SILENT_CHIME_INDEX]. */
-    fun chimeName(index: Int): String = when (index) {
-        SILENT_CHIME_INDEX -> "No sound (flash only)"
-        else -> CHIME_NAMES.getOrNull(index) ?: "Chime ${index + 1}"
-    }
+    /** Watch chime tone name for indices 0x00..0x0E. */
+    fun chimeName(index: Int): String = CHIME_NAMES.getOrNull(index) ?: "Chime ${index + 1}"
 
     /**
      * The watch's 15 tones in index order, read from the official app's chime dropdown
