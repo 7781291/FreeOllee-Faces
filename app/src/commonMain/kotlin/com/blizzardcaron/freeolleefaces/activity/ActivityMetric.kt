@@ -12,7 +12,7 @@ import kotlin.math.roundToLong
  * the phone barometer, network fallback); the track schema (`TrackPoint.altM`) reserves altitude.
  */
 enum class ActivityMetric {
-    PACE, DISTANCE, TIME, ORIENTATION, ALTITUDE, PRESSURE;
+    PACE, DISTANCE, TIME, STEPS, ORIENTATION, ALTITUDE, PRESSURE;
 
     fun next(): ActivityMetric = entries[(ordinal + 1) % entries.size]
 
@@ -20,6 +20,7 @@ enum class ActivityMetric {
         PACE -> renderPace(state, unit)
         DISTANCE -> renderDistance(state, unit)
         TIME -> renderTime(state)
+        STEPS -> renderSteps(state)
         ORIENTATION -> renderOrientation(state.headingDeg)
         ALTITUDE -> renderAltitude(state.altitudeM, unit)
         PRESSURE -> renderPressure(state.pressureHpa, unit)
@@ -30,6 +31,7 @@ enum class ActivityMetric {
         PACE -> humanPace(state, unit)
         DISTANCE -> humanDistance(state, unit)
         TIME -> humanTime(state)
+        STEPS -> humanSteps(state)
         ORIENTATION -> humanOrientation(state.headingDeg)
         ALTITUDE -> humanAltitude(state.altitudeM, unit)
         PRESSURE -> humanPressure(state.pressureHpa, unit)
@@ -44,6 +46,7 @@ enum class ActivityMetric {
         const val MAX_DISTANCE_UNITS = 9999.0
         const val NAMEPLATE_WIDTH = 6
         const val MILLIS_PER_SECOND = 1000L
+        const val MAX_STEPS = 999_999L
         const val DISTANCE_TAG = "d" // lowercase d is legible & distinct; uppercase 'D' looks like '0'
         const val FEET_PER_METER = 3.28084
         const val FULL_CIRCLE = 360
@@ -68,6 +71,11 @@ enum class ActivityMetric {
         fun renderPressure(hpa: Double?, unit: ActivityUnit): String {
             if (hpa == null) return "----"
             return DisplayFormatter.pressure(hpa, imperial = unit == ActivityUnit.IMPERIAL)
+        }
+        fun renderSteps(state: ActivityState): String {
+            val count = state.stepsCount ?: return "---"
+            val num = count.coerceIn(0, MAX_STEPS).toString()
+            return if (num.length >= NAMEPLATE_WIDTH) num.take(NAMEPLATE_WIDTH) else "${num}s"
         }
 
         // The watch nameplate cells render ':' blank and '.' as a dash, and have no legible mi/km
@@ -154,6 +162,11 @@ enum class ActivityMetric {
             } else {
                 "${hpa.roundToInt()} hPa"
             }
+        }
+
+        fun humanSteps(state: ActivityState): String? {
+            val count = state.stepsCount ?: return null
+            return "${groupThousands(count)} steps"
         }
     }
 }
