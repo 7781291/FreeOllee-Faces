@@ -197,6 +197,13 @@ class AppViewModel(
         historyRevision++
     }
 
+    /** Rename or tag a recorded activity (e.g. "Pickleball", "Walk"). Pass null/blank to clear the label. */
+    fun relabelActivity(id: String, label: String?) {
+        val track = activityStore.list().firstOrNull { it.id == id } ?: return
+        activityStore.save(track.copy(label = label?.trim()?.ifBlank { null }))
+        historyRevision++
+    }
+
     fun onWatchPicked(address: String, label: String) {
         prefs.watchAddress = address
         // Show Connecting immediately: WatchLink may already sit at Connecting, so the connect below
