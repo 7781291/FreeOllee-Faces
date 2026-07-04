@@ -119,6 +119,7 @@ data class ActivityHistoryCallbacks(
     val onOpen: (String) -> Unit,
     val onDelete: (String) -> Unit,
     val onBack: () -> Unit,
+    val onRelabel: (String, String?) -> Unit = { _, _ -> },
 )
 
 /** Activity-metrics-config screen callbacks (reorder + enable/disable, per mode). */
