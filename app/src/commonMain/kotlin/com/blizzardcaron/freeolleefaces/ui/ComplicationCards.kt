@@ -20,8 +20,9 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+imval cardColors = if (active) {port androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -209,13 +210,13 @@ private fun ComplicationCard(
     } else {
         CardDefaults.cardColors()
     }
-    val border = if (active) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
-    Card(modifier = Modifier.fillMaxWidth(), colors = cardColors, border = border) {
+    val border = if (active) BorderStroke(2.5.dp, MaterialTheme.colorScheme.primary) else null
+        Card(modifier = Modifier.fillMaxWidth(), colors = cardColors, border = border, elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)) {
         Column(modifier = Modifier.fillMaxWidth()) {
             val headerModifier = Modifier
                 .fillMaxWidth()
                 .let { if (onToggle != null) it.clickable { onToggle() } else it }
-                .padding(12.dp)
+                .padding(16.dp)
             Column(modifier = headerModifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -228,7 +229,7 @@ private fun ComplicationCard(
                             onClick = onActivate,
                             modifier = Modifier.semantics { contentDescription = "Activate $title" },
                         )
-                        Text(title, style = MaterialTheme.typography.titleMedium)
+                        Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     }
                     if (onToggle != null) {
                         Text(if (expanded) "▾" else "▸", style = MaterialTheme.typography.bodyMedium)
