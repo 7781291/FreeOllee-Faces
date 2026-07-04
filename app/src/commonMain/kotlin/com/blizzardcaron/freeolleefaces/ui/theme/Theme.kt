@@ -38,6 +38,7 @@ fun FreeOlleeFacesTheme(content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = FreeOlleeColorScheme,
         typography = freeOlleeTypography(),
+        shapes = FreeOlleeShapes,
         content = content,
     )
 }
