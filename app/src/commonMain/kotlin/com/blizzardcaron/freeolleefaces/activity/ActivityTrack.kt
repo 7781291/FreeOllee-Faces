@@ -28,4 +28,5 @@ data class ActivityTrack(
     val unit: ActivityUnit,
     val points: List<TrackPoint> = emptyList(),
     val summary: ActivitySummary? = null,
+    val label: String? = null,
 )
