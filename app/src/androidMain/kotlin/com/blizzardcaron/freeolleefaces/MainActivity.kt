@@ -449,7 +449,7 @@ private fun openNotificationAccessSettings(context: Context) {
 private fun bondedDevices(context: Context): List<BondedDevice> {
     val adapter = context.getSystemService(BluetoothManager::class.java)?.adapter
     return if (adapter?.isEnabled == true) {
-        adapter.bondedDevices?.map { BondedDevice(it.name, it.address) }.orEmpty()
+        adapter.bondedDevices?.map { BondedDevice(it.name, it.address) }.orEmpty().let { all -> all.filter { d -> d.name?.contains("ollee", ignoreCase = true) == true }.ifEmpty { all } }
     } else {
         emptyList()
     }
