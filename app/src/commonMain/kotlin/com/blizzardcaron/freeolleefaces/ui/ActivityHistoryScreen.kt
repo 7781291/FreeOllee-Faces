@@ -51,9 +51,9 @@ fun ActivityHistoryScreen(
 private fun HistoryCard(track: ActivityTrack, unit: ActivityUnit, callbacks: ActivityHistoryCallbacks) {
     var showRename by remember(track.id) { mutableStateOf(false) }
     var renameText by remember(track.id) { mutableStateOf(track.label.orEmpty()) }
-    Card(elevation = CardDefaults.cardElevation()) {
+    Card(elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)) {
         Column(
-            Modifier.fillMaxWidth().padding(12.dp),
+            Modifier.fillMaxWidth().padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             Text(track.label?.takeIf { it.isNotBlank() } ?: historyDateLabel(track.startedAtMs), fontWeight = FontWeight.Bold)
