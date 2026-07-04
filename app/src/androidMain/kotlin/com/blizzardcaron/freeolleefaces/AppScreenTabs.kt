@@ -85,6 +85,7 @@ fun ActivityHistoryTab(viewModel: AppViewModel, modifier: Modifier) {
         callbacks = ActivityHistoryCallbacks(
             onOpen = { viewModel.openActivity(it) },
             onDelete = { viewModel.deleteActivity(it) },
+            onRelabel = { id, label -> viewModel.relabelActivity(id, label) },
             onBack = { viewModel.navigateTo(Screen.Activity) },
         ),
         modifier = modifier,
